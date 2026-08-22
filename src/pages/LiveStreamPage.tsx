@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
-import { Calendar, Radio, Users, RefreshCw, Play, Heart, Video } from 'lucide-react';
+import { Calendar, Radio, RefreshCw, Heart, BookOpen, Clock } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 
 export const LiveStreamPage: React.FC = () => {
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -11,7 +13,6 @@ export const LiveStreamPage: React.FC = () => {
     embedUrl: string;
     title: string;
     description: string;
-    isPastVideo?: boolean;
   } | null>(null);
 
   // Helper to extract YouTube video ID
@@ -30,11 +31,10 @@ export const LiveStreamPage: React.FC = () => {
       const siteSettings = await api.getSiteSettings();
       setSettings(siteSettings);
 
-      const mode = siteSettings.live_stream_mode || 'manual';
-      const apiKey = siteSettings.youtube_api_key;
-      const channelId = siteSettings.youtube_channel_id;
+      const mode = siteSettings.live_stream_mode || 'auto';
+      const channelId = siteSettings.youtube_channel_id || 'UCLEhdhZFRuxMXHL3pDpg65g';
 
-      if (mode === 'auto' && channelId) {
+      if (mode === 'auto') {
         try {
           const checkRes = await fetch(`/api/check-live?channelId=${channelId}`);
           if (checkRes.ok) {
@@ -67,41 +67,53 @@ export const LiveStreamPage: React.FC = () => {
 
   useEffect(() => {
     fetchStreamSettings();
-    // Auto refresh every 45s in case stream status changes
+    // Auto refresh every 45s to detect live stream start or finish
     const interval = setInterval(() => fetchStreamSettings(), 45000);
     return () => clearInterval(interval);
   }, []);
 
-  const mode = settings.live_stream_mode || 'manual';
+  const mode = settings.live_stream_mode || 'auto';
   
   let isStreamActive = false;
   let embedUrl = '';
   let title = '';
   let description = '';
-  let isPastVideo = false;
 
-  if (mode === 'auto' && autoStreamData) {
-    isStreamActive = autoStreamData.isActive;
-    embedUrl = autoStreamData.embedUrl;
-    title = autoStreamData.title;
-    description = autoStreamData.description;
-    isPastVideo = !!autoStreamData.isPastVideo;
+  if (mode === 'auto') {
+    if (autoStreamData && autoStreamData.isActive) {
+      isStreamActive = true;
+      embedUrl = autoStreamData.embedUrl;
+      title = autoStreamData.title;
+      description = autoStreamData.description;
+    } else {
+      isStreamActive = false;
+    }
   } else {
+    // Manual Mode
     isStreamActive = settings.live_stream_active === 'true';
-    const rawUrl = settings.live_stream_youtube_url || '';
-    embedUrl = getYouTubeEmbedUrl(rawUrl);
-    title = settings.live_stream_title || 'البث المباشر للخدمات والقداسات الروحية';
-    description = settings.live_stream_description || 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية والاجتماعات الروحية المنقولة مباشرة من كنيسة العذراء بمحرم بك.';
+    if (isStreamActive && settings.live_stream_youtube_url) {
+      embedUrl = getYouTubeEmbedUrl(settings.live_stream_youtube_url);
+      title = settings.live_stream_title || 'البث المباشر للخدمات والقداسات الروحية';
+      description = settings.live_stream_description || 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية والاجتماعات الروحية.';
+    } else {
+      isStreamActive = false;
+    }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#fbf9f8] via-[#f5f3f3] to-[#e4e2e2] py-12 px-4 sm:px-6 lg:px-8 font-cairo">
+      <Helmet>
+        <title>البث المباشر - كنيسة السيدة العذراء مريم محرم بك | الإسكندرية</title>
+        <meta name="description" content="البث المباشر للصلوات والقداسات الإلهية والعظات الروحية من كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية." />
+        <link rel="canonical" href="https://www.tibarthenos.com/live-stream" />
+      </Helmet>
+
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Page Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex p-3 bg-red-50 text-red-650 rounded-full border border-red-200/50 shadow-md animate-pulse">
-            <Radio className="w-8 h-8 animate-pulse text-red-600" />
+            <Radio className="w-8 h-8 text-red-600" />
           </div>
           <h1 className="font-tajawal text-3xl sm:text-4xl font-extrabold text-[#00174a]">
             البث المباشر الكنسي
@@ -160,20 +172,9 @@ export const LiveStreamPage: React.FC = () => {
               </p>
               
               <div className="pt-4 border-t border-slate-100 flex flex-wrap gap-3 items-center justify-between text-[11px] font-bold text-slate-500">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 py-1.5 px-3 rounded-full">
-                    <Calendar className="w-4 h-4 text-[#d4af37]" />
-                    <span>بث روحي مباشر ومبارك</span>
-                  </div>
-                  <a
-                    href={`https://www.youtube.com/channel/${settings.youtube_channel_id || 'UCLEhdhZFRuxMXHL3pDpg65g'}/live`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-rose-600 hover:bg-rose-700 text-white py-1.5 px-3 rounded-full transition-all inline-flex items-center gap-1.5 shadow-sm"
-                  >
-                    <Play className="w-3 h-3 fill-current" />
-                    <span>المشاهدة على يوتيوب ↗</span>
-                  </a>
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 py-1.5 px-3 rounded-full">
+                  <Calendar className="w-4 h-4 text-[#d4af37]" />
+                  <span>بث روحي مباشر ومبارك</span>
                 </div>
                 <div className="flex items-center gap-1.5 bg-[#002366]/5 text-[#002366] py-1.5 px-3.5 rounded-full border border-[#002366]/10">
                   <Heart className="w-4 h-4 text-[#d4af37] animate-pulse" />
@@ -184,7 +185,7 @@ export const LiveStreamPage: React.FC = () => {
 
           </div>
         ) : (
-          /* Inactive Stream Screen (Peaceful Church Card) */
+          /* Inactive Stream Screen (Peaceful Card) */
           <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-2xl text-center space-y-6 max-w-2xl mx-auto transition-all">
             
             <div className="w-20 h-20 rounded-full bg-[#00174a]/5 text-[#002366] border border-[#d4af37]/30 flex items-center justify-center mx-auto shadow-inner">
@@ -196,7 +197,7 @@ export const LiveStreamPage: React.FC = () => {
                 لا يوجد بث مباشر في الوقت الحالي
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 font-semibold max-w-md mx-auto leading-relaxed">
-                نشكر محبتكم ومتابعتكم. يمكنك دائماً تصفح العظات السابقة في مكتبة العظات، مراجعة مواعيد القداسات، أو زيارة قناة الكنيسة الرسمية على يوتيوب.
+                نشكر محبتكم ومتابعتكم. يمكنك دائماً تصفح العظات السابقة في مكتبة العظات أو مراجعة مواعيد القداسات.
               </p>
             </div>
 
@@ -209,21 +210,20 @@ export const LiveStreamPage: React.FC = () => {
                 <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                 <span>تحقق من وجود بث الآن</span>
               </button>
-              <a
-                href={`https://www.youtube.com/channel/${settings.youtube_channel_id || 'UCLEhdhZFRuxMXHL3pDpg65g'}/live`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-3 px-6 rounded-xl transition-all flex items-center gap-2 shadow-md w-full sm:w-auto justify-center"
+              <Link
+                to="/sermons"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-3 px-6 rounded-xl transition-all flex items-center gap-2 w-full sm:w-auto justify-center border border-slate-200"
               >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>قناة الكنيسة على يوتيوب ↗</span>
-              </a>
-              <a
-                href="/sermons"
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-3 px-6 rounded-xl transition-all w-full sm:w-auto block text-center"
+                <BookOpen className="w-4 h-4 text-[#d4af37]" />
+                <span>مكتبة العظات</span>
+              </Link>
+              <Link
+                to="/liturgies-schedule"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-3 px-6 rounded-xl transition-all flex items-center gap-2 w-full sm:w-auto justify-center border border-slate-200"
               >
-                مكتبة العظات
-              </a>
+                <Clock className="w-4 h-4 text-[#d4af37]" />
+                <span>مواعيد القداسات</span>
+              </Link>
             </div>
 
           </div>
