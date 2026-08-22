@@ -34,44 +34,43 @@ export const LiveStreamPage: React.FC = () => {
       const apiKey = siteSettings.youtube_api_key;
       const channelId = siteSettings.youtube_channel_id;
 
-      if (mode === 'auto' && apiKey && channelId) {
+      if (mode === 'auto' && channelId) {
         try {
-          // 1. Check for active live stream
-          const liveRes = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${apiKey}`
-          );
-          const liveData = await liveRes.json();
-
-          if (liveData.items && liveData.items.length > 0) {
-            const video = liveData.items[0];
-            setAutoStreamData({
-              isActive: true,
-              embedUrl: `https://www.youtube.com/embed/${video.id.videoId}?autoplay=1`,
-              title: video.snippet.title,
-              description: video.snippet.description || 'بث مباشر جارٍ الآن من قناة الكنيسة الرسمية.'
-            });
-          } else {
-            // 2. No live stream, fetch the latest uploaded video as a fallback
-            const pastRes = await fetch(
-              `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&type=video&maxResults=1&key=${apiKey}`
+          if (apiKey) {
+            // 1. Check for active live stream via Data API
+            const liveRes = await fetch(
+              `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${apiKey}`
             );
-            const pastData = await pastRes.json();
-            if (pastData.items && pastData.items.length > 0) {
-              const video = pastData.items[0];
+            const liveData = await liveRes.json();
+
+            if (liveData.items && liveData.items.length > 0) {
+              const video = liveData.items[0];
               setAutoStreamData({
-                isActive: false,
-                embedUrl: `https://www.youtube.com/embed/${video.id.videoId}`,
+                isActive: true,
+                embedUrl: `https://www.youtube.com/embed/${video.id.videoId}?autoplay=1`,
                 title: video.snippet.title,
-                description: video.snippet.description || 'آخر تسجيل منشور على قناة الكنيسة.',
-                isPastVideo: true
+                description: video.snippet.description || 'بث مباشر جارٍ الآن من قناة الكنيسة الرسمية.'
               });
-            } else {
-              setAutoStreamData(null);
+              return;
             }
           }
+
+          // Fallback to official YouTube Live Channel Player (Zero Quota required)
+          setAutoStreamData({
+            isActive: true,
+            embedUrl: `https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1`,
+            title: 'البث المباشر للصلوات والقداسات الإلهية',
+            description: 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية والاجتماعات المنقولة مباشرة من كنيسة العذراء بمحرم بك.'
+          });
         } catch (apiErr) {
           console.error('YouTube Data API fetch failed:', apiErr);
-          setAutoStreamData(null);
+          // Fallback to direct channel live embed
+          setAutoStreamData({
+            isActive: true,
+            embedUrl: `https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1`,
+            title: 'البث المباشر للصلوات والقداسات الإلهية',
+            description: 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية والاجتماعات المنقولة مباشرة من كنيسة العذراء بمحرم بك.'
+          });
         }
       } else {
         setAutoStreamData(null);
@@ -187,10 +186,21 @@ export const LiveStreamPage: React.FC = () => {
                 {description}
               </p>
               
-              <div className="pt-4 border-t border-slate-100 flex flex-wrap gap-4 items-center justify-between text-[11px] font-bold text-slate-500">
-                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 py-1.5 px-3 rounded-full">
-                  <Calendar className="w-4 h-4 text-[#d4af37]" />
-                  <span>{isStreamActive ? 'بث روحي مبارك ومتجدد' : 'تسجيل روحي متوفر للمشاهدة'}</span>
+              <div className="pt-4 border-t border-slate-100 flex flex-wrap gap-3 items-center justify-between text-[11px] font-bold text-slate-500">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 py-1.5 px-3 rounded-full">
+                    <Calendar className="w-4 h-4 text-[#d4af37]" />
+                    <span>{isStreamActive ? 'بث روحي مبارك ومتجدد' : 'تسجيل روحي متوفر للمشاهدة'}</span>
+                  </div>
+                  <a
+                    href={`https://www.youtube.com/channel/${settings.youtube_channel_id || 'UCLEhdhZFRuxMXHL3pDpg65g'}/live`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-full transition-all inline-flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Play className="w-3 h-3 fill-current" />
+                    <span>المشاهدة على يوتيوب ↗</span>
+                  </a>
                 </div>
                 <div className="flex items-center gap-1.5 bg-[#002366]/5 text-[#002366] py-1.5 px-3.5 rounded-full border border-[#002366]/10">
                   <Heart className="w-4 h-4 text-[#d4af37] animate-pulse" />

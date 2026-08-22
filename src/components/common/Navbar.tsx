@@ -29,27 +29,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
         setTickerAnnouncements(['مرحباً بكم في المنصة الرقمية الموحدة لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية']);
       });
 
-    // Check Live Stream Status (Strict Real-time Check)
+    // Check Live Stream Status
     api.getSiteSettings()
       .then(async (settings) => {
         const mode = settings.live_stream_mode || 'manual';
-        const apiKey = settings.youtube_api_key;
         const channelId = settings.youtube_channel_id;
 
-        if (mode === 'auto' && apiKey && channelId) {
-          try {
-            const liveRes = await fetch(
-              `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${apiKey}`
-            );
-            const liveData = await liveRes.json();
-            if (liveData.items && liveData.items.length > 0) {
-              setIsLiveActive(true);
-              return;
-            }
-          } catch (e) {
-            // Ignore API network errors
-          }
-          setIsLiveActive(false);
+        if (mode === 'auto' && channelId) {
+          setIsLiveActive(true);
         } else {
           setIsLiveActive(settings.live_stream_active === 'true');
         }
