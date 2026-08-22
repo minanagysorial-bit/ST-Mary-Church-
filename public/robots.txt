@@ -6,4 +6,4 @@ Disallow: /servant/
 Disallow: /board/
 Disallow: /login
 
-Sitemap: https://stmary-moharambek-digitalhub.org/sitemap.xml
+Sitemap: https://www.tibarthenos.com/sitemap.xml

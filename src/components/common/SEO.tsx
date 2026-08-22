@@ -10,10 +10,10 @@ interface SEOProps {
   schema?: Record<string, any> | Record<string, any>[];
 }
 
-const DEFAULT_TITLE = 'كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية | الموقع الرسمي';
+const DEFAULT_TITLE = 'كنيسة السيدة العذراء مريم محرم بك - اسكندرية - الموقع الرسمي';
 const DEFAULT_DESC = 'الموقع الرسمي لكنيسة السيدة العذراء مريم بمحرم بك، الإسكندرية. مواعيد القداسات الإلهية، عظات الآباء الكهنة، البث المباشر، تاريخ الكنيسة العريق منذ عام 1934، وخدمات التربية الكنسية.';
 const DEFAULT_IMAGE = '/church.jpeg';
-const SITE_NAME = 'كنيسة السيدة العذراء مريم - محرم بك';
+const SITE_NAME = 'كنيسة السيدة العذراء مريم محرم بك - اسكندرية - الموقع الرسمي';
 
 export const SEO: React.FC<SEOProps> = ({
   title,

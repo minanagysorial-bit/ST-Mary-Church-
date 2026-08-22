@@ -103,22 +103,22 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
   return (
     <div className="flex flex-col gap-12 pb-16">
       <Helmet>
-        <title>كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية | الموقع الرسمي | St. Mary Moharam Bek</title>
-        <meta name="description" content="الموقع والمنصة الرقمية الرسمية لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية. جدول القداسات الإلهية، عظات الآباء الكهنة، البث المباشر، تاريخ وتدشين الكنيسة منذ 1934، وألبوم الصور التذكارية." />
+        <title>كنيسة السيدة العذراء مريم محرم بك - اسكندرية - الموقع الرسمي</title>
+        <meta name="description" content="الموقع والمنصة الرقمية الرسمية لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية. جدول القداسات الإلهية، عظات الآباء الكهنة، البث المباشر، قطمارس وسنكسار اليوم، وتاريخ الكنيسة منذ 1934." />
         <meta name="keywords" content="كنيسة العذراء محرم بك, كنيسة السيدة العذراء مريم بمحرم بك, كنيسة العذراء اسكندرية, قداسات كنيسة العذراء محرم بك, تاريخ كنيسة العذراء محرم بك, كهنة كنيسة العذراء محرم بك, بث مباشر كنيسة العذراء محرم بك, St Mary Moharam Bek, St Mary Church Alexandria, كنيسة قبطية ارثوذكسية محرم بك" />
-        <link rel="canonical" href="https://stmary-moharambek-digitalhub.org/" />
+        <link rel="canonical" href="https://www.tibarthenos.com/" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Church",
-            "name": "كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية",
+            "name": "كنيسة السيدة العذراء مريم محرم بك - اسكندرية - الموقع الرسمي",
             "alternateName": "St. Mary Coptic Orthodox Church Moharam Bek",
-            "url": "https://stmary-moharambek-digitalhub.org/",
-            "logo": "https://stmary-moharambek-digitalhub.org/favicon.svg",
-            "image": "https://stmary-moharambek-digitalhub.org/church.jpeg",
+            "url": "https://www.tibarthenos.com/",
+            "logo": "https://www.tibarthenos.com/favicon.svg",
+            "image": "https://www.tibarthenos.com/church.jpeg",
             "address": {
               "@type": "PostalAddress",
-              "streetAddress": "شارع الرضى، محرم بك",
+              "streetAddress": "شارع الراضى، محرم بك",
               "addressLocality": "الإسكندرية",
               "addressRegion": "محافظة الإسكندرية",
               "addressCountry": "EG"
