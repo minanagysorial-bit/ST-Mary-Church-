@@ -36,41 +36,23 @@ export const LiveStreamPage: React.FC = () => {
 
       if (mode === 'auto' && channelId) {
         try {
-          if (apiKey) {
-            // 1. Check for active live stream via Data API
-            const liveRes = await fetch(
-              `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${apiKey}`
-            );
-            const liveData = await liveRes.json();
-
-            if (liveData.items && liveData.items.length > 0) {
-              const video = liveData.items[0];
+          const checkRes = await fetch(`/api/check-live?channelId=${channelId}`);
+          if (checkRes.ok) {
+            const liveData = await checkRes.json();
+            if (liveData.isLive) {
               setAutoStreamData({
                 isActive: true,
-                embedUrl: `https://www.youtube.com/embed/${video.id.videoId}?autoplay=1`,
-                title: video.snippet.title,
-                description: video.snippet.description || 'بث مباشر جارٍ الآن من قناة الكنيسة الرسمية.'
+                embedUrl: `https://www.youtube.com/embed/${liveData.videoId || 'live_stream?channel=' + channelId}?autoplay=1`,
+                title: liveData.title || 'البث المباشر للصلوات والقداسات الإلهية',
+                description: 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية المنقولة مباشرة من كنيسة العذراء بمحرم بك.'
               });
               return;
             }
           }
-
-          // Fallback to official YouTube Live Channel Player (Zero Quota required)
-          setAutoStreamData({
-            isActive: true,
-            embedUrl: `https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1`,
-            title: 'البث المباشر للصلوات والقداسات الإلهية',
-            description: 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية والاجتماعات المنقولة مباشرة من كنيسة العذراء بمحرم بك.'
-          });
+          setAutoStreamData(null);
         } catch (apiErr) {
-          console.error('YouTube Data API fetch failed:', apiErr);
-          // Fallback to direct channel live embed
-          setAutoStreamData({
-            isActive: true,
-            embedUrl: `https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1`,
-            title: 'البث المباشر للصلوات والقداسات الإلهية',
-            description: 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية والاجتماعات المنقولة مباشرة من كنيسة العذراء بمحرم بك.'
-          });
+          console.error('Check live fetch failed:', apiErr);
+          setAutoStreamData(null);
         }
       } else {
         setAutoStreamData(null);
