@@ -1,29 +1,76 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { api, Liturgy } from '../lib/api';
-import { Calendar, Clock, MapPin, Sparkles, RefreshCw, Heart, Eye, List, Layers } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Sparkles,
+  RefreshCw,
+  Heart,
+  List,
+  Layers,
+  CalendarDays,
+  User,
+  ChevronRight,
+  ChevronLeft,
+  Sun,
+  ShieldCheck
+} from 'lucide-react';
+import { getCopticDate } from '../lib/copticReadings';
+
+export const PRIEST_NAMES_LIST = [
+  'ابونا مرقس ميلاد',
+  'ابونا بيشوي ثابت',
+  'ابونا مينا نادر',
+  'ابونا ميخائيل ميخائيل',
+  'ابونا كيرلس ميلاد',
+  'ابونا موسى وجيه'
+];
 
 export const LiturgiesSchedulePage: React.FC = () => {
   const [liturgies, setLiturgies] = useState<Liturgy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // View mode: 'tabs' (focused day view) or 'list' (full week stacked view)
-  const [viewMode, setViewMode] = useState<'tabs' | 'list'>('tabs');
+
+  // View Mode: 'tabs' (focused day/week view) or 'month' (full month calendar schedule)
+  const [viewMode, setViewMode] = useState<'tabs' | 'month'>('tabs');
+
+  // Selected Month offset (0 = current month, +1 = next month, -1 = prev month)
+  const [monthOffset, setMonthOffset] = useState<number>(0);
 
   const DAYS_OF_WEEK = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+  const now = useMemo(() => new Date(), []);
   
-  // Get today's day name in Arabic
+  // Current active month date object
+  const currentViewDate = useMemo(() => {
+    const d = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+    return d;
+  }, [now, monthOffset]);
+
+  const currentMonthName = useMemo(() => {
+    return currentViewDate.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
+  }, [currentViewDate]);
+
+  const todayFullDate = useMemo(() => {
+    const coptic = getCopticDate(now);
+    const gregorian = now.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return {
+      gregorian,
+      coptic: coptic.copticDateString,
+      dayName: now.toLocaleDateString('ar-EG', { weekday: 'long' })
+    };
+  }, [now]);
+
+  // Today's day name in Arabic
   const todayArabic = useMemo(() => {
-    const dayName = new Date().toLocaleDateString('ar-EG', { weekday: 'long' });
-    // Match against DAYS_OF_WEEK
-    const found = DAYS_OF_WEEK.find(d => dayName.includes(d));
+    const found = DAYS_OF_WEEK.find(d => todayFullDate.dayName.includes(d));
     return found || 'الأحد';
-  }, []);
+  }, [todayFullDate]);
 
   const [activeDay, setActiveDay] = useState<string>('الأحد');
 
-  // Set default active day to today once loaded
   useEffect(() => {
     setActiveDay(todayArabic);
   }, [todayArabic]);
@@ -55,6 +102,31 @@ export const LiturgiesSchedulePage: React.FC = () => {
     return `${displayHours}:${minutesStr} ${suffix}`;
   };
 
+  // Helper to extract priest name from notes or fallback
+  const extractPriestName = (liturgy: Liturgy): string => {
+    if (!liturgy.notes) return 'آباء الكنيسة';
+    const match = liturgy.notes.match(/(?:الكاهن(?:\s*المصلي)?[:\s]+)?(ابونا\s+[\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+)?)/);
+    if (match) return match[1].trim();
+
+    // Check if any of our priests is directly mentioned
+    for (const p of PRIEST_NAMES_LIST) {
+      if (liturgy.notes.includes(p)) return p;
+    }
+    return liturgy.notes.trim() || 'آباء الكنيسة';
+  };
+
+  // Helper to extract clean notes without repeating priest name
+  const extractCleanNotes = (notes: string | null): string | null => {
+    if (!notes) return null;
+    let clean = notes;
+    PRIEST_NAMES_LIST.forEach(p => {
+      clean = clean.replace(new RegExp(`(?:الكاهن(?:\\s*المصلي)?[:\\s]+)?${p}`, 'g'), '');
+    });
+    clean = clean.replace(/\|/g, '').trim();
+    return clean.length > 0 ? clean : null;
+  };
+
+  // Grouped by Day of Week
   const groupedLiturgies = useMemo(() => {
     const groups: Record<string, Liturgy[]> = {};
     DAYS_OF_WEEK.forEach(d => {
@@ -65,71 +137,145 @@ export const LiturgiesSchedulePage: React.FC = () => {
     return groups;
   }, [liturgies]);
 
+  // Generate All Days of the Selected Month with their scheduled liturgies
+  const monthDaysList = useMemo(() => {
+    const year = currentViewDate.getFullYear();
+    const month = currentViewDate.getMonth();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    const list = [];
+    for (let day = 1; day <= totalDays; day++) {
+      const dateObj = new Date(year, month, day);
+      const dayName = dateObj.toLocaleDateString('ar-EG', { weekday: 'long' });
+      const matchedDayName = DAYS_OF_WEEK.find(d => dayName.includes(d)) || 'الأحد';
+      const isToday = now.getFullYear() === year && now.getMonth() === month && now.getDate() === day;
+      const copticInfo = getCopticDate(dateObj);
+
+      // Match liturgies for this day of week
+      const dayLiturgies = (groupedLiturgies[matchedDayName] || []);
+
+      list.push({
+        dayNumber: day,
+        dateObj,
+        dayName,
+        matchedDayName,
+        isToday,
+        copticString: copticInfo.copticDateString,
+        liturgies: dayLiturgies
+      });
+    }
+    return list;
+  }, [currentViewDate, groupedLiturgies, now]);
+
   return (
     <div className="min-h-screen bg-[#fcfbf9] py-12 px-4 sm:px-6 lg:px-8 font-cairo text-right" dir="rtl">
       <Helmet>
-        <title>مواعيد القداسات والخدمات الإلهية | كنيسة السيدة العذراء بمحرم بك بالإسكندرية</title>
-        <meta name="description" content="جدول مواعيد القداسات الإلهية اليومية والأسبوعية، صلوات العشية والتسبحة بمذابح كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية." />
-        <meta name="keywords" content="مواعيد قداسات كنيسة العذراء محرم بك, جدول قداسات محرم بك, قداس الجمعة كنيسة العذراء محرم بك, قداس الاحد كنيسة العذراء محرم بك, صلوات العشية محرم بك" />
-        <link rel="canonical" href="https://stmary-moharambek-digitalhub.org/schedule" />
+        <title>{`جدول مواعيد القداسات لشهر ${currentMonthName}`} | كنيسة السيدة العذراء بمحرم بك</title>
+        <meta name="description" content={`جدول مواعيد قداسات كنيسة السيدة العذراء بمحرم بك بالإسكندرية لشهر ${currentMonthName}. أسماء الآباء الكهنة المصلين، المذابح، والتوقيت.`} />
+        <link rel="canonical" href="https://www.tibarthenos.com/schedule" />
       </Helmet>
 
-      <div className="max-w-5xl mx-auto space-y-10">
+      <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Page Header */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex p-3 bg-amber-50 text-amber-600 rounded-full border border-amber-200/50 shadow-md">
-            <Calendar className="w-8 h-8 text-[#d4af37]" />
+        {/* Top Month & Today Banner Header */}
+        <div className="bg-gradient-to-r from-[#00174a] via-[#002366] to-[#00113a] text-white rounded-3xl p-6 sm:p-8 border border-[#d4af37]/40 shadow-xl space-y-4 text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#d4af37]/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="inline-flex items-center gap-2 bg-[#fed65b] text-[#00174a] text-xs font-extrabold px-4 py-1.5 rounded-full shadow-md">
+            <Sparkles className="w-4 h-4" />
+            <span>جدول القداسات والخدمات الكنسية</span>
           </div>
-          <h1 className="font-tajawal text-3xl sm:text-4xl font-extrabold text-[#00174a]">
-            مواعيد القداسات والخدمات الروحية
+
+          <h1 className="font-tajawal text-2xl sm:text-4xl font-extrabold text-[#fed65b] leading-tight">
+            مواعيد قداسات شهر {currentMonthName}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-bold max-w-xl mx-auto leading-relaxed">
-            تابع مواعيد إقامة القداسات الإلهية، صلوات العشية، والتسبحة الأسبوعية بمذابح كنيستنا القبطية الأرثوذكسية
-          </p>
-          <div className="w-16 h-0.5 bg-[#d4af37] mx-auto rounded-full" />
+
+          {/* Today Highlight Badge */}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-1 text-xs sm:text-sm font-bold">
+            <span className="bg-white/10 border border-white/20 px-4 py-2 rounded-2xl flex items-center gap-2 text-slate-100 shadow-sm">
+              <Sun className="w-4 h-4 text-[#fed65b]" />
+              <span>تاريخ اليوم: {todayFullDate.gregorian}</span>
+            </span>
+            <span className="bg-white/10 border border-white/20 px-4 py-2 rounded-2xl flex items-center gap-2 text-[#fed65b] shadow-sm">
+              <Calendar className="w-4 h-4" />
+              <span>{todayFullDate.coptic}</span>
+            </span>
+          </div>
         </div>
 
-        {/* View Mode & Refresh Row */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-slate-200/60 p-3.5 rounded-2xl shadow-sm">
-          {/* Toggle Button Group */}
-          <div className="flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+        {/* View Mode & Month Navigation Toolbar */}
+        <div className="bg-white border border-slate-200 p-4 rounded-3xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          
+          {/* Switch View Buttons */}
+          <div className="flex bg-slate-100 p-1 rounded-2xl w-full sm:w-auto">
             <button
               onClick={() => setViewMode('tabs')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 viewMode === 'tabs'
-                  ? 'bg-white text-[#002366] shadow-sm'
-                  : 'text-slate-550 hover:text-slate-800'
+                  ? 'bg-[#002366] text-[#fed65b] shadow-md shadow-[#002366]/20'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Layers className="w-4 h-4 text-[#d4af37]" />
-              <span>عرض اليوم المختار</span>
+              <Layers className="w-4 h-4" />
+              <span>عرض الأيام واليوم الحالي</span>
             </button>
+
             <button
-              onClick={() => setViewMode('list')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'list'
-                  ? 'bg-white text-[#002366] shadow-sm'
-                  : 'text-slate-550 hover:text-slate-800'
+              onClick={() => setViewMode('month')}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                viewMode === 'month'
+                  ? 'bg-[#002366] text-[#fed65b] shadow-md shadow-[#002366]/20'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <List className="w-4 h-4 text-[#d4af37]" />
-              <span>عرض الأسبوع بالكامل</span>
+              <CalendarDays className="w-4 h-4" />
+              <span>عرض جدول الشهر كاملاً</span>
             </button>
           </div>
 
-          <button
-            onClick={fetchLiturgies}
-            className="flex items-center gap-1.5 text-xs text-slate-500 font-bold hover:text-[#002366] transition-colors self-end sm:self-auto"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>تحديث الجدول</span>
-          </button>
+          {/* Month Switcher (When in Month View or General) */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMonthOffset(prev => prev - 1)}
+              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors flex items-center gap-1 text-xs font-bold"
+              title="الشهر السابق"
+            >
+              <ChevronRight className="w-4 h-4" />
+              <span className="hidden sm:inline">الشهر السابق</span>
+            </button>
+
+            {monthOffset !== 0 && (
+              <button
+                onClick={() => setMonthOffset(0)}
+                className="px-3 py-1.5 rounded-xl bg-[#002366] text-[#fed65b] text-xs font-bold"
+              >
+                الشهر الحالي
+              </button>
+            )}
+
+            <button
+              onClick={() => setMonthOffset(prev => prev + 1)}
+              className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors flex items-center gap-1 text-xs font-bold"
+              title="الشهر التالي"
+            >
+              <span className="hidden sm:inline">الشهر التالي</span>
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={fetchLiturgies}
+              className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors"
+              title="تحديث الجدول"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+
         </div>
 
-        {/* Main Content Area */}
+        {/* Content Section */}
         {loading ? (
-          <div className="bg-white rounded-3xl p-16 text-center space-y-4 border border-slate-100 shadow-xl max-w-xl mx-auto">
+          <div className="bg-white rounded-3xl p-16 text-center space-y-4 border border-slate-200 shadow-sm max-w-xl mx-auto">
             <RefreshCw className="w-10 h-10 text-[#002366] animate-spin mx-auto" />
             <p className="text-xs font-bold text-slate-500">جاري تحميل وتنسيق جدول القداسات الكنسي...</p>
           </div>
@@ -138,227 +284,226 @@ export const LiturgiesSchedulePage: React.FC = () => {
             <p className="text-xs font-bold text-rose-600">{error}</p>
             <button
               onClick={fetchLiturgies}
-              className="bg-[#002366] text-white hover:text-[#fed65b] font-bold text-xs py-2 px-4 rounded-xl transition-all"
+              className="bg-[#002366] text-white hover:text-[#fed65b] font-bold text-xs py-2.5 px-6 rounded-xl transition-all"
             >
               إعادة المحاولة
             </button>
           </div>
         ) : viewMode === 'tabs' ? (
-          /* TABBED VIEW MODE (Focused, eye-friendly layout) */
-          <div className="space-y-6">
+          
+          /* ── 1. TABS VIEW (DAYS TABS WITH PRE-SELECTED TODAY) ── */
+          <div className="space-y-6 animate-fadeIn">
             
-            {/* Horizontal Day Tabs */}
-            <div className="flex overflow-x-auto pb-2 gap-2 justify-start md:justify-center no-scrollbar">
-              {DAYS_OF_WEEK.map(dayName => {
-                const isSelected = activeDay === dayName;
-                const isToday = todayArabic === dayName;
-                const count = (groupedLiturgies[dayName] || []).length;
-                
+            {/* Days Horizontal Tabs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+              {DAYS_OF_WEEK.map(d => {
+                const isTodayTab = d === todayArabic;
+                const count = (groupedLiturgies[d] || []).length;
+
                 return (
                   <button
-                    key={dayName}
-                    onClick={() => setActiveDay(dayName)}
-                    className={`flex flex-col items-center gap-1 px-5 py-3 rounded-2xl border transition-all text-center shrink-0 min-w-[90px] ${
-                      isSelected
-                        ? 'bg-[#002366] border-[#002366] text-[#fed65b] shadow-md scale-[1.03]'
-                        : 'bg-white border-slate-200 text-[#002366] hover:bg-slate-50'
+                    key={d}
+                    onClick={() => setActiveDay(d)}
+                    className={`relative p-3.5 rounded-2xl flex flex-col items-center gap-1 transition-all border ${
+                      activeDay === d
+                        ? 'bg-[#002366] text-white border-[#d4af37] shadow-lg scale-[1.02]'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    <span className="text-xs font-extrabold font-tajawal">{dayName}</span>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-                      isSelected ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-550'
-                    }`}>
-                      {count} خدمات
-                    </span>
-                    {isToday && (
-                      <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-[#fed65b]' : 'bg-[#002366]'} mt-0.5 animate-pulse`} />
+                    {isTodayTab && (
+                      <span className="absolute -top-2.5 bg-gradient-to-r from-[#d4af37] to-[#fed65b] text-[#00174a] text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-sm">
+                        اليوم
+                      </span>
                     )}
+                    <span className="font-tajawal text-sm font-bold">{d}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      activeDay === d ? 'bg-white/20 text-[#fed65b]' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {count > 0 ? `${count} قداس` : 'لا يوجد'}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Selected Day Content */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md space-y-6">
-              <div className="border-b border-slate-100 pb-4 flex justify-between items-center">
+            {/* Liturgies for Active Day */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                 <h2 className="font-tajawal text-lg sm:text-xl font-extrabold text-[#002366] flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#d4af37]" />
-                  <span>جدول خدمات يوم {activeDay}</span>
+                  <Calendar className="w-5 h-5 text-[#d4af37]" />
+                  <span>قداسات يوم {activeDay}</span>
+                  {activeDay === todayArabic && (
+                    <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
+                      قداسات اليوم الحالي ☀️
+                    </span>
+                  )}
                 </h2>
-                {todayArabic === activeDay && (
-                  <span className="bg-amber-50 text-amber-800 border border-amber-150 px-3 py-1 rounded-full text-[10px] font-bold">
-                    خدمات اليوم
-                  </span>
-                )}
+                <span className="text-xs font-bold text-slate-500">
+                  {(groupedLiturgies[activeDay] || []).length} قداسات مسجلة
+                </span>
               </div>
 
-              {/* Day Services List */}
-              <div className="space-y-4">
-                {(groupedLiturgies[activeDay] || []).length === 0 ? (
-                  <div className="py-16 text-center space-y-3">
-                    <Calendar className="w-12 h-12 text-slate-300 mx-auto" />
-                    <h3 className="font-tajawal text-slate-650 text-sm font-bold">لا يوجد قداسات أو اجتماعات مجدولة في هذا اليوم</h3>
-                    <p className="text-xs text-slate-400 max-w-xs mx-auto">نشكر محبتكم. يرجى تصفح باقي أيام الأسبوع من الشريط العلوي.</p>
-                  </div>
-                ) : (
-                  (groupedLiturgies[activeDay] || []).map(liturgy => {
-                    const isMainChurch = liturgy.church_name === 'الكنيسة الكبيرة';
-                    const isVesper = liturgy.title.includes('عشية');
-                    
+              {(groupedLiturgies[activeDay] || []).length === 0 ? (
+                <div className="bg-white rounded-3xl p-12 text-center text-slate-400 font-bold border border-slate-200 shadow-sm space-y-2">
+                  <Clock className="w-8 h-8 mx-auto text-slate-300" />
+                  <p className="text-sm">لا توجد قداسات مقررة ليوم {activeDay} حالياً.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {(groupedLiturgies[activeDay] || []).map(liturgy => {
+                    const priestName = extractPriestName(liturgy);
+                    const cleanNotes = extractCleanNotes(liturgy.notes);
+
                     return (
                       <div
                         key={liturgy.id}
-                        className="bg-slate-50/50 hover:bg-slate-50/80 border border-slate-200/60 rounded-2xl p-5 sm:p-6 transition-all flex flex-col md:flex-row gap-5 justify-between items-start md:items-center text-right hover:shadow-sm"
+                        className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 relative overflow-hidden group"
                       >
-                        {/* Title and Badge */}
-                        <div className="space-y-2.5">
-                          <div className="flex flex-wrap gap-2 items-center">
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border ${
-                              isVesper
-                                ? 'bg-amber-50 border-amber-150 text-amber-800'
-                                : 'bg-blue-50 border border-blue-150 text-blue-800'
-                            }`}>
-                              <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" />
-                              <span>{liturgy.title}</span>
-                            </span>
-
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border ${
-                              isMainChurch
-                                ? 'bg-[#002366]/5 border-[#002366]/10 text-[#002366]'
-                                : 'bg-emerald-50 border-emerald-150 text-emerald-800'
-                            }`}>
-                              <MapPin className="w-3.5 h-3.5 text-[#d4af37]" />
-                              <span>{liturgy.church_name}</span>
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between">
+                            <h3 className="font-tajawal text-base sm:text-lg font-extrabold text-[#002366] group-hover:text-[#d4af37] transition-colors">
+                              {liturgy.title}
+                            </h3>
+                            <span className="text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/60 px-3 py-1 rounded-full flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-[#d4af37]" />
+                              <span>{formatArabicTime(liturgy.start_time)} - {formatArabicTime(liturgy.end_time)}</span>
                             </span>
                           </div>
-                          <h3 className="font-tajawal text-base sm:text-lg font-bold text-[#002366]">
-                            مذبح: {liturgy.altar_name}
-                          </h3>
-                          {liturgy.notes && (
-                            <p className="text-[11px] text-slate-500 font-bold bg-white px-3 py-1.5 rounded-lg border border-slate-200/50 inline-block">
-                              تنبيه: {liturgy.notes}
+
+                          {/* Priest Name Tag (Prominent) */}
+                          <div className="bg-gradient-to-r from-[#00174a]/5 to-[#d4af37]/10 p-3 rounded-2xl border border-[#d4af37]/30 flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-[#002366] text-[#fed65b] flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                              <User className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-500 font-bold block">الكاهن المصلي</span>
+                              <span className="font-tajawal text-sm font-extrabold text-[#00174a]">
+                                {priestName}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Church & Altar */}
+                          <div className="text-xs text-slate-600 font-bold flex items-center gap-2 pt-1">
+                            <MapPin className="w-4 h-4 text-[#d4af37] shrink-0" />
+                            <span>{liturgy.church_name} • {liturgy.altar_name}</span>
+                          </div>
+
+                          {/* Extra Notes if any */}
+                          {cleanNotes && (
+                            <p className="text-xs text-slate-500 font-semibold bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                              {cleanNotes}
                             </p>
                           )}
                         </div>
-
-                        {/* Timing Panel */}
-                        <div className="bg-[#002366]/5 border border-[#002366]/10 px-5 py-3 rounded-2xl flex items-center gap-3 shrink-0 self-stretch md:self-auto justify-center">
-                          <Clock className="w-5 h-5 text-[#d4af37]" />
-                          <div className="text-right">
-                            <span className="text-[9px] text-slate-400 font-bold block">التوقيت الكنسي</span>
-                            <span className="text-sm font-extrabold text-[#002366] font-mono leading-tight">
-                              {formatArabicTime(liturgy.start_time)} - {formatArabicTime(liturgy.end_time)}
-                            </span>
-                          </div>
-                        </div>
                       </div>
                     );
-                  })
-                )}
-              </div>
+                  })}
+                </div>
+              )}
             </div>
 
           </div>
+
         ) : (
-          /* FULL WEEK LIST VIEW MODE (Stacked wide panels, spacious and extremely readable) */
-          <div className="space-y-6">
-            {DAYS_OF_WEEK.map((dayName) => {
-              const dayList = groupedLiturgies[dayName] || [];
-              const isToday = todayArabic === dayName;
-              
-              return (
+
+          /* ── 2. FULL MONTH SCHEDULE VIEW ── */
+          <div className="space-y-6 animate-fadeIn">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h2 className="font-tajawal text-lg sm:text-xl font-extrabold text-[#002366] flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-[#d4af37]" />
+                <span>جدول قداسات شهر {currentMonthName} كاملاً</span>
+              </h2>
+              <span className="text-xs font-bold text-slate-500">
+                {monthDaysList.length} يوماً في الشهر
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {monthDaysList.map(item => (
                 <div
-                  key={dayName}
-                  className={`bg-white rounded-3xl border transition-all ${
-                    isToday
-                      ? 'border-amber-300 shadow-[0_4px_20px_rgba(212,175,55,0.06)]'
-                      : 'border-slate-200/80 shadow-sm'
-                  } p-6 sm:p-8 space-y-5 text-right`}
+                  key={item.dayNumber}
+                  className={`bg-white rounded-3xl p-5 border transition-all shadow-sm ${
+                    item.isToday
+                      ? 'border-[#d4af37] ring-2 ring-[#d4af37]/30 bg-amber-50/20'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
                 >
-                  {/* Day Header Panel */}
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-[#d4af37]" />
-                      <h2 className="font-tajawal text-base sm:text-lg font-extrabold text-[#002366]">
-                        يوم {dayName}
-                      </h2>
-                      {isToday && (
-                        <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full text-[9px] font-bold">
-                          اليوم الحالي
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    
+                    {/* Day Date Block */}
+                    <div className="flex items-center gap-3 min-w-[220px]">
+                      <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center font-bold text-sm shrink-0 border ${
+                        item.isToday
+                          ? 'bg-[#002366] text-[#fed65b] border-[#d4af37] shadow-md'
+                          : 'bg-slate-50 text-slate-800 border-slate-200'
+                      }`}>
+                        <span className="text-base font-extrabold">{item.dayNumber}</span>
+                        <span className="text-[9px] text-slate-400">{item.dayName}</span>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-tajawal text-sm font-extrabold text-[#002366]">
+                            {item.dayName} {item.dayNumber} {currentMonthName}
+                          </span>
+                          {item.isToday && (
+                            <span className="text-[10px] bg-[#d4af37] text-[#00174a] px-2 py-0.5 rounded-full font-bold">
+                              اليوم
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">
+                          {item.copticString}
                         </span>
+                      </div>
+                    </div>
+
+                    {/* Liturgies for this Day */}
+                    <div className="flex-1">
+                      {item.liturgies.length === 0 ? (
+                        <span className="text-xs text-slate-400 font-bold">لا يوجد قداس مسجل</span>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {item.liturgies.map(l => {
+                            const priest = extractPriestName(l);
+
+                            return (
+                              <div
+                                key={l.id}
+                                className="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl space-y-1.5"
+                              >
+                                <div className="flex items-center justify-between text-xs font-bold">
+                                  <span className="text-[#002366]">{l.title}</span>
+                                  <span className="text-slate-500 font-semibold flex items-center gap-1 text-[11px]">
+                                    <Clock className="w-3 h-3 text-[#d4af37]" />
+                                    {formatArabicTime(l.start_time)} - {formatArabicTime(l.end_time)}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center justify-between text-[11px] font-semibold pt-1 border-t border-slate-200">
+                                  <span className="text-slate-700 flex items-center gap-1 font-bold text-[#00174a]">
+                                    <User className="w-3 h-3 text-[#d4af37]" />
+                                    {priest}
+                                  </span>
+                                  <span className="text-slate-400 truncate max-w-[120px]">
+                                    {l.altar_name}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                      {dayList.length} خدمات مجدولة
-                    </span>
-                  </div>
 
-                  {/* Day's Services Stacks */}
-                  <div className="space-y-3">
-                    {dayList.length === 0 ? (
-                      <p className="text-xs text-slate-400 font-semibold py-4 text-center">لا توجد قداسات أو خدمات مجدولة لهذا اليوم الكنسي.</p>
-                    ) : (
-                      dayList.map(liturgy => {
-                        const isMainChurch = liturgy.church_name === 'الكنيسة الكبيرة';
-                        const isVesper = liturgy.title.includes('عشية');
-
-                        return (
-                          <div
-                            key={liturgy.id}
-                            className="bg-slate-50/50 hover:bg-slate-50 border border-slate-150 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between transition-all"
-                          >
-                            <div className="space-y-1.5 text-right">
-                              <div className="flex flex-wrap gap-1.5 items-center">
-                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
-                                  isVesper ? 'bg-amber-50 text-amber-800 border border-amber-100' : 'bg-blue-50 text-blue-800 border border-blue-100'
-                                }`}>
-                                  {liturgy.title}
-                                </span>
-                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
-                                  isMainChurch ? 'bg-[#002366]/5 text-[#002366]' : 'bg-emerald-50 text-emerald-800'
-                                }`}>
-                                  {liturgy.church_name}
-                                </span>
-                              </div>
-                              <h4 className="font-tajawal font-bold text-sm text-[#002366]">
-                                مذبح: {liturgy.altar_name}
-                              </h4>
-                              {liturgy.notes && (
-                                <p className="text-[10px] text-slate-400 font-bold">{liturgy.notes}</p>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2 bg-[#002366]/5 px-4 py-2 rounded-xl text-xs font-bold text-[#002366] shrink-0 font-mono self-stretch sm:self-auto justify-center">
-                              <Clock className="w-3.5 h-3.5 text-[#d4af37]" />
-                              <span>{formatArabicTime(liturgy.start_time)} - {formatArabicTime(liturgy.end_time)}</span>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        )}
 
-        {/* Pastoral Banner */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 flex flex-col md:flex-row gap-6 items-center justify-between shadow-lg max-w-4xl mx-auto">
-          <div className="space-y-2 text-right">
-            <h3 className="font-tajawal font-extrabold text-lg text-[#00174a] flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#d4af37]" />
-              <span>ملاحظة رعوية كنسية</span>
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-500 font-bold leading-relaxed">
-              قد يطرأ تعديل على مواعيد القداسات خلال فترات الأصوام والنهضات الروحية وأعياد الكنيسة القبطية الكبرى، نرجو المتابعة المستمرة لصفحة الإعلانات.
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5 bg-[#002366]/5 text-[#002366] py-2.5 px-5 rounded-full border border-[#002366]/10 shrink-0 font-bold text-xs">
-            <Heart className="w-4 h-4 text-red-500 animate-pulse" />
-            <span>صلوا لأجل الخدمة</span>
-          </div>
-        </div>
+        )}
 
       </div>
     </div>
