@@ -19,9 +19,8 @@ export const Footer: React.FC = () => {
   }, []);
 
   const footerAbout = settings.footer_about || "كنيسة السيدة العذراء مريم الأرثوذكسية بمحرم بك - الإسكندرية. منبر مكرس للبناء الروحي والتعليم الأرثوذكسي والخدمة المجتمعية.";
-  const footerPhone = settings.footer_phone || "+20 3 4950000";
-  const footerEmail = settings.footer_email || "info@stmarymoharambek.org";
-  const footerAddress = settings.footer_address || "شارع الكنيسة، محرم بك، الإسكندرية، جمهورية مصر العربية";
+  const footerPhone = settings.footer_phone || "033925050";
+  const footerAddress = settings.footer_address || "شارع الراضى - محرم بك اسكندرية";
   
   // Parse schedules dynamically or use default
   const scheduleText = settings.footer_schedule || "القداس الأول (الأحد) @ 6:00 ص - 8:00 ص | القداس الثاني (الأحد) @ 8:00 ص - 10:30 ص | قداس الأربعاء @ 7:00 ص - 9:00 ص | اجتماع الشباب (الجمعة) @ 6:30 م - 8:30 م";

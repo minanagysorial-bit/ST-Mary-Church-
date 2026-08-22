@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../lib/api';
 import { useToast } from '../components/common/Toast';
-import { Mail, Phone, MapPin, Send, MessageSquare, HeartHandshake } from 'lucide-react';
+import { Phone, MapPin, Send, MessageSquare, HeartHandshake } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 export const ContactUsPage: React.FC = () => {
@@ -81,7 +81,7 @@ export const ContactUsPage: React.FC = () => {
                   <div>
                     <h4 className="text-slate-200 text-[10px] font-tajawal mb-0.5">العنوان الكنسي</h4>
                     <p className="text-white">
-                      محرم بك، شارع الكنيسة، الإسكندرية، مصر
+                      شارع الراضى - محرم بك اسكندرية
                     </p>
                   </div>
                 </div>
@@ -91,19 +91,8 @@ export const ContactUsPage: React.FC = () => {
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-slate-200 text-[10px] font-tajawal mb-0.5">أرقام التليفونات</h4>
-                    <p className="text-white dir-ltr text-right">03 - 4950000</p>
-                    <p className="text-white dir-ltr text-right">03 - 4950001</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="p-2.5 bg-white/10 rounded-xl border border-white/5 text-[#fed65b] shrink-0">
-                    <Mail className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-slate-200 text-[10px] font-tajawal mb-0.5">البريد الإلكتروني</h4>
-                    <p className="text-white font-mono">info@stmarymoharambek.org</p>
+                    <h4 className="text-slate-200 text-[10px] font-tajawal mb-0.5">رقم التليفون</h4>
+                    <p className="text-white dir-ltr text-right font-mono text-sm">033925050</p>
                   </div>
                 </div>
               </div>
