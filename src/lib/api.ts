@@ -1213,14 +1213,11 @@ export const api = {
   },
 
   // ── Membership Requests ──
-  submitMembershipRequest: async (data: MembershipRequestInsert): Promise<MembershipRequest> => {
-    const { data: request, error } = await supabase
+  submitMembershipRequest: async (data: MembershipRequestInsert): Promise<void> => {
+    const { error } = await supabase
       .from('membership_requests')
-      .insert(data)
-      .select()
-      .single();
+      .insert(data);
     if (error) throw error;
-    return request as MembershipRequest;
   },
 
   getMembershipRequests: async (status?: 'pending' | 'approved' | 'rejected'): Promise<MembershipRequest[]> => {
