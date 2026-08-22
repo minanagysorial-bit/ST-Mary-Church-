@@ -115,27 +115,18 @@ export const LiveStreamPage: React.FC = () => {
         {loading ? (
           <div className="bg-white rounded-3xl p-12 border border-slate-200 shadow-xl text-center space-y-4">
             <RefreshCw className="w-10 h-10 text-[#002366] animate-spin mx-auto" />
-            <p className="text-xs font-bold text-slate-500">جاري التحميل والتأكد من البث المباشر...</p>
+            <p className="text-xs font-bold text-slate-500">جاري التحقق من حالة البث المباشر...</p>
           </div>
-        ) : (isStreamActive || (mode === 'auto' && embedUrl)) ? (
-          /* Active Stream or Fallback Video Screen */
+        ) : isStreamActive ? (
+          /* Active Live Stream Screen */
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden transition-all duration-300 transform hover:scale-[1.01]">
             
-            {/* Live / Past Video Indicator Topbar */}
-            <div className={`text-white px-6 py-3 flex items-center justify-between text-xs sm:text-sm font-bold ${isStreamActive ? 'bg-red-600' : 'bg-[#002366]'}`}>
+            {/* Live Indicator Topbar */}
+            <div className="bg-rose-600 text-white px-6 py-3 flex items-center justify-between text-xs sm:text-sm font-bold">
               <div className="flex items-center gap-2">
-                {isStreamActive ? (
-                  <>
-                    <span className="w-2.5 h-2.5 bg-white rounded-full animate-ping shrink-0" />
-                    <span className="w-2.5 h-2.5 bg-white rounded-full absolute shrink-0" />
-                    <span className="font-tajawal pr-1 text-white select-none">بث مباشر الآن</span>
-                  </>
-                ) : (
-                  <>
-                    <Video className="w-4 h-4 text-[#fed65b]" />
-                    <span className="font-tajawal pr-1 text-white select-none">آخر فيديو مسجل بالقناة</span>
-                  </>
-                )}
+                <span className="w-2.5 h-2.5 bg-white rounded-full animate-ping shrink-0" />
+                <span className="w-2.5 h-2.5 bg-white rounded-full absolute shrink-0" />
+                <span className="font-tajawal pr-1 text-white select-none">بث مباشر الآن</span>
               </div>
               <button
                 onClick={() => fetchStreamSettings(true)}
@@ -172,13 +163,13 @@ export const LiveStreamPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 py-1.5 px-3 rounded-full">
                     <Calendar className="w-4 h-4 text-[#d4af37]" />
-                    <span>{isStreamActive ? 'بث روحي مبارك ومتجدد' : 'تسجيل روحي متوفر للمشاهدة'}</span>
+                    <span>بث روحي مباشر ومبارك</span>
                   </div>
                   <a
                     href={`https://www.youtube.com/channel/${settings.youtube_channel_id || 'UCLEhdhZFRuxMXHL3pDpg65g'}/live`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-full transition-all inline-flex items-center gap-1.5 shadow-sm"
+                    className="bg-rose-600 hover:bg-rose-700 text-white py-1.5 px-3 rounded-full transition-all inline-flex items-center gap-1.5 shadow-sm"
                   >
                     <Play className="w-3 h-3 fill-current" />
                     <span>المشاهدة على يوتيوب ↗</span>
@@ -193,19 +184,19 @@ export const LiveStreamPage: React.FC = () => {
 
           </div>
         ) : (
-          /* Inactive Stream Screen (friendly card) */
+          /* Inactive Stream Screen (Peaceful Church Card) */
           <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-2xl text-center space-y-6 max-w-2xl mx-auto transition-all">
             
-            <div className="w-24 h-24 rounded-full bg-slate-50 text-[#002366] border border-slate-200/80 flex items-center justify-center mx-auto shadow-inner">
-              <Radio className="w-12 h-12" />
+            <div className="w-20 h-20 rounded-full bg-[#00174a]/5 text-[#002366] border border-[#d4af37]/30 flex items-center justify-center mx-auto shadow-inner">
+              <Radio className="w-10 h-10 text-[#002366]" />
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-tajawal text-lg sm:text-xl font-bold text-[#002366]">
+              <h3 className="font-tajawal text-xl sm:text-2xl font-extrabold text-[#00174a]">
                 لا يوجد بث مباشر في الوقت الحالي
               </h3>
-              <p className="text-xs text-slate-500 font-semibold max-w-sm mx-auto leading-relaxed">
-                نشكر محبتكم ومتابعتكم. يمكنك دائماً تصفح العظات السابقة في مكتبة العظات أو مراجعة مواعيد القداسات.
+              <p className="text-xs sm:text-sm text-slate-600 font-semibold max-w-md mx-auto leading-relaxed">
+                نشكر محبتكم ومتابعتكم. يمكنك دائماً تصفح العظات السابقة في مكتبة العظات، مراجعة مواعيد القداسات، أو زيارة قناة الكنيسة الرسمية على يوتيوب.
               </p>
             </div>
 
@@ -213,16 +204,25 @@ export const LiveStreamPage: React.FC = () => {
               <button
                 onClick={() => fetchStreamSettings(true)}
                 disabled={refreshing}
-                className="bg-[#002366] text-[#fed65b] font-bold text-xs py-2.5 px-6 rounded-xl hover:bg-[#00174a] transition-all flex items-center gap-2 shadow-md w-full sm:w-auto justify-center disabled:opacity-50"
+                className="bg-[#002366] text-[#fed65b] font-bold text-xs py-3 px-6 rounded-xl hover:bg-[#00174a] transition-all flex items-center gap-2 shadow-md w-full sm:w-auto justify-center disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                 <span>تحقق من وجود بث الآن</span>
               </button>
               <a
-                href="/sermons"
-                className="bg-slate-50 hover:bg-slate-100 text-slate-650 border border-slate-200/80 font-bold text-xs py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto block text-center"
+                href={`https://www.youtube.com/channel/${settings.youtube_channel_id || 'UCLEhdhZFRuxMXHL3pDpg65g'}/live`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-3 px-6 rounded-xl transition-all flex items-center gap-2 shadow-md w-full sm:w-auto justify-center"
               >
-                زيارة مكتبة العظات
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>قناة الكنيسة على يوتيوب ↗</span>
+              </a>
+              <a
+                href="/sermons"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-3 px-6 rounded-xl transition-all w-full sm:w-auto block text-center"
+              >
+                مكتبة العظات
               </a>
             </div>
 
