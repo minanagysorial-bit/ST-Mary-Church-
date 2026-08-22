@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إدارة الأسر والمخدومين - كنيسة السيدة العذراء</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&amp;family=Cairo:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#eae8e7",
+                    "secondary-container": "#fed65b",
+                    "inverse-primary": "#b3c5ff",
+                    "surface-container-low": "#f5f3f3",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-primary-container": "#758dd5",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-variant": "#e4e2e2",
+                    "background": "#fbf9f8",
+                    "on-tertiary-fixed": "#390b00",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-secondary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "surface-container": "#efeded",
+                    "error-container": "#ffdad6",
+                    "secondary": "#735c00",
+                    "surface-bright": "#fbf9f8",
+                    "primary-container": "#002366",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "outline-variant": "#c5c6d2",
+                    "on-primary-fixed": "#00174a",
+                    "surface-tint": "#435b9f",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "on-background": "#1b1c1c",
+                    "on-surface": "#1b1c1c",
+                    "on-error-container": "#93000a",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#2d0700",
+                    "secondary-fixed": "#ffe088",
+                    "inverse-surface": "#303030",
+                    "on-secondary-fixed": "#241a00",
+                    "on-surface-variant": "#444650",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e4e2e2",
+                    "surface": "#fbf9f8",
+                    "outline": "#757682",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "on-secondary-container": "#745c00",
+                    "tertiary-container": "#501300",
+                    "secondary-fixed-dim": "#e9c349",
+                    "primary": "#00113a",
+                    "on-tertiary-container": "#d37758",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#f2f0f0",
+                    "surface-dim": "#dbd9d9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-mobile": "16px",
+                    "container-max": "1200px",
+                    "margin-desktop": "40px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Tajawal"],
+                    "display-lg-mobile": ["Tajawal"],
+                    "display-lg": ["Tajawal"],
+                    "body-md": ["Cairo"],
+                    "body-lg": ["Cairo"],
+                    "headline-sm": ["Tajawal"],
+                    "label-md": ["Cairo"],
+                    "caption": ["Cairo"]
+            },
+            "fontSize": {
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #fbf9f8;
+        }
+        .font-headline { font-family: 'Tajawal', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .shadow-soft {
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04);
+        }
+        .shadow-high {
+            box-shadow: 0px 12px 32px rgba(0, 35, 102, 0.08);
+        }
+        .spiritual-accent {
+            border-top: 2px solid #D4AF37;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface overflow-x-hidden">
+<!-- Sidebar Navigation Shell -->
+<aside class="h-screen w-72 fixed right-0 top-0 border-l border-outline-variant bg-surface dark:bg-surface-dim flex flex-col z-50 shadow-sm">
+<div class="p-6 flex flex-col items-center border-b border-outline-variant">
+<div class="w-20 h-20 rounded-full mb-4 overflow-hidden border-2 border-primary-container shadow-soft">
+<img class="w-full h-full object-cover" data-alt="A dignified close-up portrait of an Orthodox Christian church servant in a clean white shirt, smiling warmly against the backdrop of an ornate wooden church altar with golden icons. High-key, soft lighting, professional corporate photography style with Royal Blue and Gold color accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKvebOq00UoonQs148fyavZnU4M35ORQQ4GCXk8g7MBwCM8oddC-cv_8oL4TTOqUg-_aEHe_Nr48QxFeGnEfHiR8s2_bjmFGZairHQXnEOwgTE-t3eqrH9xx-_Kx9paDQbZ8d9iz85tR-m0VNJwidj11FuOxg7e9yGXXwV1b_uH8-Cn1zWWMUFzcIOGQ475jyfDbm-GdWcnPXQN94LLfum9B2HZzHnFs_SQ2v0JvIosSHbjvCi1Dnh9qJHzysWxmG7i20ftb4tjMvJ"/>
+</div>
+<h2 class="font-headline-md text-headline-sm font-bold text-primary">كنيسة السيدة العذراء</h2>
+<p class="font-label-md text-label-md text-on-surface-variant">بمحرم بك - لوحة التحكم</p>
+</div>
+<nav class="flex-1 py-4">
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">نظرة عامة</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-primary font-bold border-r-4 border-secondary bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-label-md text-label-md">فصولي وعائلاتي</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all duration-200" href="#">
+<span class="material-symbols-outlined">handyman</span>
+<span class="font-label-md text-label-md">أدوات الخادم</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all duration-200" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="font-label-md text-label-md">التقارير</span>
+</a>
+</nav>
+<div class="mt-auto px-6 py-4 flex flex-col gap-2">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-soft">
+<span class="material-symbols-outlined">person_add</span>
+<span class="font-label-md text-label-md">إضافة مخدوم جديد</span>
+</button>
+<div class="pt-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span class="text-sm">الإعدادات</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-error hover:text-error/80 transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">logout</span>
+<span class="text-sm">تسجيل الخروج</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Top App Bar Shell -->
+<header class="fixed top-0 left-0 right-72 h-16 z-40 flex justify-between items-center px-gutter w-full bg-surface/80 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<div class="relative">
+<input class="bg-surface-container-low border-none rounded-full px-10 py-2 w-64 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="بحث عن مخدوم أو عائلة..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant text-sm">search</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A small circular profile icon of an Egyptian deacon wearing a traditional Galabeya with red and gold embroidery. Professional avatar style, bright white background, studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdeDSW1iw3n1PUT8WufnjjM_cRrRJKarcMayLC0xiiXrbKzjagiHiV1sVUnsRcRH0m5Z4jEi0e7Djefrubw2sC_UiANb9WyMhH6KzpehKJwg6Buwsnpkct0nizbapD0R8IG3FcpLfXMrxqlnJEI6CHBeTR4HiL5JfCZtEJeoGzMuQg6-s4i_PywpsxFpEjLP41LQQL6C0Q-PCCOxBwPIqIjpU6QrMYgoXkBQ0QWzEPqtccbu0G4VM130OIkNIEFFNq8jt2zR6KDip9"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="mr-72 mt-16 p-gutter min-h-screen">
+<div class="max-w-container-max mx-auto">
+<!-- Hero Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div>
+<h1 class="font-headline-md text-headline-md text-primary font-extrabold mb-2">إدارة الأسر والمخدومين</h1>
+<p class="font-body-md text-on-surface-variant">أهلاً بك يا خادم الرب، تابع واهتم بشعب الكنيسة الموكل إليك.</p>
+</div>
+<button class="bg-secondary-container text-on-secondary-fixed-variant px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-secondary transition-all hover:text-white shadow-high active:scale-95" onclick="openFamilyModal()">
+<span class="material-symbols-outlined">add_circle</span>
+<span>إضافة أسرة جديدة</span>
+</button>
+</div>
+<!-- Bento Grid of Families -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Family Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-soft overflow-hidden flex flex-col border border-outline-variant hover:border-secondary transition-all group">
+<div class="h-32 bg-primary-container relative">
+
+<div class="absolute bottom-4 right-4 flex items-center gap-3">
+<div class="bg-white p-2 rounded-lg shadow-soft">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">church</span>
+</div>
+<h3 class="font-headline-sm text-white font-bold">أسرة الشهيد أبانوب</h3>
+</div>
+</div>
+<div class="p-6 flex-1 flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<span class="text-caption bg-surface-container px-3 py-1 rounded-full text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">group</span>
+                                12 مخدوم
+                            </span>
+<span class="text-caption text-secondary font-bold">خدمة ابتدائي</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-sm mb-6 line-clamp-2">تضم هذه الأسرة أطفال المرحلة الابتدائية بمنطقة محرم بك، مع التركيز على الأنشطة الروحية والترفيهية.</p>
+<div class="mt-auto flex flex-col gap-2">
+<button class="w-full border border-secondary text-primary font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-secondary-fixed transition-all" onclick="openMakhdoumModal('أسرة الشهيد أبانوب')">
+<span class="material-symbols-outlined text-sm">person_add</span>
+                                إضافة مخدوم
+                            </button>
+<button class="w-full bg-surface-container-high text-on-surface py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                                عرض التفاصيل
+                            </button>
+</div>
+</div>
+</div>
+<!-- Family Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-soft overflow-hidden flex flex-col border border-outline-variant hover:border-secondary transition-all group">
+<div class="h-32 bg-secondary relative">
+<div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+<div class="absolute bottom-4 right-4 flex items-center gap-3">
+<div class="bg-white p-2 rounded-lg shadow-soft">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">family_restroom</span>
+</div>
+<h3 class="font-headline-sm text-white font-bold">أسرة مارجرجس الروماني</h3>
+</div>
+</div>
+<div class="p-6 flex-1 flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<span class="text-caption bg-surface-container px-3 py-1 rounded-full text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">group</span>
+                                8 مخدومين
+                            </span>
+<span class="text-caption text-secondary font-bold">خدمة إعدادي</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-sm mb-6 line-clamp-2">أسرة نشطة لشباب المرحلة الإعدادية، تتميز بالاجتماعات الأسبوعية والرحلات الديرية.</p>
+<div class="mt-auto flex flex-col gap-2">
+<button class="w-full border border-secondary text-primary font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-secondary-fixed transition-all" onclick="openMakhdoumModal('أسرة مارجرجس الروماني')">
+<span class="material-symbols-outlined text-sm">person_add</span>
+                                إضافة مخدوم
+                            </button>
+<button class="w-full bg-surface-container-high text-on-surface py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                                عرض التفاصيل
+                            </button>
+</div>
+</div>
+</div>
+<!-- Family Card 3 - Empty State Visualization -->
+<div class="bg-surface-container rounded-xl shadow-none border-2 border-dashed border-outline-variant flex flex-col items-center justify-center p-8 text-center opacity-70 hover:opacity-100 transition-all cursor-pointer group" onclick="openFamilyModal()">
+<div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl">add</span>
+</div>
+<h3 class="font-headline-sm text-primary font-bold mb-2">إضافة عائلة جديدة</h3>
+<p class="font-body-md text-on-surface-variant text-sm">قم بتنظيم خدمتك من خلال إنشاء أسرة جديدة لربط المخدومين بها.</p>
+</div>
+</div>
+<!-- Recent Activity Section -->
+<div class="mt-12 bg-white rounded-2xl p-8 shadow-soft border border-outline-variant spiritual-accent">
+<div class="flex items-center justify-between mb-6">
+<h2 class="font-headline-sm text-primary font-bold flex items-center gap-2">
+<span class="material-symbols-outlined">history</span>
+                        آخر المخدومين المضافين
+                    </h2>
+<a class="text-secondary font-bold text-sm hover:underline" href="#">مشاهدة الكل</a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-right">
+<thead>
+<tr class="border-b border-outline-variant text-on-surface-variant">
+<th class="pb-4 font-label-md">الاسم</th>
+<th class="pb-4 font-label-md">العائلة</th>
+<th class="pb-4 font-label-md">العمر</th>
+<th class="pb-4 font-label-md">تاريخ الإضافة</th>
+<th class="pb-4 font-label-md">الإجراءات</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">م</div>
+<span class="font-bold">مينا إبراهيم عازر</span>
+</div>
+</td>
+<td class="py-4 text-on-surface-variant">أسرة الشهيد أبانوب</td>
+<td class="py-4 text-on-surface-variant">9 سنوات</td>
+<td class="py-4 text-on-surface-variant">24 أكتوبر 2023</td>
+<td class="py-4">
+<button class="p-2 hover:text-primary"><span class="material-symbols-outlined text-sm">edit</span></button>
+<button class="p-2 hover:text-error"><span class="material-symbols-outlined text-sm">delete</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold">س</div>
+<span class="font-bold">سارة يوسف كامل</span>
+</div>
+</td>
+<td class="py-4 text-on-surface-variant">أسرة مارجرجس</td>
+<td class="py-4 text-on-surface-variant">14 سنة</td>
+<td class="py-4 text-on-surface-variant">22 أكتوبر 2023</td>
+<td class="py-4">
+<button class="p-2 hover:text-primary"><span class="material-symbols-outlined text-sm">edit</span></button>
+<button class="p-2 hover:text-error"><span class="material-symbols-outlined text-sm">delete</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<!-- Modal Backdrop (Hidden by default) -->
+<div class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm p-4 overflow-y-auto" id="modal-overlay">
+<!-- Add Makhdoum Modal Content -->
+<div class="bg-surface rounded-2xl w-full max-w-md shadow-high border border-outline-variant spiritual-accent scale-95 opacity-0 transition-all duration-300 transform" id="makhdoum-modal">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low rounded-t-2xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">person_add</span>
+<h2 class="font-headline-sm text-primary font-bold">إضافة مخدوم جديد</h2>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-high rounded-full p-1 transition-all" onclick="closeModal()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6">
+<p class="text-sm text-on-surface-variant mb-6" id="target-family-name">سيتم إضافة المخدوم إلى عائلة محددة</p>
+<form class="space-y-4">
+<div class="space-y-1">
+<label class="block font-label-md text-primary">اسم المخدوم بالكامل</label>
+<input class="w-full bg-surface-container-low border border-outline rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="أدخل الاسم الثلاثي" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<label class="block font-label-md text-primary">العمر</label>
+<input class="w-full bg-surface-container-low border border-outline rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="مثال: 12" type="number"/>
+</div>
+<div class="space-y-1">
+<label class="block font-label-md text-primary">المرحلة الدراسية</label>
+<select class="w-full bg-surface-container-low border border-outline rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none">
+<option>ابتدائي</option>
+<option>إعدادي</option>
+<option>ثانوي</option>
+</select>
+</div>
+</div>
+<div class="space-y-1">
+<label class="block font-label-md text-primary">رقم هاتف المخدوم / ولي الأمر</label>
+<input class="w-full bg-surface-container-low border border-outline rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="01xxxxxxxxx" type="tel"/>
+</div>
+<div class="pt-4 flex gap-3">
+<button class="flex-1 bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary/90 transition-all shadow-soft active:scale-95" type="submit">حفظ البيانات</button>
+<button class="flex-1 border border-outline text-on-surface-variant font-bold py-3 rounded-xl hover:bg-surface-container-high transition-all" onclick="closeModal()" type="button">إلغاء</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Add Family Modal Content (Placeholder logic) -->
+<div class="bg-surface rounded-2xl w-full max-w-md shadow-high border border-outline-variant spiritual-accent hidden scale-95 opacity-0 transition-all duration-300 transform" id="family-modal">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low rounded-t-2xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">add_home</span>
+<h2 class="font-headline-sm text-primary font-bold">إنشاء أسرة جديدة</h2>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-high rounded-full p-1 transition-all" onclick="closeModal()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6">
+<form class="space-y-4">
+<div class="space-y-1">
+<label class="block font-label-md text-primary">اسم الأسرة</label>
+<input class="w-full bg-surface-container-low border border-outline rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="مثل: أسرة القديس نيقولاوس" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="block font-label-md text-primary">الخدمة التابعة لها</label>
+<select class="w-full bg-surface-container-low border border-outline rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all">
+<option>ابتدائي</option>
+<option>إعدادي</option>
+<option>ثانوي</option>
+<option>جامعة</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="block font-label-md text-primary">وصف مختصر</label>
+<textarea class="w-full bg-surface-container-low border border-outline rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all h-24" placeholder="اكتب نبذة عن أهداف هذه الأسرة"></textarea>
+</div>
+<div class="pt-4 flex gap-3">
+<button class="flex-1 bg-secondary text-white font-bold py-3 rounded-xl hover:bg-secondary/90 transition-all shadow-soft active:scale-95" type="submit">إنشاء الأسرة</button>
+<button class="flex-1 border border-outline text-on-surface-variant font-bold py-3 rounded-xl hover:bg-surface-container-high transition-all" onclick="closeModal()" type="button">إلغاء</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+<script>
+        const overlay = document.getElementById('modal-overlay');
+        const makhdoumModal = document.getElementById('makhdoum-modal');
+        const familyModal = document.getElementById('family-modal');
+        const targetFamilySpan = document.getElementById('target-family-name');
+
+        function openMakhdoumModal(familyName) {
+            targetFamilySpan.innerText = `سيتم إضافة المخدوم إلى: ${familyName}`;
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            makhdoumModal.classList.remove('hidden');
+            familyModal.classList.add('hidden');
+            setTimeout(() => {
+                makhdoumModal.classList.remove('scale-95', 'opacity-0');
+                makhdoumModal.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function openFamilyModal() {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            familyModal.classList.remove('hidden');
+            makhdoumModal.classList.add('hidden');
+            setTimeout(() => {
+                familyModal.classList.remove('scale-95', 'opacity-0');
+                familyModal.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            makhdoumModal.classList.add('scale-95', 'opacity-0');
+            familyModal.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                overlay.classList.remove('flex');
+                overlay.classList.add('hidden');
+            }, 300);
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body></html>

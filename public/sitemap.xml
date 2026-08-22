@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  
+  <!-- Home Page -->
+  <url>
+    <loc>https://stmary-moharambek-digitalhub.org/</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://stmary-moharambek-digitalhub.org/church.jpeg</image:loc>
+      <image:title>كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية</image:title>
+      <image:caption>المبنى التاريخي لكنيسة السيدة العذراء مريم بمحرم بك</image:caption>
+    </image:image>
+  </url>
+
+  <!-- About Church -->
+  <url>
+    <loc>https://stmary-moharambek-digitalhub.org/about</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Church History -->
+  <url>
+    <loc>https://stmary-moharambek-digitalhub.org/about/history</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.95</priority>
+    <image:image>
+      <image:loc>https://stmary-moharambek-digitalhub.org/history_1.jpg</image:loc>
+      <image:title>تاريخ وضع حجر الأساس لكنيسة السيدة العذراء بمحرم بك 1934</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://stmary-moharambek-digitalhub.org/history_6.jpg</image:loc>
+      <image:title>يوم افتتاح كنيسة السيدة العذراء بمحرم بك 1935</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://stmary-moharambek-digitalhub.org/history_8.jpg</image:loc>
+      <image:title>أيقونات الفنان الإيطالي آبات بكنيسة العذراء محرم بك</image:title>
+    </image:image>
+  </url>
+
+  <!-- Priests Page -->
+  <url>
+    <loc>https://stmary-moharambek-digitalhub.org/about/priests</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- Liturgies & Schedule -->
+  <url>
+    <loc>https://stmary-moharambek-digitalhub.org/schedule</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- Sermons & Spiritual Library -->
+  <url>
+    <loc>https://stmary-moharambek-digitalhub.org/sermons</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Memory Albums -->
+  <url>
+    <loc>https://stmary-moharambek-digitalhub.org/about/memory</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Contact Us & Prayer Requests -->
+  <url>
+    <loc>https://stmary-moharambek-digitalhub.org/contact</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Quiz & Competitions -->
+  <url>
+    <loc>https://stmary-moharambek-digitalhub.org/quiz</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>

@@ -1,0 +1,256 @@
+<!DOCTYPE html><html dir="rtl" lang="ar" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>تسجيل الدخول - كنيسة السيدة العذراء بمحرم بك</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&amp;family=Tajawal:wght@400;500;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Shared Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#efeded",
+                    "secondary-fixed-dim": "#e9c349",
+                    "surface-bright": "#fbf9f8",
+                    "secondary-container": "#fed65b",
+                    "secondary": "#735c00",
+                    "on-tertiary-container": "#d37758",
+                    "on-secondary-fixed": "#241a00",
+                    "surface-container-low": "#f5f3f3",
+                    "on-tertiary-fixed": "#390b00",
+                    "on-surface-variant": "#444650",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed": "#ffe088",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-error": "#ffffff",
+                    "tertiary": "#2d0700",
+                    "inverse-surface": "#303030",
+                    "surface-variant": "#e4e2e2",
+                    "background": "#fbf9f8",
+                    "tertiary-fixed": "#ffdbd0",
+                    "primary-container": "#002366",
+                    "surface": "#fbf9f8",
+                    "surface-tint": "#435b9f",
+                    "on-secondary-container": "#745c00",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "outline": "#757682",
+                    "inverse-primary": "#b3c5ff",
+                    "surface-container-high": "#eae8e7",
+                    "on-secondary": "#ffffff",
+                    "on-background": "#1b1c1c",
+                    "primary": "#00113a",
+                    "outline-variant": "#c5c6d2",
+                    "tertiary-container": "#501300",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#f2f0f0",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "surface-dim": "#dbd9d9",
+                    "primary-fixed": "#dbe1ff",
+                    "on-primary-container": "#758dd5",
+                    "on-surface": "#1b1c1c",
+                    "on-primary-fixed": "#00174a",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "40px",
+                    "unit": "8px",
+                    "container-max": "1200px",
+                    "gutter": "24px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["Cairo"],
+                    "display-lg": ["Tajawal"],
+                    "display-lg-mobile": ["Tajawal"],
+                    "headline-sm": ["Tajawal"],
+                    "caption": ["Cairo"],
+                    "label-md": ["Cairo"],
+                    "headline-md": ["Tajawal"],
+                    "body-lg": ["Cairo"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #fbf9f8;
+            overflow-x: hidden;
+        }
+        .tajawal { font-family: 'Tajawal', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .pattern-overlay {
+            background-image: radial-gradient(#d4af37 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            opacity: 0.05;
+        }
+        .role-card:checked + label {
+            border-color: #735c00;
+            background-color: #fed65b;
+            color: #241a00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(115, 92, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-4">
+<!-- Background Atmospheric Elements -->
+<div class="fixed inset-0 pointer-events-none z-0">
+<div class="pattern-overlay absolute inset-0"></div>
+<div class="absolute top-0 right-0 w-1/3 h-1/3 bg-primary-container opacity-[0.03] rounded-full blur-[120px]"></div>
+<div class="absolute bottom-0 left-0 w-1/4 h-1/4 bg-secondary opacity-[0.05] rounded-full blur-[100px]"></div>
+</div>
+<!-- Login Container -->
+<main class="relative z-10 w-full max-w-lg">
+<!-- Login Card -->
+<div class="glass-panel rounded-xl shadow-sm p-8 md:p-12 border-t-[6px] border-t-secondary animate-in fade-in slide-in-from-bottom-4 duration-700">
+<!-- Brand Section -->
+<div class="flex flex-col items-center mb-10 text-center">
+<div class="w-20 h-20 bg-primary-container rounded-full flex items-center justify-center mb-6 shadow-md border border-secondary/20">
+<span class="material-symbols-outlined text-4xl text-on-primary" style="font-variation-settings: &quot;FILL&quot; 1;">church</span>
+</div>
+<h1 class="font-headline-md text-headline-md text-primary tajawal mb-2">تسجيل الدخول</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">نظام الإدارة الكنسي - كنيسة السيدة العذراء</p>
+<div class="w-12 h-0.5 bg-secondary mt-4 rounded-full"></div>
+</div>
+<!-- Login Form -->
+<form class="space-y-6" onsubmit="event.preventDefault();">
+<!-- Role Selection (Asymmetric Grid) -->
+<div class="space-y-3">
+<label class="font-label-md text-label-md text-on-surface-variant block mb-2 px-1">نوع المستخدم</label>
+<div class="grid grid-cols-3 gap-3">
+<div>
+<input checked="" class="hidden role-card" id="role-priest" name="role" type="radio">
+<label class="flex flex-col items-center justify-center py-4 px-2 border border-outline-variant rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-container-low text-center" for="role-priest">
+<span class="material-symbols-outlined text-2xl mb-1">person_celebrate</span>
+<span class="font-label-md text-label-md">كاهن</span>
+</label>
+</div>
+<div>
+<input class="hidden role-card" id="role-servant" name="role" type="radio">
+<label class="flex flex-col items-center justify-center py-4 px-2 border border-outline-variant rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-container-low text-center" for="role-servant">
+<span class="material-symbols-outlined text-2xl mb-1">groups</span>
+<span class="font-label-md text-label-md">خادم</span>
+</label>
+</div>
+<div>
+<input class="hidden role-card" id="role-board" name="role" type="radio">
+<label class="flex flex-col items-center justify-center py-4 px-2 border border-outline-variant rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-container-low text-center" for="role-board">
+<span class="material-symbols-outlined text-2xl mb-1">account_balance</span>
+<span class="font-label-md text-label-md">عضو مجلس</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Username Field -->
+<div class="relative group">
+<label class="font-label-md text-label-md text-on-surface-variant block mb-2 px-1" for="username">اسم المستخدم</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-10 py-3.5 focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md text-body-md text-on-surface outline-none" id="username" placeholder="مثال: mary_servant" type="text">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">person</span>
+</div>
+</div>
+<!-- Password Field -->
+<div class="relative group">
+<div class="flex justify-between items-center mb-2 px-1">
+<label class="font-label-md text-label-md text-on-surface-variant" for="password">كلمة المرور</label>
+<a class="font-caption text-caption text-secondary hover:underline transition-all" href="#">نسيت كلمة المرور؟</a>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-10 py-3.5 focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md text-body-md text-on-surface outline-none" id="password" placeholder="••••••••" type="password">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">lock</span>
+<button class="absolute left-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<!-- Remember Me -->
+<div class="flex items-center gap-2 px-1">
+<input class="w-4 h-4 text-primary border-outline-variant rounded focus:ring-primary" id="remember" type="checkbox">
+<label class="font-caption text-caption text-on-surface-variant cursor-pointer" for="remember">تذكر بياناتي في هذا المتصفح</label>
+</div>
+<!-- CTA Button -->
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-4 rounded-lg font-label-md text-label-md shadow-md hover:shadow-lg transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 mt-4" type="submit">
+<span class="">دخول إلى النظام</span>
+<span class="material-symbols-outlined text-lg">login</span>
+</button>
+</form>
+<!-- Footer Text -->
+<div class="mt-12 text-center">
+<p class="font-caption text-caption text-outline">
+                    جميع الحقوق محفوظة © ٢٠٢٤ <br>
+                    كنيسة السيدة العذراء مريم - محرم بك
+                </p>
+</div>
+</div>
+<!-- Support Info -->
+<div class="mt-8 flex justify-center gap-6">
+<a class="flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">help_outline</span>
+<span class="font-caption text-caption">مركز الدعم</span>
+</a>
+<a class="flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">language</span>
+<span class="font-caption text-caption">موقع الكنيسة</span>
+</a>
+</div>
+</main>
+<!-- Side Image Decorative Decoration (Hidden on mobile) -->
+
+<script>
+        // Micro-interaction for form focus
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('scale-[1.01]');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('scale-[1.01]');
+            });
+        });
+
+        // Simple visibility toggle logic
+        const toggleBtn = document.querySelector('button[type="button"]');
+        const passInput = document.getElementById('password');
+        toggleBtn?.addEventListener('click', () => {
+            const isPass = passInput.type === 'password';
+            passInput.type = isPass ? 'text' : 'password';
+            toggleBtn.querySelector('span').textContent = isPass ? 'visibility_off' : 'visibility';
+        });
+    </script>
+
+
+
+</body></html>

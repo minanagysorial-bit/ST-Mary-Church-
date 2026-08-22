@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>بوابة التسجيل - بيانات الأسرة والعنوان | كنيسة السيدة العذراء</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&amp;family=Tajawal:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#735c00",
+                    "tertiary-container": "#501300",
+                    "on-secondary-fixed": "#241a00",
+                    "surface-container-low": "#f5f3f3",
+                    "primary-fixed": "#dbe1ff",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#b3c5ff",
+                    "tertiary": "#2d0700",
+                    "on-tertiary-fixed": "#390b00",
+                    "on-tertiary-container": "#d37758",
+                    "inverse-surface": "#303030",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "on-primary-container": "#758dd5",
+                    "error-container": "#ffdad6",
+                    "error": "#ba1a1a",
+                    "surface-tint": "#435b9f",
+                    "primary-container": "#002366",
+                    "on-primary-fixed": "#00174a",
+                    "outline": "#757682",
+                    "surface-container-highest": "#e4e2e2",
+                    "outline-variant": "#c5c6d2",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "secondary-fixed": "#ffe088",
+                    "surface-bright": "#fbf9f8",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-secondary-container": "#745c00",
+                    "on-error": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#f2f0f0",
+                    "background": "#fbf9f8",
+                    "tertiary-fixed": "#ffdbd0",
+                    "secondary-container": "#fed65b",
+                    "on-primary": "#ffffff",
+                    "on-background": "#1b1c1c",
+                    "surface-variant": "#e4e2e2",
+                    "surface": "#fbf9f8",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "surface-container": "#efeded",
+                    "surface-container-high": "#eae8e7",
+                    "primary": "#00113a",
+                    "surface-dim": "#dbd9d9",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface-variant": "#444650",
+                    "secondary-fixed-dim": "#e9c349",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "on-surface": "#1b1c1c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1200px",
+                    "unit": "8px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Tajawal"],
+                    "display-lg-mobile": ["Tajawal"],
+                    "caption": ["Cairo"],
+                    "body-md": ["Cairo"],
+                    "display-lg": ["Tajawal"],
+                    "label-md": ["Cairo"],
+                    "headline-sm": ["Tajawal"],
+                    "body-lg": ["Cairo"]
+            },
+            "fontSize": {
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Cairo', sans-serif; }
+        h1, h2, h3, h4 { font-family: 'Tajawal', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid #D4AF37;
+        }
+        .form-input {
+            transition: all 0.2s ease-in-out;
+        }
+        .form-input:focus {
+            box-shadow: 0 0 0 2px rgba(0, 17, 58, 0.1);
+            border-color: #00113a;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-surface-container-highest shadow-sm">
+<div class="flex flex-row-reverse justify-between items-center px-gutter max-w-container-max mx-auto h-20 w-full">
+<div class="font-headline-md text-headline-md text-primary">كنيسة السيدة العذراء بمحرم بك</div>
+<nav class="hidden md:flex flex-row-reverse gap-8 items-center">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">الرئيسية</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">العظات</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">الخدمات</a>
+<a class="text-secondary font-bold border-b-2 border-secondary pb-1 font-body-md text-body-md" href="#">التسجيل</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">اتصل بنا</a>
+</nav>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-full font-label-md text-label-md hover:bg-primary/90 transition-all">انضم إلينا</button>
+</div>
+</header>
+<main class="flex-grow pt-32 pb-20 px-gutter max-w-container-max mx-auto w-full">
+<!-- Progress Bar Section (3 Steps) -->
+<section class="mb-12">
+<div class="max-w-3xl mx-auto">
+<div class="flex justify-between items-center relative mb-4">
+<!-- Progress Line -->
+<div class="absolute top-1/2 left-0 w-full h-1 bg-surface-container-highest -translate-y-1/2 z-0"></div>
+<div class="absolute top-1/2 right-0 w-1/2 h-1 bg-secondary -translate-y-1/2 z-0"></div>
+<!-- Step 1: Completed -->
+<div class="relative z-10 flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-secondary text-on-primary flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<span class="font-label-md text-label-md text-secondary">البيانات الأساسية</span>
+</div>
+<!-- Step 2: Active -->
+<div class="relative z-10 flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold ring-4 ring-primary/20">
+                        2
+                    </div>
+<span class="font-label-md text-label-md text-primary font-bold">بيانات الأسرة والعنوان</span>
+</div>
+<!-- Step 3: Upcoming -->
+<div class="relative z-10 flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold">
+                        3
+                    </div>
+<span class="font-label-md text-label-md text-on-surface-variant">رفع المستندات</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Title Section -->
+<div class="text-center mb-10">
+<h1 class="font-headline-md text-headline-md text-primary mb-2">بوابة التسجيل - بيانات الأسرة والعنوان</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl mx-auto">برجاء استكمال بيانات السكن والعمل وإضافة أفراد الأسرة المقيمين معك.</p>
+</div>
+<!-- Form Section -->
+<div class="max-w-4xl mx-auto">
+<form class="space-y-10" id="registrationForm">
+<!-- Address & Work Section (Combined from Screen 6) -->
+<section class="space-y-6">
+<div class="flex items-center gap-2 text-primary border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined">location_on</span>
+<h2 class="font-headline-sm text-headline-sm">بيانات السكن والعمل</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="md:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface mb-2">العنوان بالتفصيل (رقم العقار، الشارع، الشقة)</label>
+<input class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input" placeholder="مثال: ٤٥ شارع الرصافة، الدور الثالث، شقة ٥" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">المنطقة / الحي</label>
+<select class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input rtl">
+<option value="">اختر المنطقة</option>
+<option value="moharem-bek">محرم بك</option>
+<option value="ghorb">غربال</option>
+<option value="ambrozo">أمبوزو</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">رقم الهاتف الأرضي</label>
+<input class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input" placeholder="٠٣XXXXXXXX" type="tel"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">الوظيفة الحالية</label>
+<input class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input" placeholder="أدخل المسمى الوظيفي" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">جهة العمل</label>
+<input class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input" placeholder="اسم الشركة أو المؤسسة" type="text"/>
+</div>
+</div>
+</section>
+<!-- Family Members Section -->
+<section class="space-y-6">
+<div class="flex items-center gap-2 text-primary border-b border-outline-variant pb-2">
+<span class="material-symbols-outlined">groups</span>
+<h2 class="font-headline-sm text-headline-sm">بيانات أفراد الأسرة</h2>
+</div>
+<div class="space-y-4" id="membersContainer">
+<!-- Initial Member Row -->
+<div class="glass-card p-6 rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-12 gap-4 items-end relative overflow-hidden group">
+<div class="md:col-span-3">
+<label class="block font-label-md text-label-md text-on-surface mb-2">صلة القرابة</label>
+<select class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input rtl">
+<option disabled="" selected="" value="">اختر الصلة</option>
+<option value="spouse">زوج / زوجة</option>
+<option value="son">ابن</option>
+<option value="daughter">ابنة</option>
+</select>
+</div>
+<div class="md:col-span-5">
+<label class="block font-label-md text-label-md text-on-surface mb-2">الاسم بالكامل</label>
+<input class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input" placeholder="أدخل الاسم الرباعي" type="text"/>
+</div>
+<div class="md:col-span-3">
+<label class="block font-label-md text-label-md text-on-surface mb-2">تاريخ الميلاد</label>
+<input class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input" type="date"/>
+</div>
+<div class="md:col-span-1 flex justify-center">
+<button class="w-12 h-12 rounded-lg text-error hover:bg-error-container transition-colors flex items-center justify-center" title="حذف" type="button">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+<!-- Decoration line -->
+<div class="absolute right-0 top-0 h-full w-1 bg-secondary opacity-50"></div>
+</div>
+</div>
+<!-- Add Button -->
+<div class="flex justify-center pt-4">
+<button class="flex items-center gap-2 px-8 py-3 bg-secondary-container text-on-secondary-container rounded-full font-label-md text-label-md hover:bg-secondary-fixed transition-all border border-secondary/20 shadow-sm" onclick="addMember()" type="button">
+<span class="material-symbols-outlined">add_circle</span>
+<span>إضافة فرد جديد للأسرة</span>
+</button>
+</div>
+</section>
+<!-- Navigation Buttons -->
+<div class="flex flex-row-reverse justify-between items-center pt-12 mt-12 border-t border-surface-container-highest">
+<button class="bg-primary text-on-primary px-12 py-4 rounded-xl font-headline-sm text-headline-sm flex items-center gap-3 hover:shadow-lg transition-all group" type="submit">
+<span>الخطوة التالية</span>
+<span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
+</button>
+<button class="flex items-center gap-2 px-8 py-4 text-on-surface-variant font-body-lg text-body-lg hover:text-primary transition-colors" onclick="history.back()" type="button">
+<span class="material-symbols-outlined">arrow_forward</span>
+<span>السابق</span>
+</button>
+</div>
+</form>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 bg-surface-container-highest border-t-2 border-secondary-fixed">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter px-gutter max-w-container-max mx-auto rtl items-center">
+<div class="flex flex-col gap-4">
+<div class="font-headline-sm text-headline-sm text-primary">كنيسة السيدة العذراء مريم</div>
+<p class="font-body-md text-body-md text-on-surface-variant">منارة روحية في قلب محرم بك، تخدم المجتمع وترعى النفوس بسلام المسيح.</p>
+</div>
+<div class="flex flex-col gap-4 items-center">
+<div class="flex gap-6">
+<a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md" href="#">فيسبوك</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md" href="#">يوتيوب</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md" href="#">إنستجرام</a>
+</div>
+<div class="font-body-md text-body-md text-on-surface-variant opacity-90">© ٢٠٢٤ كنيسة السيدة العذراء مريم - محرم بك. جميع الحقوق محفوظة</div>
+</div>
+<div class="flex flex-col gap-4 items-end">
+<a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md" href="#">لوحة التحكم</a>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary">location_on</span>
+<span class="font-body-md text-body-md">الإسكندرية، محرم بك</span>
+</div>
+</div>
+</div>
+</footer>
+<script>
+    function addMember() {
+        const container = document.getElementById('membersContainer');
+        const newMember = document.createElement('div');
+        newMember.className = 'glass-card p-6 rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-12 gap-4 items-end relative overflow-hidden group opacity-0 translate-y-4 transition-all duration-300';
+        
+        newMember.innerHTML = `
+            <div class="md:col-span-3">
+                <label class="block font-label-md text-label-md text-on-surface mb-2">صلة القرابة</label>
+                <select class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input rtl">
+                    <option value="" disabled selected>اختر الصلة</option>
+                    <option value="spouse">زوج / زوجة</option>
+                    <option value="son">ابن</option>
+                    <option value="daughter">ابنة</option>
+                </select>
+            </div>
+            <div class="md:col-span-5">
+                <label class="block font-label-md text-label-md text-on-surface mb-2">الاسم بالكامل</label>
+                <input type="text" placeholder="أدخل الاسم الرباعي" class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input">
+            </div>
+            <div class="md:col-span-3">
+                <label class="block font-label-md text-label-md text-on-surface mb-2">تاريخ الميلاد</label>
+                <input type="date" class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md form-input">
+            </div>
+            <div class="md:col-span-1 flex justify-center">
+                <button type="button" onclick="removeMember(this)" class="w-12 h-12 rounded-lg text-error hover:bg-error-container transition-colors flex items-center justify-center" title="حذف">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+            <div class="absolute right-0 top-0 h-full w-1 bg-secondary opacity-50"></div>
+        `;
+        
+        container.appendChild(newMember);
+        
+        // Animation Trigger
+        setTimeout(() => {
+            newMember.classList.remove('opacity-0', 'translate-y-4');
+        }, 50);
+    }
+
+    function removeMember(btn) {
+        const row = btn.closest('.glass-card');
+        row.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => {
+            row.remove();
+        }, 300);
+    }
+
+    // Handle initial member delete button
+    document.querySelector('#membersContainer button').addEventListener('click', function() {
+        if(document.querySelectorAll('#membersContainer .glass-card').length > 1) {
+            removeMember(this);
+        } else {
+            alert('يجب إضافة فرد واحد على الأقل أو ترك الحقول فارغة إذا كنت تقيم بمفردك.');
+        }
+    });
+</script>
+</body></html>

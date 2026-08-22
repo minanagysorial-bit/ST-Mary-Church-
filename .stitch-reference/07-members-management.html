@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إدارة الأعضاء - كنيسة مارمينا محرم بك</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&amp;family=Cairo:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f5f3f3",
+                    "error": "#ba1a1a",
+                    "background": "#fbf9f8",
+                    "tertiary-fixed": "#ffdbd0",
+                    "error-container": "#ffdad6",
+                    "primary": "#00113a",
+                    "surface-dim": "#dbd9d9",
+                    "outline-variant": "#c5c6d2",
+                    "on-surface-variant": "#444650",
+                    "on-background": "#1b1c1c",
+                    "surface-container-highest": "#e4e2e2",
+                    "secondary-fixed-dim": "#e9c349",
+                    "on-error": "#ffffff",
+                    "secondary": "#735c00",
+                    "tertiary-container": "#501300",
+                    "outline": "#757682",
+                    "surface-container": "#efeded",
+                    "surface-bright": "#fbf9f8",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "on-secondary-container": "#745c00",
+                    "surface-variant": "#e4e2e2",
+                    "on-tertiary-container": "#d37758",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#435b9f",
+                    "surface-container-high": "#eae8e7",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#002366",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#b3c5ff",
+                    "on-secondary-fixed-variant": "#574500",
+                    "inverse-surface": "#303030",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "inverse-on-surface": "#f2f0f0",
+                    "surface": "#fbf9f8",
+                    "secondary-container": "#fed65b",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "on-secondary-fixed": "#241a00",
+                    "on-primary-fixed": "#00174a",
+                    "on-primary-container": "#758dd5",
+                    "on-tertiary-fixed": "#390b00",
+                    "secondary-fixed": "#ffe088",
+                    "primary-fixed": "#dbe1ff",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#2d0700",
+                    "on-surface": "#1b1c1c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "8px",
+                    "container-max": "1200px",
+                    "gutter": "24px",
+                    "margin-desktop": "40px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Tajawal"],
+                    "display-lg": ["Tajawal"],
+                    "label-md": ["Cairo"],
+                    "headline-md": ["Tajawal"],
+                    "caption": ["Cairo"],
+                    "body-md": ["Cairo"],
+                    "body-lg": ["Cairo"],
+                    "display-lg-mobile": ["Tajawal"]
+            },
+            "fontSize": {
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #00091d; /* Deep Dark for Admin */
+            color: #e4e2e2;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(0, 17, 58, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(197, 198, 210, 0.1);
+        }
+        .member-row:hover {
+            background: rgba(116, 92, 0, 0.05);
+        }
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden">
+<!-- Sidebar (SideNavBar) -->
+<aside class="bg-primary h-screen w-64 fixed right-0 top-0 border-l border-outline-variant shadow-sm z-50 flex flex-col p-4 gap-2">
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="church">church</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-primary leading-tight">مارمينا محرم بك</h1>
+<p class="font-label-md text-label-md text-on-primary-fixed-variant opacity-70">نظام الإدارة</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">نظرة عامة</span>
+</a>
+<!-- Active State: إدارة الأعضاء -->
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-label-md text-label-md">إدارة الأعضاء</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings_voice">settings_voice</span>
+<span class="font-label-md text-label-md">إدارة العظات</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="web">web</span>
+<span class="font-label-md text-label-md">محتوى الموقع</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="font-label-md text-label-md">إعدادات المسؤول</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-outline-variant/20">
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-lg overflow-hidden border border-secondary">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of a church administrator wearing a formal dark suit, set against a blurred background of a modern office with religious artifacts. The lighting is soft and focused, conveying a sense of leadership and calm authority in a light-mode photography style with royal blue accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXViRTsgMbGFMU6luB3V9P1LXnpt0nPgew5QXDnbMbpM4YO4uZCjYpiijrOsEP7_5YksILaByh_Uqvyq4YWPL-UfYFsBEZvo8o34pY8fAM8meLH6mnrFDq6imwHdkI9353-_RYtSssghqiYYqeytQ-Cb-3QVlcrs6J5B9ETm_ZJzlZI-adhYFO_ZwUQahm9JqpBHxXIwXMWJbSbmHEMC6DnwvgoZC3N2WOi075fcvSzu1HYV9TlzQQtNvVr5-qxmKHe1Q_csN-PpY9"/>
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="font-label-md text-label-md font-bold text-on-primary truncate">القمص يوحنا</p>
+<p class="font-caption text-caption text-on-primary-fixed-variant truncate">مسؤول النظام</p>
+</div>
+<button class="text-on-primary-fixed-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="mr-64 min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-primary/40 backdrop-blur-md h-16 px-10 w-[calc(100%-16rem)] fixed top-0 left-0 z-40 flex justify-between items-center">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full bg-surface-container-highest/10 border-none rounded-full py-2 pr-10 pl-4 text-body-md font-body-md focus:ring-2 focus:ring-secondary transition-all text-on-surface" placeholder="البحث بالاسم أو البريد الإلكتروني..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="relative p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+<div class="h-8 w-px bg-outline-variant opacity-30"></div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-secondary-fixed">لوحة التحكم</h2>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="mt-16 p-10 flex-1 flex flex-col gap-8">
+<!-- Page Header & Stats -->
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-headline-md text-headline-md font-bold text-secondary-fixed mb-1">إدارة الأعضاء</h3>
+<p class="font-body-md text-body-md text-outline-variant">إدارة وتصفية قاعدة بيانات أعضاء الكنيسة والمجموعات الخدمية</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-secondary text-secondary-fixed rounded-lg font-label-md hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>تصدير PDF</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 border border-secondary text-secondary-fixed rounded-lg font-label-md hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="table_view">table_view</span>
+<span>تصدير Excel</span>
+</button>
+<button class="flex items-center gap-2 px-6 py-2 bg-primary-container text-on-primary-container border border-primary-fixed-dim rounded-lg font-label-md font-bold hover:shadow-lg transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+<span>إضافة عضو جديد</span>
+</button>
+</div>
+</div>
+<!-- Advanced Filters Bento -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-primary/20 p-6 rounded-xl border border-outline-variant/10">
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-secondary-fixed">الحالة</label>
+<select class="bg-primary border border-outline-variant/30 rounded-lg p-2 text-body-md focus:border-secondary outline-none">
+<option>الكل</option>
+<option>نشط</option>
+<option>غير نشط</option>
+<option>في انتظار التأكيد</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-secondary-fixed">مجموعة الخدمة</label>
+<select class="bg-primary border border-outline-variant/30 rounded-lg p-2 text-body-md focus:border-secondary outline-none">
+<option>الكل</option>
+<option>خدام مدارس الأحد</option>
+<option>اجتماع الشباب</option>
+<option>المرتلين</option>
+<option>التنظيم</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-secondary-fixed">تاريخ التسجيل</label>
+<input class="bg-primary border border-outline-variant/30 rounded-lg p-2 text-body-md focus:border-secondary outline-none [color-scheme:dark]" type="date"/>
+</div>
+<div class="flex items-end">
+<button class="w-full h-[42px] flex items-center justify-center gap-2 bg-secondary text-on-secondary font-bold rounded-lg hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+<span>تطبيق الفلاتر</span>
+</button>
+</div>
+</div>
+<!-- Members Table Card -->
+<div class="glass-panel rounded-2xl overflow-hidden border border-outline-variant/20 shadow-xl">
+<div class="overflow-x-auto">
+<table class="w-full text-right border-collapse">
+<thead>
+<tr class="bg-primary/40 border-b border-outline-variant/20">
+<th class="px-6 py-4 font-label-md text-label-md text-secondary-fixed font-bold">العضو</th>
+<th class="px-6 py-4 font-label-md text-label-md text-secondary-fixed font-bold">البريد الإلكتروني</th>
+<th class="px-6 py-4 font-label-md text-label-md text-secondary-fixed font-bold">المجموعة</th>
+<th class="px-6 py-4 font-label-md text-label-md text-secondary-fixed font-bold">الحالة</th>
+<th class="px-6 py-4 font-label-md text-label-md text-secondary-fixed font-bold">تاريخ الانضمام</th>
+<th class="px-6 py-4 font-label-md text-label-md text-secondary-fixed font-bold text-center">الإجراءات</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Member 1 -->
+<tr class="member-row transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-secondary/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A detailed digital avatar of a young Egyptian man with kind eyes, wearing a simple white shirt, framed against a background of soft liturgical gold patterns. The visual style is crisp and clean, reflecting a professional church member profile in a light-mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhUBlAFOKWiXFk7Z9RzCpr6hHb06AEoSIc0BYCfbxPzWpVGbMTe_75t7iiwtFehGn9Gs2N2PjTwSzCT3bLRp7EHmGVGkNmmgnG36WJpXfoOTDGvkWkxhzwgBLfLddxJ_x4sda_fN1s-gcRYwDWvaBSsauLaj7ZFbqMpbYsiMbceqKimZyp2IsCogdy8rN3HvQtBglMim9MILbhLEwcVC2ms0p_u17n1IbEjbaBIj0wtjuycZpkmerGPGASXGF07PqiCUoE2tdD1N6X"/>
+</div>
+<div>
+<p class="font-body-md font-bold text-on-surface">مينا يوسف</p>
+<p class="font-caption text-outline">محرم بك، الإسكندرية</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-outline-variant">mina.youssef@example.com</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-caption font-bold">خدام مدارس الأحد</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-green-500 rounded-full"></span>
+<span class="font-label-md text-green-500">نشط</span>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-outline-variant">١٢ مارس ٢٠٢٣</td>
+<td class="px-6 py-4">
+<div class="flex items-center justify-center gap-2">
+<button class="p-2 text-on-surface-variant hover:text-secondary-fixed transition-colors" title="تفاصيل">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary-fixed-dim transition-colors" title="تعديل">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors" title="حذف">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Member 2 -->
+<tr class="member-row transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-secondary/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a serene woman wearing a traditional modest outfit, with soft lighting accentuating a peaceful expression. The background features a subtle gradient of deep blues and golds, reflecting a spiritual and community-focused environment in a modern digital art style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlL0s7IAsbUhjlYr4tg1ixn0Z7xY8bfC8EHKDyy6Yi6NzGN6WNuhlLDfC0YOChsTsckRYOxOMY8Q8LIRtb9xYgbhFrNzB1QApsbo_nl9FGIWiZZQ_hgXtfOo5XC0Gvgjks-Cg3jvfxzFCSEPMzSXIoH3B1IYID0OYRSmdB5CCIrwsQHqpgh0rSl-6f4NxIhJJFfFnSghS2hHxAsFUh8YrjzoZf5oUvq7pHNE2CxO8at-483kgfroVWyyeLntZdof6Fjqoik-9ie0Zb"/>
+</div>
+<div>
+<p class="font-body-md font-bold text-on-surface">مريم أسعد</p>
+<p class="font-caption text-outline">وسط المدينة</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-outline-variant">maryam.asad@example.com</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-caption font-bold">اجتماع الشباب</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+<span class="font-label-md text-yellow-500">معلق</span>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-outline-variant">٠٥ يناير ٢٠٢٤</td>
+<td class="px-6 py-4">
+<div class="flex items-center justify-center gap-2">
+<button class="p-2 text-on-surface-variant hover:text-secondary-fixed transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Member 3 -->
+<tr class="member-row transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-secondary/30 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A photo of an elderly Egyptian gentleman with a friendly smile, graying hair, and traditional glasses. He is depicted in a high-resolution portrait style with warm, ambient lighting and a royal blue backdrop, symbolizing a respected elder in the church community." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeGXChgxUZaOA1agTzpu8ex4Ml7IXi_XLxybT2AcyTrieKJXGq3OJqXWvCRxJ9E_kV3AU0ockMGLrNcqgaq_dvvstsVHsOZhEO6gKPLT9hc7tkqm29ZSPLPf7iynQACkJCcTsf_unePdF_xFUq69uoA_YXIISZDZMN1jWwSKpYqmuozqB5Je5MDlKsRWcUr4I5MxCCmW73-cOiKVaBXAaZuKAIvyvhdzriqp0vc_k91xkTDLEXyk0sF8ct-tPzSzLf5Y9oee7Nr58b"/>
+</div>
+<div>
+<p class="font-body-md font-bold text-on-surface">إسحق جرجس</p>
+<p class="font-caption text-outline">الجمرك</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-outline-variant">isaac.gerges@example.com</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-caption font-bold">لجنة التنظيم</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-green-500 rounded-full"></span>
+<span class="font-label-md text-green-500">نشط</span>
+</div>
+</td>
+<td class="px-6 py-4 font-body-md text-outline-variant">٢٠ يونيو ٢٠٢٢</td>
+<td class="px-6 py-4">
+<div class="flex items-center justify-center gap-2">
+<button class="p-2 text-on-surface-variant hover:text-secondary-fixed transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 bg-primary/40 flex justify-between items-center border-t border-outline-variant/20">
+<span class="font-label-md text-label-md text-outline-variant">عرض ١-١٠ من أصل ٤٥٨ عضو</span>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary-fixed disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="w-10 h-10 rounded-lg bg-secondary text-on-secondary font-bold">١</button>
+<button class="w-10 h-10 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary-fixed">٢</button>
+<button class="w-10 h-10 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary-fixed">٣</button>
+<span class="text-outline-variant">...</span>
+<button class="w-10 h-10 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary-fixed">٤٦</button>
+<button class="p-2 rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-secondary/10 hover:text-secondary-fixed">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="flex justify-between items-center p-4 mt-auto w-[calc(100%-16rem)] ml-auto bg-surface-container-low dark:bg-primary/20 border-t border-outline-variant/10">
+<div class="flex gap-6">
+<a class="font-caption text-caption text-on-surface-variant hover:text-secondary transition-colors" href="#">الدعم الفني</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-secondary transition-colors" href="#">سياسة الخصوصية</a>
+</div>
+<div class="text-left">
+<p class="font-caption text-caption text-on-surface-variant">© ٢٠٢٤ كنيسة القديس مارمينا العجائبي بمحرم بك - جميع الحقوق محفوظة</p>
+</div>
+</footer>
+</main>
+<script>
+        // Simple interactive feedback for action buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // Mock action
+                const icon = this.querySelector('.material-symbols-outlined')?.textContent;
+                if(icon === 'delete') {
+                    if(confirm('هل أنت متأكد من رغبتك في حذف هذا العضو؟')) {
+                        const row = this.closest('tr');
+                        row.style.opacity = '0.5';
+                        row.style.pointerEvents = 'none';
+                        setTimeout(() => row.remove(), 500);
+                    }
+                }
+            });
+        });
+    </script>
+</body></html>

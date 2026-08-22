@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /priest/
+Disallow: /servant/
+Disallow: /board/
+Disallow: /login
+
+Sitemap: https://stmary-moharambek-digitalhub.org/sitemap.xml

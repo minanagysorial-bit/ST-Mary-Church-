@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إدارة العظات - كنيسة مارمينا محرم بك</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&amp;family=Cairo:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f5f3f3",
+                    "error": "#ba1a1a",
+                    "background": "#fbf9f8",
+                    "tertiary-fixed": "#ffdbd0",
+                    "error-container": "#ffdad6",
+                    "primary": "#00113a",
+                    "surface-dim": "#dbd9d9",
+                    "outline-variant": "#c5c6d2",
+                    "on-surface-variant": "#444650",
+                    "on-background": "#1b1c1c",
+                    "surface-container-highest": "#e4e2e2",
+                    "secondary-fixed-dim": "#e9c349",
+                    "on-error": "#ffffff",
+                    "secondary": "#735c00",
+                    "tertiary-container": "#501300",
+                    "outline": "#757682",
+                    "surface-container": "#efeded",
+                    "surface-bright": "#fbf9f8",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "on-secondary-container": "#745c00",
+                    "surface-variant": "#e4e2e2",
+                    "on-tertiary-container": "#d37758",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#435b9f",
+                    "surface-container-high": "#eae8e7",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#002366",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#b3c5ff",
+                    "on-secondary-fixed-variant": "#574500",
+                    "inverse-surface": "#303030",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "inverse-on-surface": "#f2f0f0",
+                    "surface": "#fbf9f8",
+                    "secondary-container": "#fed65b",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "on-secondary-fixed": "#241a00",
+                    "on-primary-fixed": "#00174a",
+                    "on-primary-container": "#758dd5",
+                    "on-tertiary-fixed": "#390b00",
+                    "secondary-fixed": "#ffe088",
+                    "primary-fixed": "#dbe1ff",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#2d0700",
+                    "on-surface": "#1b1c1c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "8px",
+                    "container-max": "1200px",
+                    "gutter": "24px",
+                    "margin-desktop": "40px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Tajawal"],
+                    "display-lg": ["Tajawal"],
+                    "label-md": ["Cairo"],
+                    "headline-md": ["Tajawal"],
+                    "caption": ["Cairo"],
+                    "body-md": ["Cairo"],
+                    "body-lg": ["Cairo"],
+                    "display-lg-mobile": ["Tajawal"]
+            },
+            "fontSize": {
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0d1117; /* Custom dark override for professional admin feel */
+            color: #e6edf3;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #735c00; border-radius: 10px; }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- Side Navigation Bar -->
+<aside class="bg-primary dark:bg-primary text-secondary-fixed font-body-md text-body-md font-label-md text-label-md h-screen w-64 fixed right-0 top-0 border-l border-outline-variant shadow-sm flex flex-col h-full p-4 gap-2 z-50">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<img class="w-8 h-8 object-contain" data-alt="A refined, circular gold emblem featuring a classic Coptic cross with intricate filigree details, set against a deep navy blue background. The style is professional and ecclesiastical, using a royal blue and gold color palette that feels both ancient and modern." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzQlHw2B_SXj1wU9Fkf6MhuDmU9jNT6GSqYFG_YnWrRBpOpxozZh-GYdUUlGRv8eUWxZztYIZvEFpB8gf_p-BnInS7oZ2TgiR71XSSxn5RZ2LxtHdu4s2wDqzlEMHOfV9hT2ywz5SKNH3fMWBs5XNLprSF3raiXgc0w3O3wkdDB4iiXcq8e6ndR8BH07dbJikEep_uKKN79ueTnM9s-PJjc9h6KSfXB7hExgmW7ilcHHWmOBbH6ZYAQ3sqSSBHTvRuQwwtPvZGfXOQ"/>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-on-primary">مارمينا محرم بك</span>
+<span class="text-[10px] text-on-primary-fixed-variant opacity-80 uppercase tracking-widest">نظام الإدارة</span>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md">نظرة عامة</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-md">إدارة الأعضاء</span>
+</a>
+<a class="flex items-center gap-3 p-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="settings_voice">settings_voice</span>
+<span class="font-label-md">إدارة العظات</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="web">web</span>
+<span class="font-label-md">محتوى الموقع</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="font-label-md">إعدادات المسؤول</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-outline-variant/20">
+<div class="flex items-center gap-3 p-2 rounded-lg bg-primary-container/30">
+<div class="w-8 h-8 rounded-full bg-secondary overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of a priest in traditional black clerical attire, captured with soft, cinematic studio lighting against a dark, textured background. The image has a respectful, dignified atmosphere with a focus on warm skin tones and high-detail fabric textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiAqXVBZX6CY_u0vMle-iQ1BiXxjj3bhJizmMj4HPCoVWzjj-Ntf_bLA8IjoIS8i4Bp7isz390-QHc9iIRfmALB8nl2REOHNlLL1QKXaXA_ovn6mizadoKjfpMILVflaRZrscn8EUN1a6ttvf11RfSMFmm4ISc1hkRqcLvdL0BpBzmdOe4Jc_2yD_ynTRPfHYUMTBIu6XR1QKDvXYk4sG7la0rsLLT0PQ3J3OZBrlrF12V4PxwHXVmF73idj8pJyiLDneuOkDH-4OR"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-primary">أبونا مينا</span>
+<span class="text-[10px] text-on-primary-fixed-variant">مسؤول النظام</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="mr-64 min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="bg-surface dark:bg-surface-dim text-primary dark:text-primary-fixed font-headline-sm text-headline-sm font-body-md text-body-md docked full-width top-0 mr-64 border-b border-outline-variant flat no shadows flex justify-between items-center h-16 px-margin-desktop w-[calc(100%-16rem)] fixed top-0 left-0 z-10">
+<div class="flex items-center gap-4">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">لوحة التحكم</h1>
+<div class="h-6 w-[1px] bg-outline-variant"></div>
+<h2 class="text-on-surface-variant font-label-md">إدارة العظات</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="bg-surface-container border-none rounded-full pr-10 pl-4 py-1.5 text-sm w-64 focus:ring-2 focus:ring-secondary/50 transition-all" placeholder="بحث عن عظة..." type="text"/>
+</div>
+<div class="flex gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer" data-icon="account_circle">account_circle</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<section class="mt-16 p-8 flex-grow">
+<!-- Dashboard Header Actions -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold">مكتبة العظات</h3>
+<p class="text-on-surface-variant font-body-md mt-1">إدارة وتنظيم المحتوى الروحي والدروس الكنسية</p>
+</div>
+<button class="flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl shadow-lg hover:bg-primary-container transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span class="font-label-md">إضافة عظة جديدة</span>
+</button>
+</div>
+<!-- Filters Section -->
+<div class="flex flex-wrap items-center gap-3 mb-8">
+<span class="text-on-surface-variant text-sm font-bold ml-2">تصفية حسب:</span>
+<button class="px-5 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label-md text-xs border border-secondary/20 shadow-sm transition-all">الكل</button>
+<button class="px-5 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-xs border border-outline-variant/30 transition-all">خدمة الأطفال</button>
+<button class="px-5 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-xs border border-outline-variant/30 transition-all">أسبوع الآلام</button>
+<button class="px-5 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-xs border border-outline-variant/30 transition-all">نهضات روحية</button>
+<button class="px-5 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-xs border border-outline-variant/30 transition-all">دروس الكتاب</button>
+<button class="px-5 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-xs border border-outline-variant/30 transition-all">اجتماع الشباب</button>
+</div>
+<!-- Sermons Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Sermon Card 1 -->
+<div class="glass-card rounded-2xl overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A serene landscape of a sunrise over a calm lake, with silhouettes of ancient Coptic style arches in the foreground. The lighting is ethereal with soft gold and royal blue hues. High-end photography style, representing spiritual awakening and peace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbmSVZUQYupSRDuEoK1MZwhtGqRYZW5jP8qEjxFidI_tn6ux-YY8aUM4Prj2YfEhhGZP7BvKd0CDq8olqoHLnf9CQD0LFHPn1MQ1_ycR_UeNzbqm54Wwz5Hvo-27N1nPmEYr_dloeJBKMGzZWWL3ELHNbsJ3EGjJEQMRAGF7p6m0qhZY3yHSQR5luX7m8HE0cxbmqM2BctxJa57MP8m9rB5mnAmLW1v16gw4DEYio5OrpPiUnumJGKTMjDlpPigVnk0mfHb7nqEH2h"/>
+<div class="absolute top-3 left-3 bg-black/40 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="timer">timer</span>
+                            45:20
+                        </div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+<button class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center hover:bg-secondary hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-white" data-icon="edit">edit</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center hover:bg-error hover:border-error transition-all">
+<span class="material-symbols-outlined text-white" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-secondary-fixed-dim uppercase tracking-tighter">نهضات روحية</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-secondary" data-icon="more_vert">more_vert</span>
+</div>
+<h4 class="font-headline-sm text-lg text-on-surface font-bold leading-tight mb-2 group-hover:text-secondary transition-colors">قوة الرجاء في الضيقات</h4>
+<div class="flex items-center gap-2 mt-auto">
+<div class="w-6 h-6 rounded-full bg-primary-fixed overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close up portrait of an elderly priest with a kind expression and white beard, wearing traditional clerical robes. Warm, golden-hour natural lighting filtering through a window. Cinematic depth of field with a blurred ecclesiastical interior background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyj5gmUj16CyDWaTEcgB2xq1FnC936bs4yp66GQ1j5h2GDyLefsmf4F7L9Pn3gFed6bw_1SFDXPC_boNyp2SEH1yx77EWNJMesriK6UhOwai6b_5rXoCg0bRUOqVndmKlnVTuL6xX9ftpcWVBEA4uj_8JCzDk-73P-3T50G9-MYKzvgTDUpiVStl75m40CM9sPwP76-4dAnwCAxr6d1Br9115xqQH2yFsfNbqbUXj_pSgPVBLneFolIjGn99lk7nWzUqumFpEkJkJC"/>
+</div>
+<span class="text-xs text-on-surface-variant font-label-md">نيافة الأنبا بافلي</span>
+<span class="text-[10px] text-outline mr-auto">١٢ أكتوبر ٢٠٢٣</span>
+</div>
+</div>
+</div>
+<!-- Sermon Card 2 -->
+<div class="glass-card rounded-2xl overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A stylized digital illustration of a glowing open Bible with rays of golden light emanating from the pages. The background is a deep navy blue with subtle particles of light. Modern, minimalist spiritual design with high contrast and clean lines." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHC9zW06A0SNoXVgxPzsQvjVQSAY5NMc6SXE_U33PHqn2QJtpxKKXeuHLPagW0cECxElkyUcE0rDwRmqFhNwgy4uMlvxsc4iYmah3oFPXvtO4kRvY6ZGfuhRWpNPki56KlK8KMG3psrk3W-_6C4iL3LcKN-JbbT3vs9837mG5n3ANjB5LUT19AtlZetz4Ngs5jDK5EFgUGtKt5SXrr4S1VBYgj6lOGwfL7gDAQAMARr-qddjYkq8wzZXy4Aywx0_dgmc7T56iXmhek"/>
+<div class="absolute top-3 left-3 bg-black/40 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="timer">timer</span>
+                            32:15
+                        </div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+<button class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center hover:bg-secondary hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-white" data-icon="edit">edit</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center hover:bg-error hover:border-error transition-all">
+<span class="material-symbols-outlined text-white" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-secondary-fixed-dim uppercase tracking-tighter">دروس الكتاب</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-secondary" data-icon="more_vert">more_vert</span>
+</div>
+<h4 class="font-headline-sm text-lg text-on-surface font-bold leading-tight mb-2 group-hover:text-secondary transition-colors">تأملات في مزمور الراعي</h4>
+<div class="flex items-center gap-2 mt-auto">
+<div class="w-6 h-6 rounded-full bg-primary-fixed overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a young deacon in a white tunicle with a red stole, smiling warmly in a church setting. Soft ambient light from stained glass windows creates a colorful bokeh in the background. Professional and welcoming religious portrait style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMmLd6HEFIUpExxS1Wz_5jTBqYC19efq22P06sM-0VLhG6pSxIMsbTyreUahMrp_X-8cSSG5abfP5fPN3owjk67wR9goUvSstPe4uCaMCjkFzRAPajE0vVl8ML8AjDQ1ilJre2_cE5KZvEUnohBaydFE8JpB7hfF2ZY85-TnZQok8M1t0FSDS-sNwoNulAOHFPqPQrV3yx_LMc4J73-1e37piRz0YZOc2j07CqLeHM8VrfZbQNkeH4Xiaa9LIPtSS__A_UH_FFXMMa"/>
+</div>
+<span class="text-xs text-on-surface-variant font-label-md">القمص أفرايم</span>
+<span class="text-[10px] text-outline mr-auto">٥ نوفمبر ٢٠٢٣</span>
+</div>
+</div>
+</div>
+<!-- Sermon Card 3 (Hidden State Example) -->
+<div class="glass-card rounded-2xl overflow-hidden flex flex-col group transition-all duration-300 opacity-60">
+<div class="relative h-48 overflow-hidden grayscale">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A macro photograph of incense smoke curling elegantly in the air within a dimly lit cathedral. Soft blue and purple light highlights the smoke trails. The atmosphere is mysterious and quiet. High detail with a cinematic feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSaZ_0iNVGbOiF4bXb-Ky_KTqGO9wNfYkUq03NQPwWX-cDZJWyPeoIQatrvgirH2cJ37jH5_MS7l1qOkJuMqVfB0qrgOuR9GQM0yPaQR0lxxfJtdqgiGMdXWDifBtBSYXa2OwfK6cigH-7DkJtTvTK2fBexXeGOTcT4mPsoqrQDabAgdn-Sb_A1W6DyDZnatfB218LniN4AKRmBcgkd-oCuz4BhVL5ZzMoIwK8CCa144oRvQauulYDe1SYQRg8HCooaQrn04qySVoV"/>
+<div class="absolute inset-0 bg-black/60 flex items-center justify-center">
+<div class="bg-surface/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-2">
+<span class="material-symbols-outlined text-white text-sm" data-icon="visibility_off">visibility_off</span>
+<span class="text-[10px] text-white font-bold">مخفي من الموقع</span>
+</div>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-secondary-fixed-dim uppercase tracking-tighter">خدمة الأطفال</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-secondary" data-icon="more_vert">more_vert</span>
+</div>
+<h4 class="font-headline-sm text-lg text-on-surface font-bold leading-tight mb-2">قصص من بستان الرهبان</h4>
+<div class="flex items-center gap-2 mt-auto">
+<div class="w-6 h-6 rounded-full bg-primary-fixed overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A friendly Sunday school teacher, a young woman, smiling in a bright classroom filled with colorful Christian educational posters. The lighting is bright and cheerful. The aesthetic is clean, modern, and educational." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg2lFuFAhU9YLQpV-AOS18HvCjPUr5Pidu_O2N8Qg1JbDV-Mqgic9N8J-iuhtaNRK0DEK114yfeLkX4wv7DmFR1woilXJkHedYMsQFkbrCRUxnv2sHNxB4YFCjUVeJDnteJu9Kx-Nzkbs2e6LCmsnzkIIAXvk5YL2idfGNnvHA41aRQRz6BXi4cC82n50G3K00RHxd2DuoRM_Q1t5W-CZW5aKcWTPxih1hlLvQ7xL1OaKCG43aOOo3X6z6OhuwWYfrQcaHNhrqVLZf"/>
+</div>
+<span class="text-xs text-on-surface-variant font-label-md">تاسوني مريم</span>
+<span class="text-[10px] text-outline mr-auto">٢٨ أكتوبر ٢٠٢٣</span>
+</div>
+</div>
+</div>
+<!-- Sermon Card 4 -->
+<div class="glass-card rounded-2xl overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border-l-4 border-l-secondary">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A dramatic close-up of a silver censer with smoke rising against a dark backdrop of church altar curtains. Deep red and gold accents in the lighting create a solemn, liturgical mood. High contrast and cinematic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIZQo7cAl1TwmXm00YIbnHMh6nNmuH9Y9oxaXGAVGJZuSc8ezHYmHJD5nt5Oq4Mxk5eMqSqv7xOsi5hp3VmQpjgB0l5dBe9NiVYa_jA54lDNyHWTA_AG6n9AX7z2al_TiCL8Qk-31ZElE_L9yUX1HAMSxxUAkWt789LXi-DZiijL1WoWpUZmE6OVS2RQVwbhHhEU2jeTJJOcdSxEnc82XW8WwJdcHumk5lo-pxo9RNtSvx0Bbjfx2I3mbsCQeY3yYIyT0hmWio4P5a"/>
+<div class="absolute top-3 right-3 bg-secondary text-on-secondary text-[10px] px-2 py-0.5 rounded-full font-bold">مثبت</div>
+<div class="absolute top-3 left-3 bg-black/40 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="timer">timer</span>
+                            58:40
+                        </div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+<button class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center hover:bg-secondary hover:border-secondary transition-all">
+<span class="material-symbols-outlined text-white" data-icon="edit">edit</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center hover:bg-error hover:border-error transition-all">
+<span class="material-symbols-outlined text-white" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-secondary-fixed-dim uppercase tracking-tighter">أسبوع الآلام</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-secondary" data-icon="more_vert">more_vert</span>
+</div>
+<h4 class="font-headline-sm text-lg text-on-surface font-bold leading-tight mb-2 group-hover:text-secondary transition-colors">عظمة الصليب في حياتنا</h4>
+<div class="flex items-center gap-2 mt-auto">
+<div class="w-6 h-6 rounded-full bg-primary-fixed overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a senior bishop with a long white beard, wearing a traditional Coptic crown and majestic liturgical vestments in gold and white. The background is a golden iconostasis. The image evokes a sense of deep tradition and sacred authority." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJ0HRi1k-NMfXHH3kfNx5qF59lnqUQNfwRTRa2wdszEck7jBtpIqehxARrwLjyWU7bAtijM3TqcYDgE8ydzq9Dcz8OlL7OS8583hSim87-hX8AG8bUtayRThYoHcDRWlCl9nh8k9G71uNDBxef_nJOk7o1bxlK0d4gIJ5MzMFxpDoSpvJIYrI00DAQVjdcJEYZcEE824ELHtozQo-4kw9GY3E53GvQTN6_a_rg-dzA6gMKjk9SpkXtquwuY_-pE0xjvS3mw9niXSHj"/>
+</div>
+<span class="text-xs text-on-surface-variant font-label-md">قداسة البابا تواضروس</span>
+<span class="text-[10px] text-outline mr-auto">١٥ أبريل ٢٠٢٣</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-center gap-2 mt-12">
+<button class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="w-10 h-10 rounded-lg bg-secondary-container text-on-secondary-container font-bold">١</button>
+<button class="w-10 h-10 rounded-lg bg-surface-container text-on-surface hover:bg-secondary-container transition-colors">٢</button>
+<button class="w-10 h-10 rounded-lg bg-surface-container text-on-surface hover:bg-secondary-container transition-colors">٣</button>
+<span class="text-outline mx-2">...</span>
+<button class="w-10 h-10 rounded-lg bg-surface-container text-on-surface hover:bg-secondary-container transition-colors">١٢</button>
+<button class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-container-lowest text-on-surface-variant dark:text-on-surface-variant font-caption text-caption full-width mr-64 border-t border-outline-variant flat no shadows flex justify-between items-center p-4 mt-auto w-[calc(100%-16rem)] ml-auto">
+<div class="flex items-center gap-4">
+<span class="font-label-md text-label-md font-bold text-primary">مارمينا محرم بك</span>
+<span class="text-[10px] opacity-60">© ٢٠٢٤ كنيسة القديس مارمينا العجايبي بمحرم بك - جميع الحقوق محفوظة</span>
+</div>
+<div class="flex gap-6">
+<a class="text-on-surface-variant hover:text-secondary transition-colors font-bold" href="#">الدعم الفني</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors" href="#">سياسة الخصوصية</a>
+</div>
+</footer>
+</main>
+<!-- Modal Placeholder (Hidden by default) -->
+<div class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6" id="addSermonModal">
+<div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+<div class="relative bg-surface rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-sm text-on-surface font-bold">إضافة عظة جديدة</h3>
+<button class="material-symbols-outlined text-outline hover:text-error transition-colors" data-icon="close" onclick="toggleModal()">close</button>
+</div>
+<div class="p-8 space-y-6">
+<!-- Form Content Simplified -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-xs font-bold text-on-surface-variant mr-1">عنوان العظة</label>
+<input class="bg-surface-container-low border border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-xs font-bold text-on-surface-variant mr-1">المتحدث</label>
+<select class="bg-surface-container-low border border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+<option>اختر المتحدث...</option>
+<option>نيافة الأنبا بافلي</option>
+<option>القمص أفرايم</option>
+</select>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-xs font-bold text-on-surface-variant mr-1">وصف مختصر</label>
+<textarea class="bg-surface-container-low border border-outline-variant rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" rows="3"></textarea>
+</div>
+<div class="flex gap-4 pt-4 border-t border-outline-variant/30">
+<button class="flex-1 bg-primary text-on-primary py-3 rounded-xl font-bold hover:bg-primary-container transition-all">حفظ العظة</button>
+<button class="px-8 py-3 bg-surface-container text-on-surface-variant rounded-xl font-bold" onclick="toggleModal()">إلغاء</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+        // Simple micro-interaction for the modal toggle
+        function toggleModal() {
+            const modal = document.getElementById('addSermonModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Add event listener to the main primary button
+        document.querySelector('button.bg-primary').addEventListener('click', toggleModal);
+
+        // Micro-interaction for cards
+        const cards = document.querySelectorAll('.glass-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                // Subtle lift handled by CSS, we could add audio or ripple here
+            });
+        });
+    </script>
+</body></html>

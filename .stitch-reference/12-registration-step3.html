@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>بوابة التسجيل - رفع المستندات | كنيسة السيدة العذراء</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&amp;family=Tajawal:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#735c00",
+                    "tertiary-container": "#501300",
+                    "on-secondary-fixed": "#241a00",
+                    "surface-container-low": "#f5f3f3",
+                    "primary-fixed": "#dbe1ff",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#b3c5ff",
+                    "tertiary": "#2d0700",
+                    "on-tertiary-fixed": "#390b00",
+                    "on-tertiary-container": "#d37758",
+                    "inverse-surface": "#303030",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "on-primary-container": "#758dd5",
+                    "error-container": "#ffdad6",
+                    "error": "#ba1a1a",
+                    "surface-tint": "#435b9f",
+                    "primary-container": "#002366",
+                    "on-primary-fixed": "#00174a",
+                    "outline": "#757682",
+                    "surface-container-highest": "#e4e2e2",
+                    "outline-variant": "#c5c6d2",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "secondary-fixed": "#ffe088",
+                    "surface-bright": "#fbf9f8",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-secondary-container": "#745c00",
+                    "on-error": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#f2f0f0",
+                    "background": "#fbf9f8",
+                    "tertiary-fixed": "#ffdbd0",
+                    "secondary-container": "#fed65b",
+                    "on-primary": "#ffffff",
+                    "on-background": "#1b1c1c",
+                    "surface-variant": "#e4e2e2",
+                    "surface": "#fbf9f8",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "surface-container": "#efeded",
+                    "surface-container-high": "#eae8e7",
+                    "primary": "#00113a",
+                    "surface-dim": "#dbd9d9",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface-variant": "#444650",
+                    "secondary-fixed-dim": "#e9c349",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "on-surface": "#1b1c1c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1200px",
+                    "unit": "8px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Tajawal"],
+                    "display-lg-mobile": ["Tajawal"],
+                    "caption": ["Cairo"],
+                    "body-md": ["Cairo"],
+                    "display-lg": ["Tajawal"],
+                    "label-md": ["Cairo"],
+                    "headline-sm": ["Tajawal"],
+                    "body-lg": ["Cairo"]
+            },
+            "fontSize": {
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .step-active { @apply text-primary font-bold; }
+        .step-inactive { @apply text-on-surface-variant; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- Top Navigation -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-surface-container-highest shadow-sm h-20 flex flex-row-reverse justify-between items-center px-gutter max-w-container-max mx-auto">
+<div class="font-headline-md text-headline-md text-primary">
+            كنيسة السيدة العذراء بمحرم بك
+        </div>
+<div class="flex items-center gap-4">
+<span class="font-label-md text-label-md text-on-surface-variant">بوابة الخدمات الرقمية</span>
+<span class="material-symbols-outlined text-primary">verified_user</span>
+</div>
+</header>
+<main class="flex-grow pt-32 pb-20 px-gutter max-w-container-max mx-auto w-full">
+<!-- Progress Stepper (Updated to 3 steps) -->
+<div class="mb-12 max-w-3xl mx-auto">
+<div class="flex justify-between items-center mb-4 relative">
+<!-- Connector Line -->
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-surface-container-highest -z-10"></div>
+<div class="absolute top-1/2 left-0 h-0.5 bg-primary transition-all duration-500 -z-10" style="width: 100%;"></div>
+<!-- Steps -->
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="font-label-md text-label-md text-primary">البيانات الأساسية</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="font-label-md text-label-md text-primary">بيانات الأسرة والعنوان</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold ring-4 ring-primary-fixed">3</div>
+<span class="font-label-md text-label-md text-primary font-bold">رفع المستندات</span>
+</div>
+</div>
+</div>
+<!-- Content Header -->
+<div class="text-center mb-10">
+<h1 class="font-headline-md text-headline-md text-primary mb-2">بوابة التسجيل - رفع المستندات</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+                يرجى إرفاق صور واضحة للمستندات المطلوبة لإتمام عملية التحقق من الهوية وضمان دقة البيانات المسجلة.
+            </p>
+</div>
+<!-- Upload Grid (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- National ID Front -->
+<div class="glass-panel p-8 rounded-xl hover:shadow-lg transition-all duration-300 group">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">id_card</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">بطاقة الرقم القومي (الوجه)</h3>
+<p class="font-caption text-caption text-on-surface-variant">تأكد من وضوح الصورة والبيانات</p>
+</div>
+</div>
+<label class="relative border-2 border-dashed border-outline-variant rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors group-hover:bg-surface-container-lowest/50">
+<input accept="image/*,.pdf" class="hidden" type="file"/>
+<span class="material-symbols-outlined text-4xl text-outline mb-4 group-hover:text-primary transition-transform group-hover:scale-110">upload_file</span>
+<span class="font-label-md text-label-md text-on-surface-variant">اضغط هنا أو قم بسحب الملف للرفع</span>
+<span class="text-[10px] mt-2 text-outline">JPEG, PNG or PDF (Max 5MB)</span>
+</label>
+</div>
+<!-- National ID Back -->
+<div class="glass-panel p-8 rounded-xl hover:shadow-lg transition-all duration-300 group">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">badge</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">بطاقة الرقم القومي (الظهر)</h3>
+<p class="font-caption text-caption text-on-surface-variant">تأكد من ظهور الرقم القومي بوضوح</p>
+</div>
+</div>
+<label class="relative border-2 border-dashed border-outline-variant rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors group-hover:bg-surface-container-lowest/50">
+<input accept="image/*,.pdf" class="hidden" type="file"/>
+<span class="material-symbols-outlined text-4xl text-outline mb-4 group-hover:text-primary transition-transform group-hover:scale-110">add_photo_alternate</span>
+<span class="font-label-md text-label-md text-on-surface-variant">اضغط هنا أو قم بسحب الملف للرفع</span>
+<span class="text-[10px] mt-2 text-outline">JPEG, PNG or PDF (Max 5MB)</span>
+</label>
+</div>
+<!-- Baptism Certificate -->
+<div class="md:col-span-2 glass-panel p-8 rounded-xl hover:shadow-lg transition-all duration-300 border-t-4 border-t-secondary">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">church</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">شهادة المعمودية / مستندات إضافية</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">اختياري: يفضل إرفاقها لتوثيق السجل الكنسي</p>
+</div>
+</div>
+<button class="px-8 py-3 border border-secondary text-secondary font-label-md rounded-full hover:bg-secondary hover:text-on-secondary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">attach_file</span>
+                        اختر الملفات
+                    </button>
+</div>
+</div>
+</div>
+<!-- Privacy & Security Assurance -->
+<div class="mt-12 p-6 rounded-xl bg-surface-container border border-outline-variant/30 flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary text-3xl">gpp_good</span>
+<div>
+<h4 class="font-label-md text-label-md text-primary mb-1">خصوصية وأمان بياناتك هي أولويتنا</h4>
+<p class="font-caption text-caption text-on-surface-variant leading-relaxed">
+                    يتم تشفير كافة المستندات المرفوعة فور إرسالها وتخزينها في خوادم آمنة مخصصة للكنيسة فقط. لن يتم استخدام هذه البيانات إلا لأغراض التحقق الداخلي وخدمة الأعضاء، ولن يتم مشاركتها مع أي جهة خارجية تحت أي ظرف من الظروف.
+                </p>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="mt-12 flex justify-between items-center">
+<button class="px-10 py-4 font-label-md text-on-surface-variant border border-outline-variant rounded-xl hover:bg-surface-container-high transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">arrow_forward</span>
+                السابق
+            </button>
+<button class="px-16 py-4 font-headline-sm bg-primary text-on-primary rounded-xl hover:bg-primary-container shadow-md hover:shadow-xl transition-all flex items-center gap-3">
+                إرسال الطلب
+                <span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</main>
+<!-- Spiritual Footer Decoration -->
+<div class="h-1 bg-gradient-to-l from-primary via-secondary to-primary w-full opacity-30"></div>
+<!-- Footer -->
+<footer class="w-full py-12 bg-surface-container-highest border-t-2 border-secondary-fixed">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter px-gutter max-w-container-max mx-auto rtl text-right">
+<div class="flex flex-col gap-4">
+<div class="font-headline-sm text-headline-sm text-primary">كنيسة السيدة العذراء</div>
+<p class="font-body-md text-body-md text-on-surface-variant">خدمة إلكترونية متطورة لرعاية شعب الكنيسة وتسهيل التواصل الروحي والإداري.</p>
+</div>
+<div class="flex flex-col gap-2">
+<h5 class="font-label-md text-label-md text-primary mb-2">روابط سريعة</h5>
+<a class="text-on-surface-variant hover:text-secondary transition-colors" href="#">لوحة التحكم</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors" href="#">سياسة الخصوصية</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors" href="#">شروط الاستخدام</a>
+</div>
+<div class="flex flex-col gap-4">
+<h5 class="font-label-md text-label-md text-primary mb-2">تواصل معنا</h5>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">face_nod</span>
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">video_library</span>
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">photo_camera</span>
+</div>
+<p class="font-caption text-caption text-on-surface-variant mt-4">© ٢٠٢٤ كنيسة السيدة العذراء مريم - محرم بك. جميع الحقوق محفوظة</p>
+</div>
+</div>
+</footer>
+<script>
+        // Simple Interaction: File Selection feedback
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.addEventListener('change', function(e) {
+                const fileName = e.target.files[0]?.name;
+                if (fileName) {
+                    const label = this.parentElement;
+                    const statusText = label.querySelector('.font-label-md');
+                    statusText.textContent = `تم اختيار: ${fileName}`;
+                    statusText.classList.remove('text-on-surface-variant');
+                    statusText.classList.add('text-secondary', 'font-bold');
+                    label.classList.add('bg-secondary-container/10', 'border-secondary');
+                }
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Outer glowing circle in Church Navy Blue -->
+  <circle cx="256" cy="256" r="230" fill="#00174a" stroke="#d4af37" stroke-width="12" />
+  
+  <!-- Coptic Cross Design in gold -->
+  <g fill="#fed65b" stroke="#d4af37" stroke-width="6" stroke-linejoin="round">
+    <!-- Vertical and Horizontal Bars forming the Coptic Cross -->
+    <path d="M 236 60 L 276 60 L 276 150 L 346 150 L 346 190 L 276 190 L 276 322 L 346 322 L 346 362 L 276 362 L 276 452 L 236 452 L 236 362 L 166 362 L 166 322 L 236 322 L 236 190 L 166 190 L 166 150 L 236 150 Z" />
+    
+    <!-- Central decorative circle/ring -->
+    <circle cx="256" cy="256" r="50" fill="none" stroke="#fed65b" stroke-width="12" />
+    <!-- Diagonal cross bars (Coptic style star decoration) -->
+    <path d="M 221 221 L 291 291 M 291 221 L 221 291" stroke="#fed65b" stroke-width="10" stroke-linecap="round" />
+  </g>
+</svg>

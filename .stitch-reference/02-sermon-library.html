@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>مكتبة العظات - كنيسة السيدة العذراء بمحرم بك</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&amp;family=Cairo:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#dbe1ff",
+                    "tertiary-container": "#501300",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "background": "#fbf9f8",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed-variant": "#574500",
+                    "inverse-on-surface": "#f2f0f0",
+                    "surface-container-low": "#f5f3f3",
+                    "surface-container-highest": "#e4e2e2",
+                    "primary-container": "#002366",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "on-tertiary-fixed": "#390b00",
+                    "outline": "#757682",
+                    "surface-tint": "#435b9f",
+                    "on-surface-variant": "#444650",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#758dd5",
+                    "surface-bright": "#fbf9f8",
+                    "secondary": "#735c00",
+                    "surface-container-high": "#eae8e7",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#303030",
+                    "on-secondary-fixed": "#241a00",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#efeded",
+                    "secondary-container": "#fed65b",
+                    "on-surface": "#1b1c1c",
+                    "on-background": "#1b1c1c",
+                    "on-tertiary": "#ffffff",
+                    "surface-dim": "#dbd9d9",
+                    "primary": "#00113a",
+                    "secondary-fixed-dim": "#e9c349",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-secondary-container": "#745c00",
+                    "outline-variant": "#c5c6d2",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed": "#00174a",
+                    "surface-variant": "#e4e2e2",
+                    "tertiary": "#2d0700",
+                    "secondary-fixed": "#ffe088",
+                    "surface": "#fbf9f8",
+                    "on-tertiary-container": "#d37758",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "inverse-primary": "#b3c5ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1200px",
+                    "gutter": "24px",
+                    "margin-desktop": "40px",
+                    "margin-mobile": "16px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Tajawal"],
+                    "body-lg": ["Cairo"],
+                    "display-lg-mobile": ["Tajawal"],
+                    "body-md": ["Cairo"],
+                    "display-lg": ["Tajawal"],
+                    "label-md": ["Cairo"],
+                    "headline-sm": ["Tajawal"],
+                    "caption": ["Cairo"]
+            },
+            "fontSize": {
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sermon-card-hover {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+        .sermon-card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0px 12px 32px rgba(0, 35, 102, 0.08);
+        }
+        .glass-header {
+            background: rgba(251, 249, 248, 0.85);
+            backdrop-filter: blur(12px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen">
+<!-- TopNavBar (Shared Component) -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md dark:bg-background/80 border-b border-surface-container-highest shadow-sm">
+<nav class="flex flex-row-reverse justify-between items-center px-gutter max-w-container-max mx-auto h-20 w-full">
+<div class="font-headline-md text-headline-md text-primary tracking-tight font-extrabold">
+                كنيسة السيدة العذراء بمحرم بك
+            </div>
+<div class="hidden md:flex flex-row-reverse gap-8 items-center">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">الرئيسية</a>
+<a class="text-secondary font-bold border-b-2 border-secondary pb-1 font-body-md text-body-md" href="#">العظات</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">الخدمات</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">التسجيل</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">اتصل بنا</a>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-xl font-label-md text-label-md hover:bg-primary-container transition-all shadow-md">
+                انضم إلينا
+            </button>
+</nav>
+</header>
+<main class="pt-32 pb-20 px-gutter max-w-container-max mx-auto">
+<!-- Hero & Search Section -->
+<section class="mb-16 text-center space-y-8">
+<div class="space-y-4">
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg text-primary">مكتبة العظات والتعليم</h1>
+<p class="text-on-surface-variant max-w-2xl mx-auto font-body-lg text-body-lg">
+                    استكشف مئات العظات الروحية والتعليمية التي تهدف لبناء حياتك المسيحية، متوفرة صوتياً ومرئياً.
+                </p>
+</div>
+<div class="relative max-w-xl mx-auto">
+<div class="flex items-center bg-surface-container-lowest rounded-full shadow-sm border border-outline-variant focus-within:border-primary transition-all p-2">
+<span class="material-symbols-outlined text-outline px-4">search</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-on-surface text-body-md placeholder:text-outline/60 px-2 rtl" placeholder="ابحث عن عظة، كاهن، أو موضوع..." type="text"/>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-full font-label-md hover:bg-primary-container transition-colors">
+                        بحث
+                    </button>
+</div>
+</div>
+</section>
+<!-- Filters Section -->
+<section class="mb-12">
+<div class="flex flex-wrap items-center justify-center gap-3">
+<button class="px-6 py-2 rounded-full border border-primary bg-primary text-on-primary font-label-md transition-all">الكل</button>
+<button class="px-6 py-2 rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface-variant font-label-md hover:border-secondary hover:text-secondary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">child_care</span>
+                    أطفال
+                </button>
+<button class="px-6 py-2 rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface-variant font-label-md hover:border-secondary hover:text-secondary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">auto_stories</span>
+                    أسبوع الآلام
+                </button>
+<button class="px-6 py-2 rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface-variant font-label-md hover:border-secondary hover:text-secondary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">sunny</span>
+                    القيامة
+                </button>
+<button class="px-6 py-2 rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface-variant font-label-md hover:border-secondary hover:text-secondary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">family_restroom</span>
+                    الأسرة
+                </button>
+<button class="px-6 py-2 rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface-variant font-label-md hover:border-secondary hover:text-secondary transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">history_edu</span>
+                    دراسات كتابية
+                </button>
+</div>
+</section>
+<!-- Sermon Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<article class="sermon-card-hover group bg-surface-container-lowest rounded-xl overflow-hidden border-t border-secondary/20 shadow-sm flex flex-col">
+<div class="relative h-56 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="A cinematic, high-quality photograph of a golden cross reflecting soft morning sunlight inside a majestic Coptic church with intricate woodwork. The lighting is warm and ethereal, creating a peaceful spiritual atmosphere. The colors include deep mahogany wood tones, shimmering gold accents, and soft royal blue fabrics in the background, matching the church's premium aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCHofbLqFO7uk9JEkIx8IA5-N_EgxRR2IqXoNpeb6CZ0pErny9xVZbPy6jF5mAhukrLvMlrKZVXQbW9-yPv8Q5dV25iPIULBDpF5iYv0DtzHd34Vx7UpcoMUZ5IqXJxLg9FMAb9vwv9rqzW0c1mix9Nqcg4A1uqSA4q35cMI_cSb73O4rYr1gqtJ7Zhka9b62eoD_fqL_wDxuB4AwJtxd_fQjZk7A5LqE7DkUcRtU4nbf_IqSjDRvQSlI8djSYofxBGvzs-kFZ4g31w')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent flex items-end p-4">
+<span class="bg-secondary text-on-primary px-3 py-1 rounded text-caption font-bold">أسبوع الآلام</span>
+</div>
+<button class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-white/20 backdrop-blur-md rounded-full border border-white/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-4xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">تأملات في الصليب والقيامة</h3>
+<div class="flex items-center gap-3 mb-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">person</span>
+<span class="font-body-md">القمص إبرام إدوارد</span>
+</div>
+<div class="mt-auto flex justify-between items-center pt-4 border-t border-surface-container-highest">
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span class="text-caption">١٥ أبريل ٢٠٢٤</span>
+</div>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span class="text-caption">٤٥ دقيقة</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="sermon-card-hover group bg-surface-container-lowest rounded-xl overflow-hidden border-t border-secondary/20 shadow-sm flex flex-col">
+<div class="relative h-56 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="A heartwarming digital illustration of children sitting in a circle in a sun-drenched church hall, listening to a storyteller. The style is modern minimalist with soft rounded shapes. The palette features royal blue details and golden light rays streaming through stained glass. The atmosphere is joyful, educational, and serene, perfect for a children's ministry sermon thumbnail." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCk-PumOep8lD1hrCNcpuC_dsegBZW3s8mfKlRzDwvN-Ex8qYO-tbpNInmaCXyzvrmyGNsXrV2-Hrq5NWzGg1husd5KDevYsw6MVDsGQqUkAfPAOXOxBuwfDzv6bMxHznvoqmI1nwrIAEevdyFjBREfC7IyOsT2_dJgjWa9lf7YMWUg3bLAyzmptf_dgWjtm5EGgQda2qFcRJaT0NMYuLphxdcKuisa3QRZgo3OoOovwg8PP-e_xFEZE9z3NQNb_zrmEO0eWDK6NLB')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent flex items-end p-4">
+<span class="bg-secondary text-on-primary px-3 py-1 rounded text-caption font-bold">أطفال</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">قصص من حياة القديسين للصغار</h3>
+<div class="flex items-center gap-3 mb-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">person</span>
+<span class="font-body-md">تاسوني مريم عادل</span>
+</div>
+<div class="mt-auto flex justify-between items-center pt-4 border-t border-surface-container-highest">
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span class="text-caption">١٠ أبريل ٢٠٢٤</span>
+</div>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span class="text-caption">٢٠ دقيقة</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="sermon-card-hover group bg-surface-container-lowest rounded-xl overflow-hidden border-t border-secondary/20 shadow-sm flex flex-col">
+<div class="relative h-56 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="A professional studio setup for a spiritual podcast or sermon recording. A high-end microphone sits on a wooden desk with a Bible open next to it. The background is softly blurred showing a religious icon and warm lamp lighting. The design uses royal blue and gold tones to create a sense of professional modernism and quiet sanctity." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAWyksL0ZL-z6fCY5W8I8uCYwTNX68Xmke6uKh3lE6mvYKGABwoKZlo8JruTiB_x_3KZKTAb2gG6-HkD49IwhlwXZ6jbJ3Ew3uBQBLcY2XZUVw3_2oOpVcmtYijCvtRHUO4J9-2nI1Prg4Qyx1Sj8i-Otzms8tqxIzIa2jmwdjVLAAO8UEh65KqddL_toH_aXfZ6SXzeWL-2M1v2M1reUN-XnVezmHecUsg_U0V8oPVNwdF9L6AxfWpyJjA0QmXNDSLRZ77JJLfz7Xw')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent flex items-end p-4">
+<span class="bg-secondary text-on-primary px-3 py-1 rounded text-caption font-bold">القيامة</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">قوة القيامة في حياتنا اليومية</h3>
+<div class="flex items-center gap-3 mb-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">person</span>
+<span class="font-body-md">القس يوحنا كمال</span>
+</div>
+<div class="mt-auto flex justify-between items-center pt-4 border-t border-surface-container-highest">
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span class="text-caption">٥ مايو ٢٠٢٤</span>
+</div>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span class="text-caption">٣٥ دقيقة</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 4 -->
+<article class="sermon-card-hover group bg-surface-container-lowest rounded-xl overflow-hidden border-t border-secondary/20 shadow-sm flex flex-col">
+<div class="relative h-56 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="An artistic representation of an open ancient manuscript of the Bible with elegant Arabic calligraphy. The pages are lit by a soft focal light, highlighting the texture of the parchment. The surrounding area is dark, emphasizing the 'Light of the Word'. The color palette follows the brand's Royal Blue and gold theme, with deep shadows and luminous highlights." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBMZhdkn31gdSzf3489bTjAWjzHcftVJL60Ddzz5TY5s6ZwYrogq0JmeMC_fU6XgkJ3jEIdnqb1R3YzAJHluoVGyNXwqQQZ4G6jjQyRbsXRCXTD250dXmk-ZfpzFL66n-OMdN5klmgVwnWpAG-MXReum6PecomBVRkaV5U2nkoMQDM8RxKGW2wWT3SKO8bPS1LAYP2ddUtfQpCP68OhsNu0D9J6DnFPlJIGgvgwQZz39Q_E5icvhG138e1An8sMtPh8K2S8OedXcHSv')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent flex items-end p-4">
+<span class="bg-secondary text-on-primary px-3 py-1 rounded text-caption font-bold">دراسات كتابية</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">شرح رسالة رومية - الإصحاح الأول</h3>
+<div class="flex items-center gap-3 mb-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">person</span>
+<span class="font-body-md">الدكتور مجدي باسيلي</span>
+</div>
+<div class="mt-auto flex justify-between items-center pt-4 border-t border-surface-container-highest">
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span class="text-caption">١ يونيو ٢٠٢٤</span>
+</div>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span class="text-caption">٥٠ دقيقة</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 5 -->
+<article class="sermon-card-hover group bg-surface-container-lowest rounded-xl overflow-hidden border-t border-secondary/20 shadow-sm flex flex-col">
+<div class="relative h-56 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="A minimalist photograph of a family sitting together in a modern, brightly lit living room, engaged in a peaceful conversation. The aesthetic is clean and corporate modern, with white walls, royal blue cushions, and gold decor elements. The mood is respectful and focuses on community and family values within a spiritual context." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB_1GbwL-AuSfL3DhugqXQCvkv4_SUHwNMfPjgeE19Z4nPozyMvXlMlzrbe9w8m4i-xKC8C0Pr5vxTed9ni6pDzAgHiLj9mnR1EujmAkP_5k2pvP5DYWAGIr5UgPFYoWwTr1hRTjNggpoP9iX7mrtKyAdGgghlgn52H-CH3QAiGyPlgtnyom0FEWDKa7hrCQh0_LfD94RZZ4IffBj2FPxITsEjCZKDNcGSnq0Rj26pe8Er1LZBnu8ChVZcmxwUrl2NvqpfMA7cU-dOY')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent flex items-end p-4">
+<span class="bg-secondary text-on-primary px-3 py-1 rounded text-caption font-bold">الأسرة</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">أساسيات البيت المسيحي السعيد</h3>
+<div class="flex items-center gap-3 mb-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">person</span>
+<span class="font-body-md">القمص أرسانيوس وليم</span>
+</div>
+<div class="mt-auto flex justify-between items-center pt-4 border-t border-surface-container-highest">
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span class="text-caption">١٢ مايو ٢٠٢٤</span>
+</div>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span class="text-caption">٤٢ دقيقة</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 6 -->
+<article class="sermon-card-hover group bg-surface-container-lowest rounded-xl overflow-hidden border-t border-secondary/20 shadow-sm flex flex-col">
+<div class="relative h-56 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="An atmospheric, high-contrast black and white photograph of a candle flame illuminating a church interior, with subtle gold accents added digitally. The focus is on the warm glow against the dark, quiet church hall. It evokes a feeling of deep prayer and spiritual contemplation, aligned with the church's minimalist and modern corporate visual style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDeOBhCyvD4N_xxs3IMZdZTfPaO_602eaUJHzxIOUhY5VaUpyToFkkSGs_8DKnrhvakDHPP6hbu_pDSKYZRvF4MRhci4G8IFk6OhQeDmrEqajUxObagBrhyFutpjiLcnyvZ6YYZacVNXNRxE3-MQTfGWi2A6LXTxI5RjS0nV1TdjFoH57kJvYOI82Kx46gsMMJq1xt5Ztx27zmV099ETNl_1S7ni0apzi_t3AaRIrlO5NQmhYxm_9BL4A5y4AnwnBc4sBQ0pEjwA7Y_')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent flex items-end p-4">
+<span class="bg-secondary text-on-primary px-3 py-1 rounded text-caption font-bold">أسبوع الآلام</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-grow">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">لماذا نتألم؟ نظرة مسيحية</h3>
+<div class="flex items-center gap-3 mb-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">person</span>
+<span class="font-body-md">الخادم بيتر صموئيل</span>
+</div>
+<div class="mt-auto flex justify-between items-center pt-4 border-t border-surface-container-highest">
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span class="text-caption">٢٠ أبريل ٢٠٢٤</span>
+</div>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span class="text-caption">٣٠ دقيقة</span>
+</div>
+</div>
+</div>
+</article>
+</section>
+<!-- Pagination -->
+<div class="mt-16 flex justify-center items-center gap-2">
+<button class="w-10 h-10 rounded-lg border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+<button class="w-10 h-10 rounded-lg bg-primary text-on-primary font-bold">١</button>
+<button class="w-10 h-10 rounded-lg border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors">٢</button>
+<button class="w-10 h-10 rounded-lg border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors">٣</button>
+<span class="mx-2">...</span>
+<button class="w-10 h-10 rounded-lg border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors">١٢</button>
+<button class="w-10 h-10 rounded-lg border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+</div>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="w-full py-12 bg-surface-container-highest dark:bg-surface-dim border-t-2 border-secondary-fixed">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter px-gutter max-w-container-max mx-auto rtl">
+<div class="space-y-4">
+<div class="font-headline-sm text-headline-sm text-primary">كنيسة السيدة العذراء</div>
+<p class="text-on-surface-variant font-body-md leading-relaxed opacity-90">نحن كنيسة قبطية أرثوذكسية تخدم مجتمع محرم بك بالإسكندرية، نهدف لنشر كلمة الله وبناء المجتمع روحياً واجتماعياً.</p>
+</div>
+<div class="space-y-4">
+<h4 class="font-bold text-primary mb-4">روابط سريعة</h4>
+<ul class="space-y-2">
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md opacity-90 hover:opacity-100" href="#">فيس بوك</a></li>
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md opacity-90 hover:opacity-100" href="#">يوتيوب</a></li>
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md opacity-90 hover:opacity-100" href="#">إنستجرام</a></li>
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md opacity-90 hover:opacity-100" href="#">لوحة التحكم</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<h4 class="font-bold text-primary mb-4">اتصل بنا</h4>
+<div class="space-y-2 text-on-surface-variant font-body-md opacity-90">
+<p class="flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">location_on</span> شارع محرم بك، الإسكندرية</p>
+<p class="flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">call</span> 03-XXXXXXX</p>
+<p class="flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">mail</span> info@stmarymoharambek.com</p>
+</div>
+</div>
+</div>
+<div class="mt-12 pt-8 border-t border-outline-variant/30 text-center text-on-surface-variant font-body-md px-gutter">
+            © ٢٠٢٤ كنيسة السيدة العذراء مريم - محرم بك. جميع الحقوق محفوظة
+        </div>
+</footer>
+<script>
+        // Micro-interactions for filters
+        const filterButtons = document.querySelectorAll('.flex.flex-wrap button');
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => {
+                    b.classList.remove('bg-primary', 'text-on-primary');
+                    b.classList.add('bg-surface-container-lowest', 'text-on-surface-variant');
+                });
+                btn.classList.add('bg-primary', 'text-on-primary');
+                btn.classList.remove('bg-surface-container-lowest', 'text-on-surface-variant');
+            });
+        });
+
+        // Search bar interaction
+        const searchInput = document.querySelector('input[type="text"]');
+        const searchContainer = searchInput?.parentElement;
+        
+        searchInput?.addEventListener('focus', () => {
+            searchContainer.classList.add('ring-2', 'ring-primary/20', 'shadow-md');
+        });
+        
+        searchInput?.addEventListener('blur', () => {
+            searchContainer.classList.remove('ring-2', 'ring-primary/20', 'shadow-md');
+        });
+    </script>
+</body></html>

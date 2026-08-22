@@ -1,0 +1,436 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&amp;family=Tajawal:wght@400;500;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#eae8e7",
+                    "surface-container-low": "#f5f3f3",
+                    "error": "#ba1a1a",
+                    "secondary-container": "#fed65b",
+                    "inverse-primary": "#b3c5ff",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-primary-container": "#758dd5",
+                    "primary-fixed": "#dbe1ff",
+                    "on-tertiary-fixed": "#390b00",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-secondary": "#ffffff",
+                    "surface-variant": "#e4e2e2",
+                    "background": "#fbf9f8",
+                    "surface-container": "#efeded",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "surface-bright": "#fbf9f8",
+                    "primary-container": "#002366",
+                    "secondary": "#735c00",
+                    "outline-variant": "#c5c6d2",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "on-primary-fixed": "#00174a",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "on-background": "#1b1c1c",
+                    "surface-tint": "#435b9f",
+                    "on-surface": "#1b1c1c",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#2d0700",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#ffe088",
+                    "inverse-surface": "#303030",
+                    "on-secondary-fixed": "#241a00",
+                    "on-surface-variant": "#444650",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "on-primary": "#ffffff",
+                    "surface": "#fbf9f8",
+                    "outline": "#757682",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-secondary-container": "#745c00",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#501300",
+                    "secondary-fixed-dim": "#e9c349",
+                    "primary": "#00113a",
+                    "on-tertiary-container": "#d37758",
+                    "surface-dim": "#dbd9d9",
+                    "inverse-on-surface": "#f2f0f0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "container-max": "1200px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "label-md": ["Cairo"],
+                    "caption": ["Cairo"],
+                    "headline-sm": ["Tajawal"],
+                    "display-lg": ["Tajawal"],
+                    "body-md": ["Cairo"],
+                    "body-lg": ["Cairo"],
+                    "headline-md": ["Tajawal"],
+                    "display-lg-mobile": ["Tajawal"]
+            },
+            "fontSize": {
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    }catch(_e){}</script><meta charset="utf-8"></head><body class="min-h-screen flex flex-row overflow-x-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="bg-primary dark:bg-primary text-secondary-fixed dark:text-secondary-fixed-dim font-body-md text-body-md font-label-md text-label-md h-screen w-64 fixed right-0 top-0 border-l border-outline-variant shadow-sm flex flex-col h-full p-4 gap-2 z-20">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="church">church</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-primary">العذراء محرم بك</h1>
+<p class="text-[10px] opacity-70">نظام الإدارة الاستراتيجي</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a href="#" class="bg-secondary-container text-on-secondary-container rounded-lg font-bold flex items-center gap-3 p-3 transition-transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="">نظرة عامة</span>
+</a>
+<a href="#" class="text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg flex items-center gap-3 p-3 transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="">إدارة الأعضاء</span>
+</a>
+<a href="#" class="text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg flex items-center gap-3 p-3 transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="settings_voice">settings_voice</span>
+<span class="">إدارة العظات</span>
+</a>
+<a href="#" class="text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg flex items-center gap-3 p-3 transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="web">web</span>
+<span class="">محتوى الموقع</span>
+</a>
+<a href="#" class="text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg flex items-center gap-3 p-3 transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="">إعدادات المسؤول</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-on-primary-fixed-variant/20">
+<div class="flex items-center gap-3 px-2">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A dignified professional headshot of a church board member wearing a formal suit, set against a blurred background of a traditional church interior with warm golden lighting. The photo is high-quality, crisp, and conveys a sense of wisdom and leadership." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0YcLh5DfeP0dxm_oUzPa6PMiqbU-34tYYy7wOlLGxTPCjgZq4uSdkWkVGWeLGb9kAdbNQ5yMXJG6mHvJAXLEXMTFUJ113pIzDHHALDXFaDNT9bb8H0tajAE10PGm1WzFn40tBGbC0fTAFfJBTNXxX6aZ3VskAdsvFuZnIwzdQycF4Zh-_LtVYI73TfCXgwH1DSNON0WqyhU8qJZmz6HC3SVaKhuvMiw4x-sD0wY6GGxkLFB9D2UaxdINY7BR1__dYQfeCeXsv4PnA">
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold text-on-primary truncate">أ. هاني يوسف</p>
+<p class="text-[10px] text-on-primary-fixed-variant truncate">أمين الصندوق</p>
+</div>
+<span class="material-symbols-outlined text-on-primary-fixed-variant cursor-pointer" data-icon="logout">logout</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 mr-64 flex flex-col min-h-screen bg-background">
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center h-16 px-margin-desktop w-[calc(100%-16rem)] fixed top-0 left-0 z-10 bg-surface dark:bg-surface-dim border-b border-outline-variant flat no shadows">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none rounded-full pr-10 pl-4 py-2 text-body-md focus:ring-2 focus:ring-primary w-64 transition-all" placeholder="البحث عن خطة أو مهمة..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">لوحة التحكم الاستراتيجية</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative cursor-pointer hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-3xl cursor-pointer hover:text-primary transition-colors" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<section class="mt-16 p-gutter flex flex-col gap-8 max-w-[1400px]">
+<!-- Welcome Header -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-primary mb-1">مرحباً بك، سيادة العضو</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">إليك نظرة سريعة على تقدم المشاريع القائمة والمهام العاجلة.</p>
+</div>
+<button class="bg-primary text-on-primary px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                    إضافة مبادرة جديدة
+                </button>
+</div>
+<!-- Bento Grid: Analytics & Status -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="md:col-span-1 glass-card p-6 rounded-2xl flex flex-col justify-between gold-border-top shadow-sm">
+<div class="flex justify-between items-start">
+<span class="p-2 bg-primary/10 rounded-lg material-symbols-outlined text-primary" data-icon="pending_actions">pending_actions</span>
+<span class="text-primary font-bold">+١٢٪</span>
+</div>
+<div class="mt-4">
+<p class="text-on-surface-variant text-label-md font-label-md">مشاريع تحت التنفيذ</p>
+<h3 class="text-4xl font-bold text-primary">٠٨</h3>
+</div>
+</div>
+<div class="md:col-span-1 glass-card p-6 rounded-2xl flex flex-col justify-between gold-border-top shadow-sm">
+<div class="flex justify-between items-start">
+<span class="p-2 bg-secondary/10 rounded-lg material-symbols-outlined text-secondary" data-icon="task_alt">task_alt</span>
+<span class="text-secondary font-bold">مكتمل</span>
+</div>
+<div class="mt-4">
+<p class="text-on-surface-variant text-label-md font-label-md">مهام منجزة هذا الأسبوع</p>
+<h3 class="text-4xl font-bold text-secondary">٢٤</h3>
+</div>
+</div>
+<div class="md:col-span-2 glass-card p-6 rounded-2xl relative overflow-hidden gold-border-top shadow-sm">
+<div class="relative z-10">
+<h4 class="text-primary font-bold font-headline-sm mb-2">إجمالي الميزانية المستخدمة</h4>
+<p class="text-on-surface-variant mb-4">الميزانية الاستراتيجية السنوية ٢٠٢٤</p>
+<div class="flex items-center gap-4">
+<div class="flex-1 h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[65%] rounded-full shadow-[0_0_10px_rgba(115,92,0,0.3)]"></div>
+</div>
+<span class="text-primary font-bold">٦٥٪</span>
+</div>
+</div>
+<div class="absolute -bottom-10 -left-10 opacity-5">
+<span class="material-symbols-outlined text-[150px]" data-icon="payments">payments</span>
+</div>
+</div>
+</div>
+<!-- Strategic Plans & Tasks Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Main Strategic Plans List (2/3 width) -->
+<div class="lg:col-span-2 space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm font-bold text-primary">المبادرات الاستراتيجية الجارية</h3>
+<a class="text-secondary font-label-md hover:underline" href="#">عرض الكل</a>
+</div>
+<!-- Plan Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex items-start justify-between mb-4">
+<div class="flex gap-4">
+<div class="w-16 h-16 rounded-xl bg-surface-container flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-4xl" data-icon="foundation">foundation</span>
+</div>
+<div>
+<h4 class="font-bold text-lg text-primary">تجديد قاعة المناسبات الكبرى</h4>
+<p class="text-body-md text-on-surface-variant">تحديث الأنظمة الصوتية، الإضاءة، والدهانات الداخلية.</p>
+</div>
+</div>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-xs font-bold">عالية الأولوية</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-md">
+<span class="text-on-surface-variant">نسبة الإنجاز</span>
+<span class="text-primary font-bold">٧٢٪</span>
+</div>
+<div class="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[72%] rounded-full"></div>
+</div>
+</div>
+<div class="mt-6 flex justify-between items-center">
+<div class="flex -space-x-2 rtl:space-x-reverse">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden" title="Member 1">
+<img class="w-full h-full object-cover" data-alt="Portrait of a young woman with a warm smile, wearing a modest professional blouse, professional lighting, corporate headshot style, clean background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqzsd9SLj-1IoJzHWoOJjGLvZ2jM4DaZmwsPHRKGyYgNx-O27zhgQuQIl5Dgd4DQLyvPD8MwZ0rpxjBdsJqfd2WA2QHHTZ1OPR3IVj0UWdxaIOzgMHZzHs6zN86CTCu4QzbFabaSV_Y5c6ZtS42X015TcdYhSHQomxJAuRQubZ9FXLRPMXB1cLaUy-fOx9HuBkwiIqNfiSdDePfyb7z7v_13qftc1LXRyvdVBVv2W8zmEfhd1xtY17hmxZTunajjTC0fK1hbiKMlAs">
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden" title="Member 2">
+<img class="w-full h-full object-cover" data-alt="A man in his 40s with a kind expression, wearing a semi-formal shirt, focused on the camera, sharp professional photography, soft church interior background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuASoRfLwK-4jfVzIjmSyMtEgVrLO3uLNkSU4s9pgdTd6TC9fXweyYVsz9gl6CPW-JDlvszhSGS1xaR2M0xBLyB_5LB3YyGA9OIHtlwWsT60aYKWCmbuwt8_NbK5vUYyhlGQhcRbgPPEFI1ZZmOXo7iTriERc8lMfIUtMfsLhr4hVTN6Bah9EasOvgrL3tFYgEdX_pvo__ldiClWpnaWvs7LJkoFJ9K0eRG8HH-Bv3NwIqGzLrrxUnu7JB1IxJjC1KQTWZK5d_RlU9X-">
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-primary text-white flex items-center justify-center text-[10px] font-bold">+٣</div>
+</div>
+<button class="text-primary font-label-md flex items-center gap-1 hover:gap-2 transition-all">
+                                التفاصيل المباشرة <span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
+</button>
+</div>
+</div>
+<!-- Plan Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex items-start justify-between mb-4">
+<div class="flex gap-4">
+<div class="w-16 h-16 rounded-xl bg-surface-container flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-4xl" data-icon="groups_2">groups_2</span>
+</div>
+<div>
+<h4 class="font-bold text-lg text-primary">مؤتمر الشباب الصيفي ٢٠٢٤</h4>
+<p class="text-body-md text-on-surface-variant">تنظيم فعاليات روحية ورياضية لعدد ٣٠٠ شاب وشابة.</p>
+</div>
+</div>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-xs font-bold">متوسطة</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-md">
+<span class="text-on-surface-variant">نسبة الإنجاز</span>
+<span class="text-primary font-bold">٤٥٪</span>
+</div>
+<div class="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[45%] rounded-full"></div>
+</div>
+</div>
+<div class="mt-6 flex justify-between items-center">
+<div class="flex -space-x-2 rtl:space-x-reverse">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a serene man with silver hair and a warm smile, professional lighting, soft focus background, expressing community leadership and calm authority." src="https://lh3.googleusercontent.com/aida-public/AB6AXuASZ88NGoxjxuVI0x188nACkr1TtbEy-5clFq7PzHPSgS7BlDw_JxolTzvd_4cybjR0vUdNVrUpnbv7L4LhF5NH8aY0iAUD0T-FaLa7RTXVxASUIsNFGoV48mbv50f1_TgNfMp-mnIKSSrY7-WfcQnbUYQFbPnurGJW4kC4-znAzcLJA9qPGnltJCrNtyuq5ezY_Rz04li11rvEqGkzIqMSyTyVc7pfE_epd7aXJ0KR-_cR9-agd43Deo3eCFvfn6fl1d0m_V_PD8BT">
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of a woman in her late 30s, dressed in a formal blue dress, sharp eye contact, representing church board professionalism and warmth." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCNKvCQiPDsf5RrW2wG3Jn8lEFFB_rbenYRzvyEuCZXYf2st6g6NwV16-aXSnViRsrhorOsl7GgElYxFaVu417xzjTwF6ucYuq-GXSCsHBlw0QmqT-poy5-l9chc8YJqBmzUbuBBfrmMIijQo8dLnOsDTKBLGrLcndS9fSaCoO5EP_G4JLMpMRxxMeqiGEFvmZnGjHSDrcu6B62I-iHXPRLuFva9gaZ_T6RuxFx3ttRnOFOHG9CMJIV3KWgDDH3F3mpHAa3qGq4V0r">
+</div>
+</div>
+<button class="text-primary font-label-md flex items-center gap-1 hover:gap-2 transition-all">
+                                التفاصيل المباشرة <span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
+</button>
+</div>
+</div>
+<!-- Plan Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex items-start justify-between mb-4">
+<div class="flex gap-4">
+<div class="w-16 h-16 rounded-xl bg-surface-container flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-4xl" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div>
+<h4 class="font-bold text-lg text-primary">تطوير منصة الخدمات الإلكترونية</h4>
+<p class="text-body-md text-on-surface-variant">إتاحة حجز القداسات والخدمات عبر تطبيق الموبايل.</p>
+</div>
+</div>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-xs font-bold">مجدولة</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-md">
+<span class="text-on-surface-variant">نسبة الإنجاز</span>
+<span class="text-primary font-bold">١٥٪</span>
+</div>
+<div class="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-outline w-[15%] rounded-full"></div>
+</div>
+</div>
+<div class="mt-6 flex justify-between items-center">
+<div class="flex -space-x-2 rtl:space-x-reverse">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A tech-focused professional headshot of a younger man with glasses, wearing a neutral colored polo shirt, bright clean background, friendly and professional appearance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmTQpe-9NJBAyQ56p_Qh28Csr3ZBFx-TaVhiDg3bjj0g88newo-uVgKQS1m58LmHZq6N8BdQVnJBtgGctnSQ1PhRgs5gF3SmxX9TVgEJNhHWTyB78m9sXO2gaUSFF7F2BaUc4z_9HwDCEkI6UmsgpRMtnYEz7HonNwGSvkJS2ihOdC9Z8svh2HcPkEKxsw1kUGe5I3V6voIFFGoVQEeZHqEw0aQixma_rw9Nlfc0JDtbOjuP5vuvrVjyKLAkwPD_F79NRSkJGenxov">
+</div>
+</div>
+<button class="text-primary font-label-md flex items-center gap-1 hover:gap-2 transition-all">
+                                التفاصيل المباشرة <span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Right Column: Tasks and Notifications (1/3 width) -->
+<div class="space-y-6">
+<div class="glass-card p-6 rounded-2xl gold-border-top shadow-sm flex flex-col h-full">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline-sm text-headline-sm font-bold text-primary">المهام العاجلة</h3>
+<span class="bg-error text-white w-6 h-6 flex items-center justify-center rounded-full text-xs">٣</span>
+</div>
+<div class="space-y-4">
+<!-- Task Item -->
+<div class="flex gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer border-r-4 border-error">
+<input class="mt-1 rounded text-primary focus:ring-primary" type="checkbox">
+<div>
+<p class="font-bold text-primary">توقيع عقد توريد أجهزة الصوت</p>
+<p class="text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="schedule">schedule</span>
+                                        تنتهي غداً
+                                    </p>
+</div>
+</div>
+<!-- Task Item -->
+<div class="flex gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer border-r-4 border-secondary">
+<input class="mt-1 rounded text-primary focus:ring-primary" type="checkbox">
+<div>
+<p class="font-bold text-primary">مراجعة كشوفات اشتراكات الشباب</p>
+<p class="text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="schedule">schedule</span>
+                                        خلال يومين
+                                    </p>
+</div>
+</div>
+<!-- Task Item -->
+<div class="flex gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer border-r-4 border-primary">
+<input class="mt-1 rounded text-primary focus:ring-primary" type="checkbox">
+<div>
+<p class="font-bold text-primary">اعتماد التصاميم النهائية للمنصة</p>
+<p class="text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="schedule">schedule</span>
+                                        خلال ٤ أيام
+                                    </p>
+</div>
+</div>
+<!-- Task Item -->
+<div class="flex gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer border-r-4 border-outline">
+<input class="mt-1 rounded text-primary focus:ring-primary" type="checkbox">
+<div>
+<p class="font-bold text-primary">اجتماع لجنة الصيانة الأسبوعي</p>
+<p class="text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="event">event</span>
+                                        السبت القادم - الساعة ٦ م
+                                    </p>
+</div>
+</div>
+</div>
+<button class="mt-8 w-full py-3 text-primary font-bold border-2 border-primary/20 rounded-xl hover:bg-primary/5 transition-colors">
+                            إضافة مهمة سريعة
+                        </button>
+</div>
+<!-- Upcoming Events Mini Card -->
+<div class="bg-primary-container text-on-primary rounded-2xl p-6 relative overflow-hidden">
+<div class="relative z-10">
+<h4 class="font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+                                الاجتماع العام القادم
+                            </h4>
+<div class="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
+<p class="text-xl font-bold">١٥ يونيو - ٠٧:٠٠ م</p>
+<p class="text-sm opacity-80">مناقشة ميزانية النصف الثاني من العام</p>
+</div>
+</div>
+<span class="absolute -bottom-4 -left-4 material-symbols-outlined text-white/5 text-8xl" data-icon="groups">groups</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer (Shared Component) -->
+<footer class="flex justify-between items-center p-4 mt-auto w-[calc(100%-16rem)] ml-auto bg-surface-container-low dark:bg-surface-container-lowest text-on-surface-variant dark:text-on-surface-variant font-caption text-caption border-t border-outline-variant flat no shadows">
+<p class="font-label-md text-label-md font-bold text-primary">© ٢٠٢٤ كنيسة القديس مارمينا العجايبي بمحرم بك - جميع الحقوق محفوظة</p>
+<div class="flex gap-6">
+<a class="hover:text-secondary transition-colors" href="#">الدعم الفني</a>
+<a class="hover:text-secondary transition-colors" href="#">سياسة الخصوصية</a>
+</div>
+</footer>
+</main>
+<!-- Interactive Layer: Floating Micro-effects -->
+<script>
+        // Simple micro-interaction for cards
+        document.querySelectorAll('.glass-card, .bg-surface-container-lowest').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0px)';
+            });
+        });
+
+        // Search bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-105');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-105');
+        });
+    </script>
+
+</body></html>

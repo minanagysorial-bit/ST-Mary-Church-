@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إعدادات المسؤولين - كنيسة مارمينا محرم بك</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&amp;family=Cairo:wght@300;400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f5f3f3",
+                    "error": "#ba1a1a",
+                    "background": "#fbf9f8",
+                    "tertiary-fixed": "#ffdbd0",
+                    "error-container": "#ffdad6",
+                    "primary": "#00113a",
+                    "surface-dim": "#dbd9d9",
+                    "outline-variant": "#c5c6d2",
+                    "on-surface-variant": "#444650",
+                    "on-background": "#1b1c1c",
+                    "surface-container-highest": "#e4e2e2",
+                    "secondary-fixed-dim": "#e9c349",
+                    "on-error": "#ffffff",
+                    "secondary": "#735c00",
+                    "tertiary-container": "#501300",
+                    "outline": "#757682",
+                    "surface-container": "#efeded",
+                    "surface-bright": "#fbf9f8",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "on-secondary-container": "#745c00",
+                    "surface-variant": "#e4e2e2",
+                    "on-tertiary-container": "#d37758",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#435b9f",
+                    "surface-container-high": "#eae8e7",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#002366",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#b3c5ff",
+                    "on-secondary-fixed-variant": "#574500",
+                    "inverse-surface": "#303030",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "inverse-on-surface": "#f2f0f0",
+                    "surface": "#fbf9f8",
+                    "secondary-container": "#fed65b",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "on-secondary-fixed": "#241a00",
+                    "on-primary-fixed": "#00174a",
+                    "on-primary-container": "#758dd5",
+                    "on-tertiary-fixed": "#390b00",
+                    "secondary-fixed": "#ffe088",
+                    "primary-fixed": "#dbe1ff",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#2d0700",
+                    "on-surface": "#1b1c1c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "8px",
+                    "container-max": "1200px",
+                    "gutter": "24px",
+                    "margin-desktop": "40px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Tajawal"],
+                    "display-lg": ["Tajawal"],
+                    "label-md": ["Cairo"],
+                    "headline-md": ["Tajawal"],
+                    "caption": ["Cairo"],
+                    "body-md": ["Cairo"],
+                    "body-lg": ["Cairo"],
+                    "display-lg-mobile": ["Tajawal"]
+            },
+            "fontSize": {
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #00091d; /* Deep Dark for Admin */
+            color: #fbf9f8;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 10px;
+        }
+        .switch-input:checked + .switch-label {
+            background-color: #fed65b;
+        }
+        .switch-input:checked + .switch-label::after {
+            transform: translateX(-20px);
+            background-color: #00113a;
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+<!-- Sidebar Navigation Shell -->
+<aside class="bg-primary h-screen w-64 fixed right-0 top-0 border-l border-outline-variant shadow-sm flex flex-col p-4 gap-2 z-30 transition-all duration-300">
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img class="w-8 h-8 object-contain" data-alt="A stylized minimalist golden church icon on a deep royal blue background, representing the spiritual heritage of St. Mary Church. The artwork uses clean lines and a premium modern aesthetic, echoing spiritual peace and administrative order through symmetrical composition and soft ambient glow." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMClGpRmd59bN8L1bqLXF_Sf7PITy44OJcHIZZuaP3TG07GZedO9CQR3qDe9_y7SQxWM-sFbo8D1glOxtn6bhxD8v-nk5B7DLAxrTBHMIXgbuokaMSR59uw8amOVzD1dnIjAXF_YvIlF_daHJlbF0MFFQcMoGBfwVqnIwy103nRsQOJefw3NRL3JUIs9lxN70Ir4f_XLiDhN6VXtMFbZUrxZBJb-i0tTwlfS_btuw3hFzsyBtF4SrHRKWI66EmyGaLZmaeFCkfMVYY"/>
+</div>
+<div>
+<h1 class="font-headline-sm text-[18px] font-bold text-on-primary leading-tight">مارمينا محرم بك</h1>
+<p class="font-label-md text-caption text-secondary-fixed opacity-70">نظام الإدارة</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md">نظرة عامة</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md">إدارة الأعضاء</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings_voice</span>
+<span class="font-label-md">إدارة العظات</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">web</span>
+<span class="font-label-md">محتوى الموقع</span>
+</a>
+<a class="flex items-center gap-3 p-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="font-label-md">إعدادات المسؤول</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-white/10 pt-4">
+<button class="w-full flex items-center gap-3 p-3 text-error rounded-lg hover:bg-error/10 transition-colors">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md">تسجيل الخروج</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="mr-64 w-[calc(100%-16rem)] h-screen overflow-y-auto custom-scrollbar bg-[#00091d] relative">
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center h-16 px-margin-desktop sticky top-0 bg-[#00091d]/80 backdrop-blur-md z-20 border-b border-white/5">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-sm text-primary-fixed font-bold">إدارة المسؤولين والصلاحيات</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined text-primary-fixed cursor-pointer hover:text-secondary-fixed-dim transition-colors">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<span class="font-label-md text-primary-fixed group-hover:text-secondary-fixed-dim transition-colors">أ. يوحنا مرقس</span>
+<span class="material-symbols-outlined text-3xl text-primary-fixed">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Content Body -->
+<div class="p-margin-desktop space-y-8">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h3 class="font-headline-md text-white mb-2">قائمة مسؤولي النظام</h3>
+<p class="font-body-md text-outline-variant">إدارة الحسابات التي لديها حق الوصول للوحة التحكم وتحديد صلاحيات كل فرد.</p>
+</div>
+<button class="flex items-center gap-2 bg-secondary text-on-secondary px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-secondary/20 transition-all transform active:scale-95">
+<span class="material-symbols-outlined">person_add</span>
+<span>إضافة مسؤول جديد</span>
+</button>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-panel p-6 rounded-2xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-primary-fixed-dim">
+<span class="material-symbols-outlined">shield_person</span>
+</div>
+<div>
+<p class="font-caption text-outline-variant">إجمالي المسؤولين</p>
+<p class="font-headline-sm text-white font-bold">١٢</p>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-2xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/20 flex items-center justify-center text-secondary-fixed-dim">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+</div>
+<div>
+<p class="font-caption text-outline-variant">مدراء النظام</p>
+<p class="font-headline-sm text-white font-bold">٣</p>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-2xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-tertiary-container/30 flex items-center justify-center text-tertiary-fixed-dim">
+<span class="material-symbols-outlined">history</span>
+</div>
+<div>
+<p class="font-caption text-outline-variant">آخر نشاط</p>
+<p class="font-headline-sm text-white font-bold">منذ ٥ دقائق</p>
+</div>
+</div>
+</div>
+<!-- Admin List Table -->
+<div class="glass-panel rounded-2xl overflow-hidden">
+<table class="w-full text-right">
+<thead class="bg-white/5 text-primary-fixed border-b border-white/10">
+<tr>
+<th class="p-4 font-label-md">المسؤول</th>
+<th class="p-4 font-label-md">الدور الوظيفي</th>
+<th class="p-4 font-label-md">تعديل المحتوى</th>
+<th class="p-4 font-label-md">إدارة الأعضاء</th>
+<th class="p-4 font-label-md">الرسائل</th>
+<th class="p-4 font-label-md">إجراءات</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<!-- Admin Row 1 -->
+<tr class="hover:bg-white/[0.02] transition-colors">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-primary-container flex items-center justify-center text-white font-bold">م</div>
+<div>
+<p class="font-body-md font-bold text-white">مينا غبريال</p>
+<p class="font-caption text-outline-variant">mina@church.org</p>
+</div>
+</div>
+</td>
+<td class="p-4">
+<span class="bg-secondary-container/20 text-secondary-fixed-dim px-3 py-1 rounded-full font-label-md">مدير نظام</span>
+</td>
+<td class="p-4">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="switch-input absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 checked:right-0 right-5" id="edit-1" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-white/20 cursor-pointer transition-colors duration-200" for="edit-1"></label>
+</div>
+</td>
+<td class="p-4">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="switch-input absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 checked:right-0 right-5" id="manage-1" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-white/20 cursor-pointer transition-colors duration-200" for="manage-1"></label>
+</div>
+</td>
+<td class="p-4">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="switch-input absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 checked:right-0 right-5" id="msg-1" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-white/20 cursor-pointer transition-colors duration-200" for="msg-1"></label>
+</div>
+</td>
+<td class="p-4">
+<button class="p-2 text-outline-variant hover:text-error transition-colors transform active:scale-90">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</td>
+</tr>
+<!-- Admin Row 2 -->
+<tr class="hover:bg-white/[0.02] transition-colors">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-container to-blue-500 flex items-center justify-center text-white font-bold">س</div>
+<div>
+<p class="font-body-md font-bold text-white">سارة إبراهيم</p>
+<p class="font-caption text-outline-variant">sara.i@church.org</p>
+</div>
+</div>
+</td>
+<td class="p-4">
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-label-md">محرر محتوى</span>
+</td>
+<td class="p-4">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="switch-input absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 checked:right-0 right-5" id="edit-2" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-white/20 cursor-pointer transition-colors duration-200" for="edit-2"></label>
+</div>
+</td>
+<td class="p-4">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input class="switch-input absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 checked:right-0 right-5" id="manage-2" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-white/20 cursor-pointer transition-colors duration-200" for="manage-2"></label>
+</div>
+</td>
+<td class="p-4">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input class="switch-input absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 checked:right-0 right-5" id="msg-2" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-white/20 cursor-pointer transition-colors duration-200" for="msg-2"></label>
+</div>
+</td>
+<td class="p-4">
+<button class="p-2 text-outline-variant hover:text-error transition-colors transform active:scale-90">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</td>
+</tr>
+<!-- Admin Row 3 -->
+<tr class="hover:bg-white/[0.02] transition-colors">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-gradient-to-br from-tertiary-container to-orange-400 flex items-center justify-center text-white font-bold">ب</div>
+<div>
+<p class="font-body-md font-bold text-white">بيشوي أنور</p>
+<p class="font-caption text-outline-variant">bishoy.a@church.org</p>
+</div>
+</div>
+</td>
+<td class="p-4">
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-label-md">مسؤول تواصل</span>
+</td>
+<td class="p-4">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input class="switch-input absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 checked:right-0 right-5" id="edit-3" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-white/20 cursor-pointer transition-colors duration-200" for="edit-3"></label>
+</div>
+</td>
+<td class="p-4">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input class="switch-input absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 checked:right-0 right-5" id="manage-3" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-white/20 cursor-pointer transition-colors duration-200" for="manage-3"></label>
+</div>
+</td>
+<td class="p-4">
+<div class="relative inline-block w-10 h-5 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="switch-input absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 checked:right-0 right-5" id="msg-3" name="toggle" type="checkbox"/>
+<label class="switch-label block overflow-hidden h-5 rounded-full bg-white/20 cursor-pointer transition-colors duration-200" for="msg-3"></label>
+</div>
+</td>
+<td class="p-4">
+<button class="p-2 text-outline-variant hover:text-error transition-colors transform active:scale-90">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Activity Logs / Audit Trail -->
+<div class="glass-panel p-6 rounded-2xl">
+<div class="flex items-center justify-between mb-6">
+<h4 class="font-headline-sm text-white">سجل العمليات الأخيرة</h4>
+<button class="text-secondary-fixed-dim hover:underline font-label-md transition-all">مشاهدة الكل</button>
+</div>
+<div class="space-y-4">
+<div class="flex items-start gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors">
+<div class="mt-1 w-2 h-2 rounded-full bg-secondary"></div>
+<div class="flex-1">
+<p class="font-body-md text-white">قام <span class="text-secondary-fixed-dim font-bold">مينا غبريال</span> بتغيير صلاحيات المحتوى لـ سارة إبراهيم</p>
+<p class="font-caption text-outline-variant">اليوم، ١٠:٣٠ ص</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors">
+<div class="mt-1 w-2 h-2 rounded-full bg-blue-400"></div>
+<div class="flex-1">
+<p class="font-body-md text-white">تمت إضافة مسؤول جديد: <span class="text-secondary-fixed-dim font-bold">بيشوي أنور</span> بواسطة النظام</p>
+<p class="font-caption text-outline-variant">أمس، ٠٤:١٥ م</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors">
+<div class="mt-1 w-2 h-2 rounded-full bg-error"></div>
+<div class="flex-1">
+<p class="font-body-md text-white">محاولة دخول فاشلة من عنوان IP غير معروف للمسؤول يوحنا مرقس</p>
+<p class="font-caption text-outline-variant">أمس، ٠٩:٠٠ م</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Footer for Mobile Shell Logic (Hidden on Desktop per instruction) -->
+<footer class="flex justify-between items-center p-4 mt-12 w-[calc(100%-16rem)] ml-auto bg-surface-container-low dark:bg-[#00091d] border-t border-white/10">
+<p class="font-caption text-on-surface-variant">© ٢٠٢٤ كنيسة القديس مارمينا العجائبي بمحرم بك - جميع الحقوق محفوظة</p>
+<div class="flex gap-4">
+<a class="font-caption text-on-surface-variant hover:text-secondary-fixed-dim transition-colors" href="#">الدعم الفني</a>
+<a class="font-caption text-on-surface-variant hover:text-secondary-fixed-dim transition-colors" href="#">سياسة الخصوصية</a>
+</div>
+</footer>
+</main>
+<!-- Modal Placeholder for 'Add New Admin' (Static UI Demonstration) -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300" id="addAdminModal">
+<div class="bg-[#00113a] w-full max-w-lg rounded-2xl p-8 border border-white/10 shadow-2xl transform scale-95 transition-transform duration-300">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-sm text-white">إضافة مسؤول جديد</h3>
+<button class="text-outline-variant hover:text-white" onclick="toggleModal()"><span class="material-symbols-outlined">close</span></button>
+</div>
+<form class="space-y-4">
+<div>
+<label class="block font-label-md text-primary-fixed mb-2">الاسم الكامل</label>
+<input class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:border-secondary outline-none transition-colors" placeholder="أدخل اسم المسؤول" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-primary-fixed mb-2">البريد الإلكتروني</label>
+<input class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:border-secondary outline-none transition-colors" placeholder="email@church.org" type="email"/>
+</div>
+<div>
+<label class="block font-label-md text-primary-fixed mb-2">الدور</label>
+<select class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:border-secondary outline-none transition-colors appearance-none">
+<option>مدير نظام</option>
+<option>محرر محتوى</option>
+<option>مشرف أعضاء</option>
+</select>
+</div>
+<div class="pt-4 flex gap-4">
+<button class="flex-1 bg-secondary text-on-secondary font-bold py-3 rounded-xl transition-transform active:scale-95" type="button">حفظ البيانات</button>
+<button class="flex-1 bg-white/5 text-white font-bold py-3 rounded-xl hover:bg-white/10 transition-colors" onclick="toggleModal()" type="button">إلغاء</button>
+</div>
+</form>
+</div>
+</div>
+<script>
+        function toggleModal() {
+            const modal = document.getElementById('addAdminModal');
+            modal.classList.toggle('opacity-0');
+            modal.classList.toggle('pointer-events-none');
+            modal.children[0].classList.toggle('scale-95');
+        }
+
+        // Attach event to the Add button
+        document.querySelector('button.bg-secondary').addEventListener('click', toggleModal);
+
+        // Simple animation for the rows
+        document.querySelectorAll('tbody tr').forEach((tr, index) => {
+            tr.style.opacity = '0';
+            tr.style.transform = 'translateY(10px)';
+            setTimeout(() => {
+                tr.style.transition = 'all 0.4s ease';
+                tr.style.opacity = '1';
+                tr.style.transform = 'translateY(0)';
+            }, 100 * index);
+        });
+    </script>
+</body></html>

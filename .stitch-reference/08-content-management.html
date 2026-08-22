@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إدارة محتوى الموقع - كنيسة مارمينا محرم بك</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Cairo:wght@400;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@100..900&family=Tajawal:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f5f3f3",
+                    "error": "#ba1a1a",
+                    "background": "#fbf9f8",
+                    "tertiary-fixed": "#ffdbd0",
+                    "error-container": "#ffdad6",
+                    "primary": "#00113a",
+                    "surface-dim": "#dbd9d9",
+                    "outline-variant": "#c5c6d2",
+                    "on-surface-variant": "#444650",
+                    "on-background": "#1b1c1c",
+                    "surface-container-highest": "#e4e2e2",
+                    "secondary-fixed-dim": "#e9c349",
+                    "on-error": "#ffffff",
+                    "secondary": "#735c00",
+                    "tertiary-container": "#501300",
+                    "outline": "#757682",
+                    "surface-container": "#efeded",
+                    "surface-bright": "#fbf9f8",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "on-secondary-container": "#745c00",
+                    "surface-variant": "#e4e2e2",
+                    "on-tertiary-container": "#d37758",
+                    "on-tertiary-fixed-variant": "#783018",
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#435b9f",
+                    "surface-container-high": "#eae8e7",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#002366",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#b3c5ff",
+                    "on-secondary-fixed-variant": "#574500",
+                    "inverse-surface": "#303030",
+                    "on-primary-fixed-variant": "#2a4386",
+                    "inverse-on-surface": "#f2f0f0",
+                    "surface": "#fbf9f8",
+                    "secondary-container": "#fed65b",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "on-secondary-fixed": "#241a00",
+                    "on-primary-fixed": "#00174a",
+                    "on-primary-container": "#758dd5",
+                    "on-tertiary-fixed": "#390b00",
+                    "secondary-fixed": "#ffe088",
+                    "primary-fixed": "#dbe1ff",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#2d0700",
+                    "on-surface": "#1b1c1c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "8px",
+                    "container-max": "1200px",
+                    "gutter": "24px",
+                    "margin-desktop": "40px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Tajawal"],
+                    "display-lg": ["Tajawal"],
+                    "label-md": ["Cairo"],
+                    "headline-md": ["Tajawal"],
+                    "caption": ["Cairo"],
+                    "body-md": ["Cairo"],
+                    "body-lg": ["Cairo"],
+                    "display-lg-mobile": ["Tajawal"]
+            },
+            "fontSize": {
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "44px", "fontWeight": "500"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #1b1c1c; /* Dark mode fallback */
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .sidebar-active {
+            background: #fed65b;
+            color: #241a00;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #435b9f;
+            box-shadow: 0 0 0 2px rgba(67, 91, 159, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-on-background text-surface selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 fixed right-0 top-0 bg-primary dark:bg-primary border-l border-outline-variant shadow-sm z-50 flex flex-col h-full p-4 gap-2">
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional church logo for St. Mary Church in Moharam Bek, featuring a minimalist cross intertwined with olive branches. The logo is designed with a royal blue and gold palette, reflecting a sense of spiritual elegance and modern corporate style, set against a clean white background for high visibility." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7b8MR7UzV6kWi-IWwu86hqLpdjEAuYj28Q2HDja8pJueqA1Xb54uruultFW0TFEjbULqbcEaKt4Cil8Nkm4qyh8n-L4OqqsWRCJh1XGoUD-xS9IC-MaUuxypjk0a7VNuy7xrFTZ2zodYqqp2r7-sDFnJ5A5CuEwjibkQO6gWm_PNcyR_2Q5WaegpNGz4BarlKqd-6L5r3FD0ESzCK1-4RhhpV1Dz7-Ddgg3RS88yfaCyq8FOFNWFvkuwEA0t5ejLJmfnkNXXcxdRH"/>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-primary leading-tight">مارمينا محرم بك</h2>
+<p class="font-label-md text-label-md text-on-primary-fixed-variant opacity-80">نظام الإدارة</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">نظرة عامة</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">إدارة الأعضاء</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings_voice</span>
+<span class="font-label-md text-label-md">إدارة العظات</span>
+</a>
+<a class="flex items-center gap-3 p-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined">web</span>
+<span class="font-label-md text-label-md text-on-secondary-fixed">محتوى الموقع</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-primary-fixed-variant hover:bg-on-primary-fixed-variant/10 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="font-label-md text-label-md">إعدادات المسؤول</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-on-primary-fixed-variant/20">
+<div class="flex items-center gap-3 p-2">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm">account_circle</span>
+</div>
+<div class="overflow-hidden">
+<p class="font-label-md text-label-md text-on-primary truncate">الخدمة التقنية</p>
+<p class="text-[10px] text-on-primary-fixed-variant truncate">admin@stmina.church</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="mr-64 min-h-screen flex flex-col">
+<!-- Top Navigation -->
+<header class="flex justify-between items-center h-16 px-margin-desktop w-[calc(100%-16rem)] fixed top-0 left-0 z-10 bg-surface dark:bg-surface-dim border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">لوحة التحكم</h1>
+<div class="relative">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pr-10 pl-4 py-1.5 bg-background border border-outline-variant rounded-full text-sm w-64" placeholder="بحث في المحتوى..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="mt-16 p-margin-desktop space-y-gutter flex-1 overflow-y-auto">
+<!-- Page Header with Action -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-secondary-fixed-dim">إدارة محتوى الموقع</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">تعديل الأقسام الرئيسية، الإعلانات، والآية اليومية</p>
+</div>
+<button class="flex items-center gap-2 bg-secondary-container hover:bg-secondary-fixed text-on-secondary-fixed px-6 py-3 rounded-xl font-bold transition-all hover:shadow-lg active:scale-95">
+<span class="material-symbols-outlined">save</span>
+<span class="font-label-md text-label-md">حفظ جميع التغييرات</span>
+</button>
+</div>
+<!-- Bento Grid Layout -->
+<div class="bento-grid">
+<!-- Hero Section Editor (Large Span) -->
+<section class="col-span-8 glass-card rounded-2xl p-8 space-y-6">
+<div class="flex items-center gap-3 border-b border-outline-variant pb-4">
+<span class="material-symbols-outlined text-secondary-fixed-dim">branding_watermark</span>
+<h3 class="font-headline-sm text-headline-sm font-bold">محرر القسم الرئيسي (Hero Section)</h3>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="space-y-4">
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-secondary-fixed-dim">العنوان الرئيسي</label>
+<input class="bg-on-background/50 border border-outline-variant rounded-lg p-3 text-surface" type="text" value="أهلاً بكم في كنيسة الشهيد العظيم مارمينا"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-secondary-fixed-dim">العنوان الفرعي</label>
+<textarea class="bg-on-background/50 border border-outline-variant rounded-lg p-3 text-surface resize-none" rows="3">مكان للصلاة والتعزية الروحية لجميع أفراد الأسرة في قلب الإسكندرية</textarea>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-secondary-fixed-dim">صورة الخلفية</label>
+<div class="relative h-full rounded-xl overflow-hidden border-2 border-dashed border-outline-variant flex flex-col items-center justify-center group">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity" data-alt="A grand interior view of a Coptic Orthodox church, specifically showing the intricate wooden iconostasis and soaring dome. The lighting is warm and ethereal, with sunlight streaming through stained glass windows, creating a peaceful and sacred atmosphere. The visual style is professional, high-resolution photography with a rich palette of deep blues and golden highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDscaBSAGl5P5leeJqEhVRRp4MXAkCkQdTLeyhJUJNAw8CD3aQUt4RwUx_qtWdGBIKvcYcDPS1N6k3TGzbekvEWrfIk4y9RB0EaBYYdpt7VtXwYZ32y_cElDB8EhgFYhs7hT4XaVZ8Q1uuv_ptEiwmffJM7yZVuaTHqMPuR0nSAI8tcG-fn1Re7ywcpT3TAslMT_AufvZzauCNgAFt17Xhp4ndqIw9kza9lgkfJbX7lSsfrDqLK-Wogpz229a05ccVOZfNZuXbdpgfO"/>
+</div>
+<div class="relative z-10 text-center p-4">
+<span class="material-symbols-outlined text-4xl text-outline mb-2">add_a_photo</span>
+<p class="font-caption text-caption text-outline">انقر لتغيير الصورة أو اسحب ملفاً هنا</p>
+<p class="text-[10px] text-outline/60 mt-1">المقاس الموصى به: 1920x1080 بكسل</p>
+</div>
+<input class="absolute inset-0 opacity-0 cursor-pointer" type="file"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Verse of the Day Editor -->
+<section class="col-span-4 glass-card rounded-2xl p-8 space-y-6 flex flex-col">
+<div class="flex items-center gap-3 border-b border-outline-variant pb-4">
+<span class="material-symbols-outlined text-secondary-fixed-dim">menu_book</span>
+<h3 class="font-headline-sm text-headline-sm font-bold">آية اليوم</h3>
+</div>
+<div class="flex-1 space-y-4">
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-secondary-fixed-dim">نص الآية</label>
+<textarea class="bg-on-background/50 border border-outline-variant rounded-lg p-3 text-surface italic text-center font-headline-sm" placeholder="اكتب الآية هنا..." rows="5">"لأَنَّهُ هكَذَا أَحَبَّ اللهُ الْعَالَمَ حَتَّى بَذَلَ ابْنَهُ الْوَحِيدَ..."</textarea>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-secondary-fixed-dim">الشاهد (المرجع)</label>
+<input class="bg-on-background/50 border border-outline-variant rounded-lg p-3 text-surface text-center" type="text" value="يوحنا 3 : 16"/>
+</div>
+</div>
+<div class="pt-4 flex gap-2">
+<button class="flex-1 py-2 rounded-lg bg-primary-container text-on-primary-container font-label-md hover:bg-primary transition-colors">تحديث تلقائي</button>
+<button class="w-12 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-outline hover:text-surface transition-colors">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</div>
+</section>
+<!-- Church Announcements Management -->
+<section class="col-span-12 glass-card rounded-2xl p-8 space-y-8">
+<div class="flex justify-between items-center border-b border-outline-variant pb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-fixed-dim">campaign</span>
+<h3 class="font-headline-sm text-headline-sm font-bold">إدارة إعلانات الكنيسة</h3>
+</div>
+<button class="flex items-center gap-2 text-secondary-fixed-dim hover:text-secondary-container transition-colors font-bold">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-label-md text-label-md">إضافة إعلان جديد</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Announcement Card 1 -->
+<div class="group relative bg-on-background/40 border border-outline-variant/30 rounded-xl overflow-hidden hover:border-secondary-fixed-dim/50 transition-all duration-300 shadow-sm hover:shadow-xl">
+<div class="h-32 bg-surface-container flex items-center justify-center relative">
+<img class="w-full h-full object-cover" data-alt="A festive and elegant graphic design for a church spiritual renaissance event. The image features a silhouette of St. Mary against a backdrop of a glowing evening sky, with ornate golden patterns and traditional Coptic motifs framing the borders. The overall feel is reverent, celebratory, and culturally rich, using a palette of royal blue, gold, and deep purple." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_IDzynAXDamsrw-gLiCGOvFg42hJuaT0pf5cjnnXACPk4zKtVVIFgXpSjMBXOG0XtQtSsRg7EBHyLnrQuh0qZVbnX_Ei06J4pY43co4FFnEMqZ7pe4CIeWWC67fI1HJ71WeF4jgyk-DsvOzunpli_DQqybttFJ4C2KaXbrwKdsKIF0WZXl7iu95yf2nOwjD1u3MpTlCYlnNP8r2xEbBCzLIIFWxq5Ca1buH8voaUj4hH4ubUpRWpnD4ZSGRbUoYit2WcUy_3JQCNj"/>
+<div class="absolute inset-0 bg-primary/40 group-hover:bg-transparent transition-colors"></div>
+</div>
+<div class="p-4 space-y-2">
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-surface">نهضة صوم العذراء</h4>
+<span class="bg-secondary-container/20 text-secondary-fixed-dim text-[10px] px-2 py-0.5 rounded-full border border-secondary-fixed-dim/30">نشط</span>
+</div>
+<p class="text-on-surface-variant font-caption text-caption line-clamp-2">تبدأ النهضة الروحية يوم 7 أغسطس بحضور نخبة من الآباء الكهنة والوعاظ...</p>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant/20">
+<span class="text-[10px] text-outline">تاريخ النشر: 01/08/2024</span>
+<div class="flex gap-2">
+<button class="text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-sm">edit</span></button>
+<button class="text-outline hover:text-error transition-colors"><span class="material-symbols-outlined text-sm">delete</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Announcement Card 2 -->
+<div class="group relative bg-on-background/40 border border-outline-variant/30 rounded-xl overflow-hidden hover:border-secondary-fixed-dim/50 transition-all duration-300 shadow-sm hover:shadow-xl">
+<div class="h-32 bg-surface-container flex items-center justify-center relative">
+<img class="w-full h-full object-cover" data-alt="A clean and professional digital flyer for a church summer club, showing happy children of various ages engaged in activities like painting, music, and sports. The background is a bright, sun-drenched playground with modern playground equipment. The visual style is vibrant, high-key, and family-oriented, featuring a palette of sky blue, sunshine yellow, and grassy green." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpmIYVwjlwyP2dMbfLJDEmq-YEakjJWVyFW_OFToXCNla-if2nytUe5LOvtMT6Tldm9mexJ18jMXYKNeDmi_kBNRzKLqgzDaO1G1a4TPtKn0yNxkgUat2ccMW9kt47hI2Ic_ZIeqn5o6PH7o55F21eEzI_8XinXKULKgSI6QkBxGwG1ZGGTgONPExRAcMVp_jGNBlfCxrSyCnYB_8SsSG1W7PyJv0IJCKyoQKY2_U8AakG6i5tGSN5lTvFHzkrQk2MGwfA6-NJd-Tk"/>
+<div class="absolute inset-0 bg-primary/40 group-hover:bg-transparent transition-colors"></div>
+</div>
+<div class="p-4 space-y-2">
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-surface">فتح باب التقديم للنادي الصيفي</h4>
+<span class="bg-secondary-container/20 text-secondary-fixed-dim text-[10px] px-2 py-0.5 rounded-full border border-secondary-fixed-dim/30">نشط</span>
+</div>
+<p class="text-on-surface-variant font-caption text-caption line-clamp-2">يسر الكنيسة الإعلان عن بدء الأنشطة الصيفية لعام 2024 لجميع المراحل الدراسية...</p>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant/20">
+<span class="text-[10px] text-outline">تاريخ النشر: 15/07/2024</span>
+<div class="flex gap-2">
+<button class="text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined text-sm">edit</span></button>
+<button class="text-outline hover:text-error transition-colors"><span class="material-symbols-outlined text-sm">delete</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Add New Announcement Placeholder -->
+<button class="group border-2 border-dashed border-outline-variant/30 rounded-xl flex flex-col items-center justify-center p-8 hover:border-secondary-fixed-dim/50 hover:bg-secondary-container/5 transition-all duration-300 gap-4">
+<div class="w-12 h-12 rounded-full bg-outline-variant/20 flex items-center justify-center text-outline group-hover:bg-secondary-container group-hover:text-on-secondary-fixed transition-colors">
+<span class="material-symbols-outlined text-2xl">add</span>
+</div>
+<div class="text-center">
+<p class="font-bold text-outline group-hover:text-surface">إضافة إعلان جديد</p>
+<p class="text-[10px] text-outline/60 mt-1">أضف خبراً أو حدثاً جديداً للمجتمع</p>
+</div>
+</button>
+</div>
+</section>
+</div>
+</div>
+<!-- Footer -->
+<footer class="flex justify-between items-center p-4 mt-auto w-[calc(100%-16rem)] ml-auto bg-surface-container-low dark:bg-surface-container-lowest border-t border-outline-variant">
+<p class="font-caption text-caption text-on-surface-variant">© ٢٠٢٤ كنيسة القديس مارمينا العجائبي بمحرم بك - جميع الحقوق محفوظة</p>
+<div class="flex gap-6">
+<a class="font-caption text-caption text-on-surface-variant hover:text-secondary transition-colors" href="#">الدعم الفني</a>
+<a class="font-caption text-caption text-on-surface-variant hover:text-secondary transition-colors" href="#">سياسة الخصوصية</a>
+</div>
+</footer>
+</main>
+<!-- Success Toast (Hidden by default) -->
+<div class="fixed bottom-8 left-8 bg-secondary-container text-on-secondary-fixed px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-24 opacity-0 transition-all duration-300 z-[60]" id="save-toast">
+<span class="material-symbols-outlined text-green-700">check_circle</span>
+<div class="font-label-md text-label-md">تم حفظ التغييرات بنجاح على خادم الموقع</div>
+</div>
+<script>
+        // Simple Interaction logic
+        const saveBtn = document.querySelector('button:has(span:contains("حفظ"))');
+        const toast = document.getElementById('save-toast');
+
+        // Note: querySelector:contains is not standard but used here for conceptual clarity.
+        // Proper way for the demo:
+        document.querySelectorAll('button').forEach(btn => {
+            if (btn.innerText.includes('حفظ')) {
+                btn.onclick = () => {
+                    toast.classList.remove('translate-y-24', 'opacity-0');
+                    setTimeout(() => {
+                        toast.classList.add('translate-y-24', 'opacity-0');
+                    }, 3000);
+                };
+            }
+        });
+
+        // Search bar interaction
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.onfocus = () => searchInput.parentElement.classList.add('ring-2', 'ring-secondary-container/50');
+        searchInput.onblur = () => searchInput.parentElement.classList.remove('ring-2', 'ring-secondary-container/50');
+    </script>
+</body></html>
