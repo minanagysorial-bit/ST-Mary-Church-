@@ -264,7 +264,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
             </div>
 
             <Link
-              to="/register"
+              to="/membership/register"
               className="w-full text-center bg-[#00174a] hover:bg-[#00113a] text-white font-bold text-xs py-2.5 rounded-xl transition-colors shadow"
             >
               سجّل بياناتك في الكنيسة
