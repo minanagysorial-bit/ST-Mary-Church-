@@ -31,32 +31,27 @@ export const LiveStreamPage: React.FC = () => {
   const fetchStreamSettings = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     try {
-      const siteSettings = await api.getSiteSettings();
+      const siteSettings = await api.getSiteSettings().catch(() => ({}));
       setSettings(siteSettings);
 
-      const mode = siteSettings.live_stream_mode || 'auto';
-
-      if (mode === 'auto') {
-        try {
-          const checkRes = await fetch(`/api/check-live?channelId=${OFFICIAL_CHURCH_CHANNEL_ID}`);
-          if (checkRes.ok) {
-            const liveData = await checkRes.json();
-            if (liveData.isLive && liveData.videoId) {
-              setAutoStreamData({
-                isActive: true,
-                embedUrl: `https://www.youtube.com/embed/${liveData.videoId}?autoplay=1&rel=0`,
-                title: liveData.title || 'البث المباشر - كنيسة السيدة العذراء مريم بمحرم بك',
-                description: 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية المنقولة مباشرة من كنيسة العذراء بمحرم بك.'
-              });
-              return;
-            }
+      // ALWAYS check live broadcast from the official church channel
+      try {
+        const checkRes = await fetch(`/api/check-live?channelId=${OFFICIAL_CHURCH_CHANNEL_ID}`);
+        if (checkRes.ok) {
+          const liveData = await checkRes.json();
+          if (liveData.isLive && liveData.videoId) {
+            setAutoStreamData({
+              isActive: true,
+              embedUrl: `https://www.youtube.com/embed/${liveData.videoId}?autoplay=1&rel=0`,
+              title: liveData.title || 'البث المباشر - كنيسة السيدة العذراء مريم بمحرم بك',
+              description: 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية المنقولة مباشرة من كنيسة العذراء بمحرم بك.'
+            });
+            return;
           }
-          setAutoStreamData(null);
-        } catch (apiErr) {
-          console.error('Check live fetch failed:', apiErr);
-          setAutoStreamData(null);
         }
-      } else {
+        setAutoStreamData(null);
+      } catch (apiErr) {
+        console.error('Check live fetch failed:', apiErr);
         setAutoStreamData(null);
       }
     } catch (err) {
@@ -74,32 +69,25 @@ export const LiveStreamPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const mode = settings.live_stream_mode || 'auto';
-  
   let isStreamActive = false;
   let embedUrl = '';
   let title = '';
   let description = '';
 
-  if (mode === 'auto') {
-    if (autoStreamData && autoStreamData.isActive) {
-      isStreamActive = true;
-      embedUrl = autoStreamData.embedUrl;
-      title = autoStreamData.title;
-      description = autoStreamData.description;
-    } else {
-      isStreamActive = false;
-    }
+  // Priority 1: Automated Live Detection from Church Channel
+  if (autoStreamData && autoStreamData.isActive) {
+    isStreamActive = true;
+    embedUrl = autoStreamData.embedUrl;
+    title = autoStreamData.title;
+    description = autoStreamData.description;
+  } else if (settings.live_stream_active === 'true' && settings.live_stream_youtube_url) {
+    // Priority 2: Manual fallback stream
+    isStreamActive = true;
+    embedUrl = getYouTubeEmbedUrl(settings.live_stream_youtube_url);
+    title = settings.live_stream_title || 'البث المباشر للخدمات والقداسات الروحية';
+    description = settings.live_stream_description || 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية والاجتماعات الروحية.';
   } else {
-    // Manual Mode
-    isStreamActive = settings.live_stream_active === 'true';
-    if (isStreamActive && settings.live_stream_youtube_url) {
-      embedUrl = getYouTubeEmbedUrl(settings.live_stream_youtube_url);
-      title = settings.live_stream_title || 'البث المباشر للخدمات والقداسات الروحية';
-      description = settings.live_stream_description || 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية والاجتماعات الروحية.';
-    } else {
-      isStreamActive = false;
-    }
+    isStreamActive = false;
   }
 
   return (

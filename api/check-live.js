@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -15,11 +14,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Official Church YouTube Channel ID
   const OFFICIAL_CHURCH_CHANNEL_ID = 'UCLEhdhZFRuxMXHL3pDpg65g';
   const channelId = req.query.channelId || OFFICIAL_CHURCH_CHANNEL_ID;
 
-  // Strict check: Only allow checking our official church channel
   if (channelId !== OFFICIAL_CHURCH_CHANNEL_ID) {
     res.status(200).json({
       isLive: false,
@@ -40,7 +37,6 @@ export default async function handler(req, res) {
     const html = await ytRes.text();
 
     // 1. Strict Channel Ownership Verification
-    // Ensure the returned page strictly belongs to our church channel
     const belongsToOurChannel = html.includes(channelId) || 
                                html.includes(`"channelId":"${channelId}"`) ||
                                html.includes(`"externalChannelId":"${channelId}"`) ||
@@ -55,15 +51,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    // 2. Strict Live Broadcast Verification
-    // Check if there is an active live broadcast (not an offline stream or random video)
-    const isLive = (html.includes('"isLiveBroadcast":true') || 
-                   html.includes('"status":"LIVE"') ||
-                   html.includes('"isLive":true')) && 
-                   !html.includes('"status":"LIVE_STREAM_OFFLINE"') &&
-                   !html.includes('LIVE_STREAM_OFFLINE');
-
-    // 3. Extract Canonical Video ID of OUR channel
+    // 2. Extract Canonical Video ID of OUR channel
     let videoId = null;
     if (ytRes.url && ytRes.url.includes('watch?v=')) {
       const vMatch = ytRes.url.match(/watch\?v=([a-zA-Z0-9_-]{11})/);
@@ -78,15 +66,29 @@ export default async function handler(req, res) {
       if (ogMatch) videoId = ogMatch[1];
     }
 
+    // 3. Strict Live Broadcast Verification
+    // Check if offline
+    const isOffline = html.includes('"status":"LIVE_STREAM_OFFLINE"') || 
+                      html.includes('LIVE_STREAM_OFFLINE') ||
+                      html.includes('"playabilityStatus":{"status":"LIVE_STREAM_OFFLINE"');
+
+    const isLive = (html.includes('"isLive":true') ||
+                   html.includes('"isLiveBroadcast":true') || 
+                   html.includes('"status":"LIVE"') ||
+                   html.includes('BADGE_STYLE_TYPE_LIVE_NOW') ||
+                   html.includes('"label":"LIVE"')) && !isOffline;
+
     let title = 'البث المباشر - كنيسة السيدة العذراء مريم بمحرم بك';
     const titleMatch = html.match(/<meta name="title" content="([^"]+)">/);
     if (titleMatch && titleMatch[1]) {
       title = titleMatch[1].replace(' - YouTube', '').trim();
     }
 
+    const finalIsLive = !!(belongsToOurChannel && isLive && videoId);
+
     res.status(200).json({
-      isLive: !!(isLive && videoId),
-      videoId: (isLive && videoId) ? videoId : null,
+      isLive: finalIsLive,
+      videoId: finalIsLive ? videoId : null,
       channelId: OFFICIAL_CHURCH_CHANNEL_ID,
       title: title,
       timestamp: new Date().toISOString()
