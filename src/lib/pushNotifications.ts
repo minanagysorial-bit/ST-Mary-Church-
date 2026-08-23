@@ -41,8 +41,9 @@ export async function registerPushSubscription(): Promise<PushSubscription | nul
     if (!reg.pushManager) return null;
 
     let sub = await reg.pushManager.getSubscription();
+    const convertedVapidKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+
     if (!sub) {
-      const convertedVapidKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: convertedVapidKey as any
@@ -94,13 +95,18 @@ export async function triggerLocalNotification(payload: PushNotificationPayload)
     return false;
   }
 
+  const iconUrl = payload.icon 
+    ? (payload.icon.startsWith('http') ? payload.icon : window.location.origin + payload.icon) 
+    : window.location.origin + '/app-icon-192.png';
+  const badgeUrl = window.location.origin + '/app-icon-192.png';
+
   try {
     const reg = await navigator.serviceWorker.ready;
     if (reg && reg.showNotification) {
       await reg.showNotification(payload.title, {
         body: payload.body,
-        icon: payload.icon || '/app-icon-192.png',
-        badge: payload.icon || '/app-icon-192.png',
+        icon: iconUrl,
+        badge: badgeUrl,
         image: payload.image || undefined,
         data: {
           url: payload.url || '/'
@@ -108,16 +114,16 @@ export async function triggerLocalNotification(payload: PushNotificationPayload)
         dir: 'rtl',
         lang: 'ar',
         tag: 'church-notif-' + Date.now(),
-        renotify: true
+        renotify: true,
+        requireInteraction: true
       } as any);
       return true;
     }
   } catch (err) {
-    // Fallback to standard browser notification if SW ready fails
     try {
       new Notification(payload.title, {
         body: payload.body,
-        icon: payload.icon || '/app-icon-192.png'
+        icon: iconUrl
       });
       return true;
     } catch (fallbackErr) {

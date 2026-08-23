@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stmary-v4';
+const CACHE_NAME = 'stmary-v5';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -33,7 +33,7 @@ self.addEventListener('fetch', (event) => {
   
   const url = new URL(event.request.url);
 
-  // If HTML document navigation, ALWAYS go Network First so user gets latest updates instantly
+  // If HTML document navigation, ALWAYS go Network First
   if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
     event.respondWith(
       fetch(event.request)
@@ -84,19 +84,23 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  const iconUrl = data.icon ? (data.icon.startsWith('http') ? data.icon : self.location.origin + data.icon) : self.location.origin + '/app-icon-192.png';
+  const badgeUrl = self.location.origin + '/app-icon-192.png';
+
   const options = {
     body: data.body,
-    icon: data.icon || '/app-icon-192.png',
-    badge: data.badge || '/app-icon-192.png',
+    icon: iconUrl,
+    badge: badgeUrl,
     image: data.image || undefined,
     data: {
       url: data.url || '/'
     },
     dir: 'rtl',
     lang: 'ar',
-    vibrate: [100, 50, 100],
+    vibrate: [200, 100, 200, 100, 200],
     tag: 'st-mary-notification-' + Date.now(),
-    renotify: true
+    renotify: true,
+    requireInteraction: true
   };
 
   event.waitUntil(
