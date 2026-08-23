@@ -1,11 +1,24 @@
 import { supabase } from './supabase';
 
+export const VAPID_PUBLIC_KEY = 'BPGwWNXzN4fKaD34wsfy6AOKSDAs48rNIJiRCUFby1omLzu9nOmqjMbjxW4MUCNfdOwMTgxIFytkrpHoqcGhK-I';
+
 export interface PushNotificationPayload {
   title: string;
   body: string;
   icon?: string;
   image?: string;
   url?: string;
+}
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 /** Check if Web Notifications and ServiceWorker are supported */
@@ -19,7 +32,43 @@ export function getNotificationPermission(): NotificationPermission {
   return Notification.permission;
 }
 
-/** Request notification permission from user */
+/** Register device push subscription with VAPID and save to server */
+export async function registerPushSubscription(): Promise<PushSubscription | null> {
+  if (!isNotificationSupported()) return null;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if (!reg.pushManager) return null;
+
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const convertedVapidKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedVapidKey as any
+      });
+    }
+
+    if (sub) {
+      const subJson = sub.toJSON();
+      localStorage.setItem('church_push_sub', JSON.stringify(subJson));
+
+      // Save to server
+      await fetch('/api/save-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: subJson })
+      }).catch(err => console.warn('Save subscription error:', err));
+    }
+
+    return sub;
+  } catch (err) {
+    console.error('Failed to register push subscription:', err);
+    return null;
+  }
+}
+
+/** Request notification permission from user and register subscription */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (!isNotificationSupported()) {
     console.warn('Notifications not supported on this browser.');
@@ -30,6 +79,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       localStorage.setItem('church_notifications_enabled', 'true');
+      await registerPushSubscription();
     }
     return permission;
   } catch (error) {
@@ -49,8 +99,8 @@ export async function triggerLocalNotification(payload: PushNotificationPayload)
     if (reg && reg.showNotification) {
       await reg.showNotification(payload.title, {
         body: payload.body,
-        icon: payload.icon || '/favicon.svg',
-        badge: payload.icon || '/favicon.svg',
+        icon: payload.icon || '/app-icon-192.png',
+        badge: payload.icon || '/app-icon-192.png',
         image: payload.image || undefined,
         data: {
           url: payload.url || '/'
@@ -67,7 +117,7 @@ export async function triggerLocalNotification(payload: PushNotificationPayload)
     try {
       new Notification(payload.title, {
         body: payload.body,
-        icon: payload.icon || '/favicon.svg'
+        icon: payload.icon || '/app-icon-192.png'
       });
       return true;
     } catch (fallbackErr) {
@@ -78,9 +128,36 @@ export async function triggerLocalNotification(payload: PushNotificationPayload)
   return false;
 }
 
-/** Broadcast notification from Admin to all devices & save in announcements */
+/** Broadcast notification from Admin via Web-Push server, Supabase Realtime, and Announcements */
 export async function broadcastChurchNotification(payload: PushNotificationPayload, userId?: string | null): Promise<void> {
-  // 1. Broadcast via Supabase Realtime Channel
+  // 1. Get current device subscription if available
+  let userSub: any = null;
+  try {
+    const saved = localStorage.getItem('church_push_sub');
+    if (saved) userSub = JSON.parse(saved);
+  } catch (e) {
+    // ignore
+  }
+
+  // 2. Call serverless Web-Push endpoint
+  try {
+    await fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: payload.title,
+        body: payload.body,
+        icon: payload.icon || '/app-icon-192.png',
+        image: payload.image,
+        url: payload.url || '/',
+        subscription: userSub
+      })
+    });
+  } catch (e) {
+    console.warn('Server push API error:', e);
+  }
+
+  // 3. Broadcast via Supabase Realtime Channel
   try {
     const channel = supabase.channel('church_realtime_notifications');
     await channel.send({
@@ -92,7 +169,7 @@ export async function broadcastChurchNotification(payload: PushNotificationPaylo
     console.warn('Realtime broadcast error:', e);
   }
 
-  // 2. Also save into announcements table so it appears in church board/popups
+  // 4. Save into announcements table
   try {
     await supabase.from('announcements').insert({
       title: payload.title,
@@ -107,7 +184,7 @@ export async function broadcastChurchNotification(payload: PushNotificationPaylo
     console.warn('Announcements insert error:', e);
   }
 
-  // 3. Trigger locally on sender device if permitted
+  // 5. Trigger locally immediately
   if (Notification.permission === 'granted') {
     await triggerLocalNotification(payload);
   }
@@ -119,7 +196,6 @@ export function subscribeToChurchNotifications(callback: (payload: PushNotificat
     .channel('church_realtime_notifications')
     .on('broadcast', { event: 'new_push_notification' }, ({ payload }) => {
       callback(payload as PushNotificationPayload);
-      // If notifications are permitted, show system notification popup
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         triggerLocalNotification(payload as PushNotificationPayload);
       }
