@@ -170,8 +170,10 @@ export const MembershipRegistrationPage: React.FC = () => {
       const nameRes = validateFullName(fullName);
       if (!nameRes.isValid) errors.fullName = nameRes.error!;
 
-      // 2. National ID
-      if (nationalId.trim()) {
+      // 2. National ID (Strictly Required)
+      if (!nationalId || !nationalId.trim()) {
+        errors.nationalId = 'الرقم القومي إجباري (14 رقماً) لاستكمال تسجيل العضوية.';
+      } else {
         const nidRes = validateEgyptianNationalId(nationalId);
         if (!nidRes.isValid) errors.nationalId = nidRes.error!;
       }
@@ -509,7 +511,7 @@ ${filteredFamily.length > 0
                       <label className="text-slate-700 font-bold block flex items-center justify-between">
                         <span className="flex items-center gap-1.5">
                           <CreditCard className="w-4 h-4 text-[#002366]" />
-                          الرقم القومي (14 رقم)
+                          الرقم القومي (14 رقم) *
                         </span>
                         {nationalIdInfo && (
                           <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
