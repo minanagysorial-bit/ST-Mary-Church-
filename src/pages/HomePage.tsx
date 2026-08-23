@@ -22,8 +22,7 @@ import {
   Download,
   CheckCircle2,
   Radio,
-  WifiOff,
-  Palette
+  WifiOff
 } from 'lucide-react';
 import { api, Verse, Announcement } from '../lib/api';
 import { DailyReadingsCard } from '../components/common/DailyReadingsCard';
@@ -413,7 +412,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* Service 1 */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg hover:shadow-xl transition-shadow space-y-4 group">
@@ -433,31 +432,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
             </Link>
           </div>
 
-          {/* Service: Greeting Cards Maker */}
-          <div className="bg-gradient-to-br from-[#00174a] to-[#002366] text-white rounded-3xl p-6 border-2 border-[#d4af37]/60 shadow-xl hover:shadow-2xl transition-all space-y-4 group relative overflow-hidden">
-            <div className="w-14 h-14 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform">
-              <Palette className="w-7 h-7" />
-            </div>
-            <div className="space-y-1">
-              <span className="bg-[#d4af37]/20 text-[#fed65b] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-[#d4af37]/40">
-                خدمة جديدة ✨
-              </span>
-              <h3 className="font-tajawal text-xl font-bold text-white group-hover:text-[#fed65b] transition-colors">
-                صانع بطاقات التهنئة
-              </h3>
-            </div>
-            <p className="text-xs text-slate-200 leading-relaxed">
-              صمم كارت تهنئة مخصص باسمك واسم أحبائك لعيد القيامة، الميلاد، وصوم العذراء مريم وشاركه على واتساب.
-            </p>
-            <Link
-              to="/cards"
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#fed65b] hover:text-white pt-2"
-            >
-              <span>صمم بطاقتك الآن 🎨</span>
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </div>
-
           {/* Service 2 */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg hover:shadow-xl transition-shadow space-y-4 group">
             <div className="w-14 h-14 rounded-2xl bg-[#d4af37] text-[#00174a] flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform">
@@ -471,7 +445,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
               to="/membership/register"
               className="inline-flex items-center gap-2 text-xs font-bold text-[#002366] hover:text-[#d4af37] pt-2"
             >
-              <span>البدء في التسجيل</span>
+              <span>البدء في التسجيل (3 خطوات)</span>
               <ArrowLeft className="w-4 h-4" />
             </Link>
           </div>

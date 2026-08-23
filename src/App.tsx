@@ -27,7 +27,6 @@ import { ContactUsPage } from './pages/ContactUsPage';
 import { LiturgiesSchedulePage } from './pages/LiturgiesSchedulePage';
 import { ReadingsPage } from './pages/ReadingsPage';
 import { MembershipRegistrationPage } from './pages/MembershipRegistrationPage';
-import { GreetingCardsPage } from './pages/GreetingCardsPage';
 
 // Admin Dashboards (Lazy Loaded for Speed & Code Splitting)
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
@@ -183,8 +182,6 @@ const AppLayout: React.FC = () => {
             <Route path="/contact-us" element={<ContactUsPage />} />
             <Route path="/schedule" element={<LiturgiesSchedulePage />} />
             <Route path="/liturgies-schedule" element={<LiturgiesSchedulePage />} />
-            <Route path="/cards" element={<GreetingCardsPage />} />
-            <Route path="/greeting-cards" element={<GreetingCardsPage />} />
             <Route path="/pages/*" element={<DynamicPage />} />
 
             {/* Membership Clerk Routes */}

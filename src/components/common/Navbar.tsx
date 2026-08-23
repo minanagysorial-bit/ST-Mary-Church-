@@ -125,16 +125,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
               مكتبة العظات
             </Link>
             <Link
-              to="/cards"
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all flex items-center gap-1 ${
-                isActive('/cards')
-                  ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
-                  : 'text-[#fed65b] hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <span>بطاقات التهنئة 🎨</span>
-            </Link>
-            <Link
               to="/membership/register"
               className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
                 isActive('/membership/register')
@@ -241,15 +231,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
             }`}
           >
             مكتبة العظات
-          </Link>
-          <Link
-            to="/cards"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              isActive('/cards') ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40' : 'text-[#fed65b] hover:bg-white/10'
-            }`}
-          >
-            🎨 صانع بطاقات التهنئة
           </Link>
           <Link
             to="/membership/register"
