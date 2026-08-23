@@ -139,16 +139,26 @@ export const LiturgiesSchedulePage: React.FC = () => {
     return `${displayHours}:${minutesStr} ${suffix}`;
   };
 
-  // Helper to extract priest name from notes
-  const extractPriestName = (liturgy: Liturgy): string => {
-    if (!liturgy.notes) return 'آباء الكنيسة';
-    const match = liturgy.notes.match(/(?:الكاهن(?:\s*المصلي)?[:\s]+)?(ابونا\s+[\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+)?)/);
-    if (match) return match[1].trim();
+  // Helper to extract multiple priest names from notes
+  const extractPriestNames = (liturgy: Liturgy): string[] => {
+    if (!liturgy.notes) return ['آباء الكنيسة'];
+    const matched: string[] = [];
 
     for (const p of PRIEST_NAMES_LIST) {
-      if (liturgy.notes.includes(p)) return p;
+      if (liturgy.notes.includes(p) && !matched.includes(p)) {
+        matched.push(p);
+      }
     }
-    return liturgy.notes.trim() || 'آباء الكنيسة';
+
+    if (matched.length > 0) return matched;
+
+    const match = liturgy.notes.match(/(?:الكهنة|الكاهن(?:\s*المصلي)?[:\s]+)?([^|]+)/);
+    if (match) {
+      const names = match[1].split(/[،,•]/).map(s => s.trim()).filter(Boolean);
+      if (names.length > 0) return names;
+    }
+
+    return [liturgy.notes.trim() || 'آباء الكنيسة'];
   };
 
   // Grouped by Day of Week
@@ -329,7 +339,7 @@ export const LiturgiesSchedulePage: React.FC = () => {
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                           {dayLiturgies.map(l => {
-                            const priestName = extractPriestName(l);
+                            const priestNames = extractPriestNames(l);
 
                             return (
                               <div
@@ -346,16 +356,25 @@ export const LiturgiesSchedulePage: React.FC = () => {
                                   </span>
                                 </div>
 
-                                {/* Priest Name Badge */}
-                                <div className="bg-white border border-amber-200/80 p-2 rounded-xl flex items-center gap-2 shadow-2xs">
-                                  <div className="w-6 h-6 rounded-full bg-[#002366] text-[#fed65b] flex items-center justify-center font-bold text-[10px] shrink-0">
+                                {/* Priest Names Badge */}
+                                <div className="bg-white border border-amber-200/80 p-2.5 rounded-xl flex items-start gap-2 shadow-2xs">
+                                  <div className="w-6 h-6 rounded-full bg-[#002366] text-[#fed65b] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
                                     <User className="w-3.5 h-3.5" />
                                   </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] text-slate-400 font-bold">الكاهن:</span>
-                                    <span className="font-tajawal text-xs font-extrabold text-[#00174a]">
-                                      {priestName}
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-[10px] text-slate-400 font-bold">
+                                      {priestNames.length > 1 ? 'الكهنة المصلون:' : 'الكاهن المصلي:'}
                                     </span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {priestNames.map((p, idx) => (
+                                        <span
+                                          key={idx}
+                                          className="bg-amber-50 text-[#00174a] border border-amber-200 px-2 py-0.5 rounded-md font-tajawal text-xs font-extrabold"
+                                        >
+                                          {p}
+                                        </span>
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
 

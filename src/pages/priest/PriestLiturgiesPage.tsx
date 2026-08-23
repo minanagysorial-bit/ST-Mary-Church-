@@ -13,7 +13,8 @@ import {
   Edit,
   User,
   CheckCircle2,
-  CalendarDays
+  CalendarDays,
+  Check
 } from 'lucide-react';
 import { api, Liturgy } from '../../lib/api';
 
@@ -48,7 +49,9 @@ export const PriestLiturgiesPage: React.FC = () => {
   const [customChurchName, setCustomChurchName] = useState('');
   const [altarName, setAltarName] = useState('مذبح السيدة العذراء');
   const [customAltarName, setCustomAltarName] = useState('');
-  const [priestName, setPriestName] = useState('ابونا مرقس ميلاد');
+  
+  // Multi-priest selection
+  const [selectedPriests, setSelectedPriests] = useState<string[]>(['ابونا مرقس ميلاد']);
   const [customPriestName, setCustomPriestName] = useState('');
   const [extraNotes, setExtraNotes] = useState('');
 
@@ -84,15 +87,40 @@ export const PriestLiturgiesPage: React.FC = () => {
     return `${displayHours}:${minutesStr} ${suffix}`;
   };
 
-  // Helper to extract priest name from notes
-  const extractPriest = (l: Liturgy): string => {
-    if (!l.notes) return 'غير محدد';
+  // Helper to extract priests array from notes
+  const extractPriests = (l: Liturgy): string[] => {
+    if (!l.notes) return ['غير محدد'];
+    const matched: string[] = [];
+    
+    // Check known priests list
     for (const p of PRIEST_NAMES_LIST) {
-      if (l.notes.includes(p)) return p;
+      if (l.notes.includes(p) && !matched.includes(p)) {
+        matched.push(p);
+      }
     }
-    const match = l.notes.match(/(?:الكاهن[:\s]+)?(ابونا\s+[\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+)?)/);
-    if (match) return match[1].trim();
-    return l.notes.split('|')[0].trim() || 'غير محدد';
+
+    if (matched.length > 0) return matched;
+
+    // Regex check for custom names
+    const match = l.notes.match(/(?:الكهنة|الكاهن)[:\s]+([^|]+)/);
+    if (match) {
+      const names = match[1].split(/[،,•]/).map(s => s.trim()).filter(Boolean);
+      if (names.length > 0) return names;
+    }
+
+    return [l.notes.split('|')[0].trim() || 'غير محدد'];
+  };
+
+  const togglePriest = (name: string) => {
+    if (selectedPriests.includes(name)) {
+      if (selectedPriests.length === 1 && !customPriestName.trim()) {
+        // keep at least one
+        return;
+      }
+      setSelectedPriests(prev => prev.filter(p => p !== name));
+    } else {
+      setSelectedPriests(prev => [...prev, name]);
+    }
   };
 
   const openAddModal = () => {
@@ -105,7 +133,7 @@ export const PriestLiturgiesPage: React.FC = () => {
     setCustomChurchName('');
     setAltarName('مذبح السيدة العذراء');
     setCustomAltarName('');
-    setPriestName('ابونا مرقس ميلاد');
+    setSelectedPriests(['ابونا مرقس ميلاد']);
     setCustomPriestName('');
     setExtraNotes('');
     setShowModal(true);
@@ -135,16 +163,19 @@ export const PriestLiturgiesPage: React.FC = () => {
       setCustomAltarName(l.altar_name);
     }
 
-    const currentPriest = extractPriest(l);
-    if (PRIEST_NAMES_LIST.includes(currentPriest)) {
-      setPriestName(currentPriest);
-      setCustomPriestName('');
-    } else {
-      setPriestName('مخصص');
-      setCustomPriestName(currentPriest);
-    }
+    const currentPriests = extractPriests(l);
+    const knownInList = currentPriests.filter(p => PRIEST_NAMES_LIST.includes(p));
+    const customInList = currentPriests.filter(p => !PRIEST_NAMES_LIST.includes(p));
 
-    setExtraNotes(l.notes?.replace(new RegExp(`(?:الكاهن(?:\\s*المصلي)?[:\\s]+)?${currentPriest}`, 'g'), '').replace(/\|/g, '').trim() || '');
+    setSelectedPriests(knownInList.length > 0 ? knownInList : []);
+    setCustomPriestName(customInList.join('، '));
+
+    let cleanNotes = l.notes || '';
+    PRIEST_NAMES_LIST.forEach(p => {
+      cleanNotes = cleanNotes.replace(new RegExp(`(?:الكهنة|الكاهن(?:\\s*المصلي)?[:\\s]+)?${p}`, 'g'), '');
+    });
+    setExtraNotes(cleanNotes.replace(/\|/g, '').replace(/الكهنة المصلون[:\s]*/g, '').trim());
+
     setShowModal(true);
     setError(null);
   };
@@ -155,15 +186,26 @@ export const PriestLiturgiesPage: React.FC = () => {
 
     const finalChurchName = churchName === 'أخرى' ? customChurchName.trim() : churchName;
     const finalAltarName = altarName === 'أخرى' ? customAltarName.trim() : altarName;
-    const finalPriestName = priestName === 'مخصص' ? customPriestName.trim() : priestName;
+
+    // Combine all selected and custom priests
+    const allPriests = [...selectedPriests];
+    if (customPriestName.trim()) {
+      allPriests.push(customPriestName.trim());
+    }
 
     if (!title.trim() || !day || !startTime || !endTime || !finalChurchName || !finalAltarName) {
       setError('يرجى تعبئة كافة الحقول المطلوبة وتحديد الكنيسة والمذبح.');
       return;
     }
 
-    // Format formatted notes with priest name
-    let combinedNotes = `الكاهن المصلي: ${finalPriestName}`;
+    if (allPriests.length === 0) {
+      setError('يرجى اختيار أو كتابة كاهن واحد على الأقل للمشاركة في القداس.');
+      return;
+    }
+
+    // Format combined notes with all priest names
+    const priestPrefix = allPriests.length > 1 ? 'الكهنة المصلون' : 'الكاهن المصلي';
+    let combinedNotes = `${priestPrefix}: ${allPriests.join(' • ')}`;
     if (extraNotes.trim()) {
       combinedNotes += ` | ${extraNotes.trim()}`;
     }
@@ -179,7 +221,7 @@ export const PriestLiturgiesPage: React.FC = () => {
           altar_name: finalAltarName,
           notes: combinedNotes,
         });
-        setSuccessMessage('تم تحديث بيانات القداس بنجاح!');
+        setSuccessMessage('تم تحديث بيانات القداس والكهنة المشاركين بنجاح!');
       } else {
         await api.createLiturgy({
           title: title.trim(),
@@ -226,7 +268,7 @@ export const PriestLiturgiesPage: React.FC = () => {
               إدارة جدول قداسات شهر {currentMonthName}
             </h1>
             <p className="text-xs text-slate-500 font-bold mt-1">
-              تحديد مواعيد القداسات، تعيين أسماء الآباء الكهنة المصلين، وتحديث الجدول الكنسي شهرياً
+              تحديد مواعيد القداسات، تعيين كاهن أو أكثر لكل قداس، وتحديث الجدول الكنسي شهرياً
             </p>
           </div>
 
@@ -275,7 +317,7 @@ export const PriestLiturgiesPage: React.FC = () => {
                   <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 font-bold">
                     <th className="p-4">اليوم</th>
                     <th className="p-4">القداس / الخدمة</th>
-                    <th className="p-4">الكاهن المصلي</th>
+                    <th className="p-4">الكهنة المصلون</th>
                     <th className="p-4">التوقيت</th>
                     <th className="p-4">الكنيسة والمذبح</th>
                     <th className="p-4 text-center">الإجراءات</th>
@@ -283,7 +325,7 @@ export const PriestLiturgiesPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
                   {liturgies.map(l => {
-                    const priest = extractPriest(l);
+                    const priests = extractPriests(l);
 
                     return (
                       <tr key={l.id} className="hover:bg-slate-50/60 transition-colors">
@@ -294,10 +336,17 @@ export const PriestLiturgiesPage: React.FC = () => {
                         </td>
                         <td className="p-4 text-[#002366] text-sm font-extrabold">{l.title}</td>
                         <td className="p-4">
-                          <span className="bg-amber-50 text-amber-900 border border-amber-200/80 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 w-fit">
-                            <User className="w-3.5 h-3.5 text-[#d4af37]" />
-                            {priest}
-                          </span>
+                          <div className="flex flex-wrap gap-1.5 max-w-xs">
+                            {priests.map((p, idx) => (
+                              <span
+                                key={idx}
+                                className="bg-amber-50 text-amber-900 border border-amber-200/80 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs"
+                              >
+                                <User className="w-3 h-3 text-[#d4af37]" />
+                                {p}
+                              </span>
+                            ))}
+                          </div>
                         </td>
                         <td className="p-4 text-slate-600 font-bold">
                           {formatArabicTime(l.start_time)} - {formatArabicTime(l.end_time)}
@@ -356,7 +405,7 @@ export const PriestLiturgiesPage: React.FC = () => {
               </div>
 
               {/* Modal Form */}
-              <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs font-semibold">
+              <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs font-semibold max-h-[80vh] overflow-y-auto">
                 
                 {/* Title & Day */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -386,33 +435,58 @@ export const PriestLiturgiesPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Priest Name Dropdown (Strict User Requirement) */}
-                <div className="space-y-1.5 bg-amber-50/50 p-4 rounded-2xl border border-amber-200/60">
-                  <label className="text-[#00174a] font-extrabold block flex items-center gap-1.5 text-xs">
-                    <User className="w-4 h-4 text-[#d4af37]" />
-                    <span>الكاهن المصلي (اختر من القائمة المعتمدة) *</span>
-                  </label>
-                  <select
-                    value={priestName}
-                    onChange={(e) => setPriestName(e.target.value)}
-                    className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2.5 outline-none font-extrabold text-xs text-[#002366] focus:ring-1 focus:ring-[#002366]"
-                  >
-                    {PRIEST_NAMES_LIST.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                    <option value="مخصص">اسم كاهن آخر (اكتبه أدناه)...</option>
-                  </select>
+                {/* Multi-Priest Selection (Can select multiple priests!) */}
+                <div className="space-y-2.5 bg-amber-50/50 p-4 rounded-2xl border border-amber-200/60">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[#00174a] font-extrabold flex items-center gap-1.5 text-xs">
+                      <User className="w-4 h-4 text-[#d4af37]" />
+                      <span>الآباء الكهنة المصلون (يمكن اختيار أكثر من كاهن) *</span>
+                    </label>
+                    <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">
+                      تم تحديد ({selectedPriests.length + (customPriestName.trim() ? 1 : 0)})
+                    </span>
+                  </div>
 
-                  {priestName === 'مخصص' && (
+                  {/* Checkbox chips */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {PRIEST_NAMES_LIST.map(p => {
+                      const isSelected = selectedPriests.includes(p);
+
+                      return (
+                        <button
+                          type="button"
+                          key={p}
+                          onClick={() => togglePriest(p)}
+                          className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-between text-right ${
+                            isSelected
+                              ? 'bg-[#002366] text-[#fed65b] border-[#002366] shadow-sm'
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-amber-300'
+                          }`}
+                        >
+                          <span>{p}</span>
+                          <div className={`w-4 h-4 rounded-md flex items-center justify-center border ${
+                            isSelected ? 'bg-[#fed65b] border-[#fed65b] text-[#00174a]' : 'border-slate-300 bg-slate-50'
+                          }`}>
+                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Add Custom Priest Name */}
+                  <div className="pt-2">
+                    <label className="text-slate-600 text-[11px] font-bold block mb-1">
+                      أو اكتب اسم كاهن آخر إضافي:
+                    </label>
                     <input
                       type="text"
-                      required
-                      placeholder="اكتب اسم الأب الكاهن..."
+                      placeholder="مثال: أبونا ضيف أو كاهن زائر..."
                       value={customPriestName}
                       onChange={(e) => setCustomPriestName(e.target.value)}
-                      className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2 outline-none font-bold text-xs mt-2"
+                      className="w-full bg-white border border-amber-300 rounded-xl px-4 py-2 outline-none font-bold text-xs"
                     />
-                  )}
+                  </div>
                 </div>
 
                 {/* Timing */}
