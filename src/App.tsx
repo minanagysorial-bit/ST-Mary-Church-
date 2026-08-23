@@ -8,6 +8,7 @@ import { Footer } from './components/common/Footer';
 import { PrayerModal } from './components/common/PrayerModal';
 import { SermonVideoModal } from './components/sermons/SermonVideoModal';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
+import { NotificationPermissionModal } from './components/common/NotificationPermissionModal';
 import type { Sermon } from './lib/api';
 import { PERMISSIONS } from './lib/permissions';
 
@@ -239,6 +240,9 @@ const AppLayout: React.FC = () => {
 
       {/* Floating PWA Installation Prompt on Mobile */}
       <PWAInstallPrompt />
+
+      {/* Interactive Push Notification & App Enablement Modal */}
+      <NotificationPermissionModal />
 
       {/* Global Prayer Requests Modal */}
       <PrayerModal isOpen={isPrayerModalOpen} onClose={() => setIsPrayerModalOpen(false)} />
