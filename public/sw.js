@@ -1,19 +1,19 @@
-const CACHE_NAME = 'stmary-v2';
+const CACHE_NAME = 'stmary-v4';
 const STATIC_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.json',
   '/favicon.svg',
+  '/app-icon-192.png',
+  '/app-icon-512.png',
+  '/apple-touch-icon.png',
   '/church.jpeg'
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
-  );
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -27,11 +27,29 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Cache Handling
+// Network-First for Navigation (HTML), Cache-First for versioned assets
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  
   const url = new URL(event.request.url);
 
+  // If HTML document navigation, ALWAYS go Network First so user gets latest updates instantly
+  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Assets: Cache with Network Fallback
   if (url.origin === self.location.origin && (url.pathname.startsWith('/assets/') || STATIC_ASSETS.includes(url.pathname))) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
@@ -48,13 +66,13 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Web Push Notification Event
+// Web Push Notification Handler
 self.addEventListener('push', (event) => {
   let data = {
     title: 'كنيسة السيدة العذراء مريم بمحرم بك',
     body: 'إشعار روحي جديد من كنيسة العذراء بمحرم بك',
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: '/app-icon-192.png',
+    badge: '/app-icon-192.png',
     url: '/'
   };
 
@@ -68,8 +86,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body,
-    icon: data.icon || '/favicon.svg',
-    badge: data.badge || '/favicon.svg',
+    icon: data.icon || '/app-icon-192.png',
+    badge: data.badge || '/app-icon-192.png',
     image: data.image || undefined,
     data: {
       url: data.url || '/'
