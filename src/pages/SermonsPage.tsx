@@ -215,7 +215,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = ({ onSelectSermonForModal
             </Link>
 
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed line-clamp-2 font-medium">
-              {featuredSermon.description || 'عظة وكلمة روحية من كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية.'}
+              {featuredSermon.description && !featuredSermon.description.includes('مستوردة') ? featuredSermon.description : 'عظة وكلمة روحية مباركة من كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية.'}
             </p>
 
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-semibold pt-1">
@@ -316,7 +316,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = ({ onSelectSermonForModal
                   </Link>
 
                   <p className="text-xs text-slate-500 line-clamp-2 font-medium">
-                    {sermon.description || 'عظة وكلمة روحية من كنيسة السيدة العذراء مريم بمحرم بك.'}
+                    {sermon.description && !sermon.description.includes('مستوردة') ? sermon.description : 'عظة وكلمة روحية مباركة من كنيسة السيدة العذراء مريم بمحرم بك.'}
                   </p>
                 </div>
 

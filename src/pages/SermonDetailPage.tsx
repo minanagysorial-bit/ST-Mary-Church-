@@ -158,7 +158,7 @@ export const SermonDetailPage: React.FC = () => {
               عن الكلمة الروحية والنقاط الأساسية
             </h3>
             <p className="text-sm text-slate-700 leading-relaxed font-semibold">
-              {sermon.description || 'عظة وكلمة روحية من كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية.'}
+              {sermon.description && !sermon.description.includes('مستوردة') ? sermon.description : 'عظة وكلمة روحية مباركة من كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية.'}
             </p>
           </div>
 
