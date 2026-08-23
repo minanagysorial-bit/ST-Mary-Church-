@@ -135,16 +135,23 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-[#00174a] via-[#002366] to-[#00113a] text-white py-16 sm:py-24 lg:py-28 px-4 sm:px-6 lg:px-8 border-b-2 border-[#d4af37]">
+      <section className="relative min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center bg-[#00113a] overflow-hidden text-white border-b-4 border-[#d4af37]">
+        {/* Background Image with opacity */}
         <div 
-          className="absolute inset-0 opacity-15 bg-cover bg-center pointer-events-none mix-blend-overlay"
-          style={{ backgroundImage: `url(${heroContent.image_url})` }}
+          className="absolute inset-0 bg-cover z-0" 
+          style={{ 
+            backgroundImage: `url('${heroContent.image_url}')`, 
+            opacity: 0.78,
+            backgroundPosition: "center bottom"
+          }}
         />
-        
-        <div className="relative max-w-4xl mx-auto text-center space-y-6 animate-fade-in">
-          <div className="inline-flex items-center gap-2 bg-[#fed65b] text-[#00174a] px-4 py-1.5 rounded-full text-xs font-extrabold shadow-md mb-2">
+        {/* Background Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#00113a]/80 via-[#00113a]/40 to-[#00113a]/75 z-10" />
+
+        <div className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6 py-16">
+          <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 border border-[#fed65b]/40 text-[#fed65b] text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-inner animate-fade-in">
             <Sparkles className="w-4 h-4" />
-            <span>البوابة الرقمية الرسمية لكنيسة السيدة العذراء مريم</span>
+            <span>البوابة الرقمية الموحدة لخدمات الكنيسة</span>
           </div>
 
           <h1 className="font-tajawal text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight drop-shadow-md">
@@ -156,7 +163,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
             )}
           </h1>
 
-          <p className="text-sm sm:text-base lg:text-lg text-slate-200 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-200 max-w-2xl mx-auto leading-relaxed font-medium">
             {heroContent.description}
           </p>
 
