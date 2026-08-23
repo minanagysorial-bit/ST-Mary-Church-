@@ -4,25 +4,27 @@ const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BPGwWNXzN4fKaD34wsfy6A
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'UadNrXkYfye7dbaplnTik5goeNMRfC0VDy0ZebwZVwU';
 const VAPID_SUBJECT = 'mailto:admin@tibarthenos.com';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://pcyektzremkilvpfqtll.supabase.co';
+const SUPABASE_URL = 'https://pcyektzremkilvpfqtll.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjeWVrdHpyZW1raWx2cGZxdGxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxOTIxNDAsImV4cCI6MjEwMjc2ODE0MH0.R0v34tg13PbnBrIw3J8qutlNi6XHI6yLmNyckNprtWU';
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-// Simple REST helper — no external SDK needed
-async function supabaseFetch(path, options = {}) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-      ...(options.headers || {}),
-    },
-  });
-  const text = await res.text();
-  try { return JSON.parse(text); } catch { return []; }
+async function fetchSubscriptionsFromDB() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?select=subscription_json`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    });
+    if (!res.ok) return [];
+    const rows = await res.json();
+    return rows
+      .map(r => { try { return JSON.parse(r.subscription_json); } catch { return null; } })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 export default async function handler(req, res) {
@@ -48,67 +50,40 @@ export default async function handler(req, res) {
     url: url || '/',
   });
 
-  // Fetch ALL persisted subscriptions from Supabase
-  let allSubs = [];
-  try {
-    const rows = await supabaseFetch('push_subscriptions?select=subscription_json', { method: 'GET' });
-    if (Array.isArray(rows)) {
-      allSubs = rows
-        .map(r => { try { return JSON.parse(r.subscription_json); } catch { return null; } })
-        .filter(Boolean);
-    }
-  } catch (e) {
-    console.error('Failed to fetch subscriptions from DB:', e);
-  }
+  // Collect targets: DB subscriptions + the one sent in body
+  const dbSubs = await fetchSubscriptionsFromDB();
+  const targets = [...dbSubs];
 
-  // Also add the single subscription passed in body (current device)
-  const targets = [...allSubs];
   if (subscription && subscription.endpoint) {
     if (!targets.some(t => t.endpoint === subscription.endpoint)) {
       targets.push(subscription);
     }
   }
 
+  console.log(`Sending push to ${targets.length} targets`);
+
   if (targets.length === 0) {
     return res.status(200).json({
       success: true,
       delivered: 0,
-      message: 'No active push subscriptions found — user must enable notifications first',
+      message: 'No active push subscriptions found - user must enable notifications first',
     });
   }
 
   let deliveredCount = 0;
   const errors = [];
-  const staleEndpoints = [];
 
   await Promise.all(
     targets.map(async (target) => {
       try {
-        await webpush.sendNotification(target, payload, {
-          TTL: 86400,
-          urgency: 'high',
-        });
+        await webpush.sendNotification(target, payload, { TTL: 86400, urgency: 'high' });
         deliveredCount++;
       } catch (err) {
-        console.error('Push error:', target.endpoint, err.statusCode, err.message);
-        errors.push(err.message);
-        // Remove expired/invalid subscriptions (410 = Gone, 404 = Not Found)
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          staleEndpoints.push(target.endpoint);
-        }
+        console.error('Push error:', err.statusCode, err.message);
+        errors.push({ endpoint: target.endpoint?.slice(-30), code: err.statusCode, msg: err.message });
       }
     })
   );
-
-  // Clean up stale subscriptions
-  if (staleEndpoints.length > 0) {
-    for (const ep of staleEndpoints) {
-      await supabaseFetch(
-        `push_subscriptions?endpoint=eq.${encodeURIComponent(ep)}`,
-        { method: 'DELETE' }
-      ).catch(() => {});
-    }
-  }
 
   return res.status(200).json({
     success: true,
