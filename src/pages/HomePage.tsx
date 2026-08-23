@@ -52,22 +52,35 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      (window as any).deferredInstallPrompt = e;
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
   }, []);
 
   const handleInstallApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
+    const prompt = (window as any).deferredInstallPrompt || deferredPrompt;
+    if (prompt) {
+      prompt.prompt();
+      const { outcome } = await prompt.userChoice;
       if (outcome === 'accepted') {
         setInstallSuccess(true);
       }
+      (window as any).deferredInstallPrompt = null;
       setDeferredPrompt(null);
     } else {
-      // Guide iPhone / Safari users
-      alert('لتثبيت التطبيق على الآيفون: اضغط على زر المشاركة (Share ⎋) في المتصفح، ثم اختر "إضافة إلى الشاشة الرئيسية ➕ (Add to Home Screen)".');
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+      if (isStandalone) {
+        alert('✅ التطبيق مثبت بالفعل على هاتفك!');
+        return;
+      }
+
+      const isIos = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+      if (isIos) {
+        alert('📱 على الآيفون: اضغط على زر المشاركة بالأسفل ⎋ ثم اختر (إضافة إلى الشاشة الرئيسية ➕).');
+      } else {
+        alert('📲 لتثبيت التطبيق على جهازك: اضغط على خيارات المتصفح (الثلاث نقاط ⋮ بالأعلى) ثم اختر "تثبيت التطبيق" أو "إضافة إلى الشاشة الرئيسية".');
+      }
     }
   };
 
