@@ -39,10 +39,9 @@ export const NotificationPermissionModal: React.FC = () => {
 
     // Check if dismissed before
     const dismissed = localStorage.getItem('church_popup_dismissed');
-    const alreadySubscribed = localStorage.getItem('church_notifications_enabled') === 'true';
 
-    // Show popup gently after 3 seconds if not dismissed and not granted
-    if (!dismissed && !alreadySubscribed && permission !== 'granted') {
+    // Show popup after 3 seconds if not dismissed and not already granted
+    if (!dismissed && permission !== 'granted') {
       const timer = setTimeout(() => {
         setIsOpen(true);
       }, 3000);

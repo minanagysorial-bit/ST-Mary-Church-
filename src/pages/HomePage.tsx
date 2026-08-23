@@ -85,8 +85,20 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
   };
 
   const handleEnableNotifications = async () => {
+    // Clear old flags so we always re-register fresh
+    localStorage.removeItem('church_notifications_enabled');
+    localStorage.removeItem('church_push_sub');
+
     const res = await requestNotificationPermission();
     setNotificationStatus(res);
+
+    if (res === 'granted') {
+      alert('✅ تم تفعيل الإشعارات بنجاح! ستصلك تنبيهات القداسات والإعلانات مباشرة على هاتفك.');
+    } else if (res === 'denied') {
+      alert('⚠️ تم حظر الإشعارات. يرجى فتح إعدادات المتصفح (اضغط على القفل 🔒 بجانب الرابط) وتفعيل "الإشعارات / Notifications".');
+    } else {
+      alert('⚠️ لم يتم السماح بالإشعارات. يرجى الضغط على "سماح (Allow)" عند ظهور النافذة.');
+    }
   };
 
   useEffect(() => {
