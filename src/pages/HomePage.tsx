@@ -279,84 +279,90 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         <DailyReadingsCard />
       </section>
 
-      {/* ── APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX ── */}
+      {/* ── APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX (WHITE COMPACT CARD) ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-br from-[#00174a] via-[#002366] to-[#00113a] text-white rounded-3xl p-6 sm:p-10 border-2 border-[#d4af37]/40 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#d4af37]/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center relative z-10">
+        <div className="bg-white text-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-slate-200/80 hover:border-[#d4af37]/40 relative overflow-hidden font-cairo transition-all">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
             
             {/* Right: Info & Features */}
-            <div className="lg:col-span-2 space-y-4">
-              <div className="inline-flex items-center gap-2 bg-[#fed65b] text-[#00174a] text-xs font-extrabold px-3.5 py-1 rounded-full shadow-md">
-                <Smartphone className="w-4 h-4" />
-                <span>تطبيق كنيسة السيدة العذراء محرم بك للهواتف الذكية</span>
+            <div className="space-y-3 max-w-2xl text-right flex-grow">
+              
+              {/* Header Badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 bg-[#002366]/5 border border-[#002366]/15 text-[#002366] text-xs font-extrabold px-3 py-1 rounded-full">
+                  <Smartphone className="w-3.5 h-3.5 text-[#d4af37]" />
+                  <span>تطبيق الهاتف المحمول</span>
+                </span>
+
+                <span className="bg-amber-50 text-amber-900 border border-amber-200/60 text-xs font-bold px-3 py-1 rounded-full">
+                  ⚡ إصدار خفيف وسريع مجاناً
+                </span>
               </div>
 
-              <h2 className="font-tajawal text-2xl sm:text-4xl font-extrabold text-[#fed65b] leading-tight">
-                تطبيق الكنيسة دائماً معك على شاشة هاتفك 📱
+              {/* Headline */}
+              <h2 className="font-tajawal text-xl sm:text-2xl font-extrabold text-[#00174a] leading-snug">
+                تطبيق كنيسة السيدة العذراء محرم بك على هاتفك 📱
               </h2>
 
-              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">
-                احصل على تجربة سريعة وسلسة: تابع البث المباشر للقداسات، استقبل آية اليوم صباحاً، وتصفح السنكسار والأجبية في أي وقت حتى بدون اتصال بالإنترنت!
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-semibold">
+                تابع البث المباشر للقداسات، استقبل آية اليوم والتنبيهات الكنسية فورياً، وتصفح السنكسار وقراءات اليوم بدون اتصال بالإنترنت.
               </p>
 
               {/* Feature Badges */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-                <div className="bg-white/10 border border-white/15 p-2.5 rounded-2xl flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-[#fed65b] shrink-0" />
-                  <span className="text-[11px] font-bold text-slate-100">إشعارات وتنبيهات فورية</span>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <div className="bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                  <Bell className="w-3.5 h-3.5 text-[#d4af37]" />
+                  <span>إشعارات فورية</span>
                 </div>
-
-                <div className="bg-white/10 border border-white/15 p-2.5 rounded-2xl flex items-center gap-2">
-                  <Radio className="w-4 h-4 text-[#fed65b] shrink-0" />
-                  <span className="text-[11px] font-bold text-slate-100">بث مباشر للصلوات</span>
+                <div className="bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                  <Radio className="w-3.5 h-3.5 text-red-600" />
+                  <span>بث مباشر للصلوات</span>
                 </div>
+                <div className="bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                  <WifiOff className="w-3.5 h-3.5 text-[#002366]" />
+                  <span>يعمل بدون إنترنت</span>
+                </div>
+              </div>
+            </div>
 
-                <div className="bg-white/10 border border-white/15 p-2.5 rounded-2xl flex items-center gap-2 col-span-2 sm:col-span-1">
-                  <WifiOff className="w-4 h-4 text-[#fed65b] shrink-0" />
-                  <span className="text-[11px] font-bold text-slate-100">يعمل بدون إنترنت</span>
+            {/* Left: Icon & CTA Buttons */}
+            <div className="shrink-0 w-full md:w-auto flex flex-col sm:flex-row md:flex-col items-center gap-3 pt-2 md:pt-0">
+              <div className="flex items-center gap-3 w-full justify-center">
+                <img
+                  src="/app-icon-192.png"
+                  alt="Church App Icon"
+                  className="w-14 h-14 rounded-2xl object-cover shadow-md border border-slate-200 shrink-0"
+                />
+                <div className="text-right sm:hidden md:block">
+                  <p className="font-tajawal text-xs font-bold text-[#00174a]">العذراء محرم بك</p>
+                  <p className="text-[10px] text-slate-400 font-semibold">تطبيق رسمي</p>
                 </div>
               </div>
 
-              {/* CTA Action Buttons */}
-              <div className="pt-4 flex flex-col sm:flex-row items-center gap-3">
+              <div className="flex flex-col sm:flex-row md:flex-col gap-2 w-full">
                 <button
                   onClick={handleInstallApp}
-                  className="w-full sm:w-auto bg-[#fed65b] hover:bg-[#ffe088] text-[#00174a] font-extrabold text-xs px-6 py-3 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+                  className="w-full bg-[#002366] hover:bg-[#00174a] text-white hover:text-[#fed65b] px-5 py-2.5 rounded-xl font-tajawal font-extrabold text-xs transition-all shadow-md flex items-center justify-center gap-2 group active:scale-95"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>{installSuccess ? 'تم التثبيت بنجاح!' : 'تثبيت التطبيق على هاتفك الآن 📲'}</span>
+                  <Download className="w-4 h-4 text-[#fed65b]" />
+                  <span>{installSuccess ? 'تم التثبيت بنجاح!' : 'تثبيت التطبيق على هاتفك 📲'}</span>
                 </button>
 
                 {notificationStatus !== 'granted' ? (
                   <button
                     onClick={handleEnableNotifications}
-                    className="w-full sm:w-auto bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold text-xs px-6 py-3 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95"
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95"
                   >
-                    <Bell className="w-4 h-4 text-[#fed65b]" />
-                    <span>تفعيل إشعارات الكنيسة 🔔</span>
+                    <Bell className="w-3.5 h-3.5 text-[#d4af37]" />
+                    <span>تفعيل الإشعارات 🔔</span>
                   </button>
                 ) : (
-                  <span className="bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-bold text-xs px-4 py-2.5 rounded-2xl flex items-center justify-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>الإشعارات مفعلة على هذا الهاتف ✅</span>
+                  <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-[11px] px-3 py-1.5 rounded-xl flex items-center justify-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>الإشعارات مفعلة ✅</span>
                   </span>
                 )}
               </div>
-            </div>
-
-            {/* Left: App Icon & Visual */}
-            <div className="flex flex-col items-center justify-center p-6 bg-white/5 border border-white/10 rounded-3xl text-center space-y-3">
-              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-1 shadow-2xl overflow-hidden">
-                <img src="/app-icon-512.png" alt="Church App Icon" className="w-full h-full rounded-2xl object-cover" />
-              </div>
-              <h3 className="font-tajawal text-base font-extrabold text-white">
-                العذراء محرم بك
-              </h3>
-              <p className="text-[11px] text-slate-300 font-semibold">
-                الإصدار الرقمي الرسمي V2.0 • مجاني 100%
-              </p>
             </div>
 
           </div>
