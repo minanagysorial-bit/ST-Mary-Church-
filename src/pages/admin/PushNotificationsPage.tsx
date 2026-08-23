@@ -112,28 +112,58 @@ export const PushNotificationsPage: React.FC = () => {
   };
 
   const handleTestOnMyDevice = async () => {
-    if (permission !== 'granted') {
-      const newPerm = await requestNotificationPermission();
-      setPermission(newPerm);
-      if (newPerm !== 'granted') {
-        setErrorMsg('يرجى السماح بإذن الإشعارات لتجربتها على جهازك.');
+    if (!('Notification' in window)) {
+      setErrorMsg('متصفحك لا يدعم الإشعارات. يرجى استخدام متصفح Chrome أو Safari.');
+      return;
+    }
+
+    if (Notification.permission === 'denied') {
+      setErrorMsg('⚠️ تم حظر إذن الإشعارات سابقاً على هذا المتصفح. اضغط على أيقونة القفل 🔒 بجانب رابط الموقع أعلى الشاشة، ثم اختر (الأذونات / Permissions) وفعل (سماح بالإشعارات / Allow).');
+      return;
+    }
+
+    // Ensure Service Worker is active
+    if ('serviceWorker' in navigator) {
+      await navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
+    let currentPerm: NotificationPermission = Notification.permission;
+    if (currentPerm !== 'granted') {
+      currentPerm = await requestNotificationPermission();
+      setPermission(currentPerm);
+      if (currentPerm !== 'granted') {
+        setErrorMsg('يرجى الضغط على "سماح (Allow)" عند ظهور نافذة طلب إذن الإشعارات.');
         return;
       }
     }
 
-    const success = await triggerLocalNotification({
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]);
+    }
+
+    const payload = {
       title,
       body,
-      icon: iconUrl,
+      icon: iconUrl || '/app-icon-192.png',
       image: imageUrl || undefined,
       url: targetUrl
-    });
+    };
+
+    const success = await triggerLocalNotification(payload);
+
+    // Also trigger server push if subscription registered
+    fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
 
     if (success) {
-      setSuccessMsg('تم إرسال إشعار تجريبي لشاشة هاتفك / جهازك بنجاح! 🔔');
-      setTimeout(() => setSuccessMsg(null), 3000);
+      setSuccessMsg('تم إرسال إشعار تجريبي لشاشة هاتفك / جهازك بنجاح! 🔔 تفقد شريط الإشعارات بالأعلى.');
+      setTimeout(() => setSuccessMsg(null), 4000);
     } else {
-      setErrorMsg('تعذر إظهار الإشعار. تأكد من تفعيل إشعارات المتصفح.');
+      setSuccessMsg('تم إرسال الإشعار! إذا لم يظهر على شاشتك، تأكد من عدم تفعيل وضع "عدم الإزعاج (DND)" في الهاتف.');
+      setTimeout(() => setSuccessMsg(null), 4000);
     }
   };
 
