@@ -44,6 +44,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           { label: 'إدارة الكهنة', path: '/admin/priests', icon: 'supervisor_account', permission: PERMISSIONS.MANAGE_CONTENT },
           { label: 'جدول القداسات', path: '/priest/liturgies', icon: 'calendar_month', permission: PERMISSIONS.MANAGE_LITURGIES },
           { label: 'ألبومات الذاكرة', path: '/admin/albums', icon: 'images', permission: PERMISSIONS.MANAGE_CONTENT },
+          { label: 'الإشعارات الفورية', path: '/admin/notifications', icon: 'notifications_active' },
           { label: 'إعدادات المسؤول', path: '/admin/permissions', icon: 'admin_panel_settings', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'إدارة الآيات', path: '/admin/verses', icon: 'menu_book', permission: PERMISSIONS.MANAGE_VERSES },
         ];

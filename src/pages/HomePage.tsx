@@ -16,10 +16,17 @@ import {
   Clock,
   ChevronLeft,
   Check,
-  Megaphone
+  Megaphone,
+  Smartphone,
+  Bell,
+  Download,
+  CheckCircle2,
+  Radio,
+  WifiOff
 } from 'lucide-react';
 import { api, Verse, Announcement } from '../lib/api';
 import { DailyReadingsCard } from '../components/common/DailyReadingsCard';
+import { requestNotificationPermission, getNotificationPermission } from '../lib/pushNotifications';
 
 interface HomePageProps {
   onOpenPrayerModal: () => void;
@@ -30,12 +37,44 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
   const [loadingVerse, setLoadingVerse] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeAnnouncements, setActiveAnnouncements] = useState<Announcement[]>([]);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [notificationStatus, setNotificationStatus] = useState<NotificationPermission>(getNotificationPermission());
+  const [installSuccess, setInstallSuccess] = useState(false);
   const [heroContent, setHeroContent] = useState({
     title: 'كنيسة السيدة العذراء مريم',
     subtitle: 'بمحرم بك - الإسكندرية',
     image_url: '/church.jpeg',
     description: '"عَظَّمَ الرَّبُّ الْعَمَلَ مَعَنَا، وَصِرْنَا فَرِحِينَ." مرحباً بكم في الموقع الرسمي لمتابعة العظات، جدول القداسات، وتسجيل بيوت وأسر المخدومين.'
   });
+
+  useEffect(() => {
+    // Listen for PWA prompt
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setInstallSuccess(true);
+      }
+      setDeferredPrompt(null);
+    } else {
+      // Guide iPhone / Safari users
+      alert('لتثبيت التطبيق على الآيفون: اضغط على زر المشاركة (Share ⎋) في المتصفح، ثم اختر "إضافة إلى الشاشة الرئيسية ➕ (Add to Home Screen)".');
+    }
+  };
+
+  const handleEnableNotifications = async () => {
+    const res = await requestNotificationPermission();
+    setNotificationStatus(res);
+  };
 
   useEffect(() => {
     const fetchRandomVerse = async () => {
@@ -59,92 +98,53 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
     };
     const fetchHeroContent = async () => {
       try {
-        const page = await api.getCustomPageBySlug('home');
-        if (page) {
-          const sections = await api.getPageSections(page.id);
-          const hero = sections.find(s => s.section_type === 'hero');
-          if (hero) {
-            setHeroContent({
-              title: hero.title || 'كنيسة السيدة العذراء مريم',
-              subtitle: hero.subtitle || 'بمحرم بك - الإسكندرية',
-              image_url: hero.image_url || '/church.jpeg',
-              description: hero.content || '"عَظَّمَ الرَّبُّ الْعَمَلَ مَعَنَا، وَصِرْنَا فَرِحِينَ." مرحباً بكم في الموقع الرسمي لمتابعة العظات، جدول القداسات، وتسجيل بيوت وأسر المخدومين.'
-            });
-          }
-        }
+        const settings = await api.getSiteSettings();
+        setHeroContent({
+          title: settings.hero_title || 'كنيسة السيدة العذراء مريم',
+          subtitle: settings.hero_subtitle || 'بمحرم بك - الإسكندرية',
+          image_url: settings.hero_image_url || '/church.jpeg',
+          description: settings.hero_paragraph || '"عَظَّمَ الرَّبُّ الْعَمَلَ مَعَنَا، وَصِرْنَا فَرِحِينَ." مرحباً بكم في الموقع الرسمي لمتابعة العظات، جدول القداسات، وتسجيل بيوت وأسر المخدومين.'
+        });
       } catch (err) {
-        console.error('Error loading dynamic hero content:', err);
+        console.error('Error fetching hero content:', err);
       }
     };
+
     fetchRandomVerse();
     fetchAnnouncements();
     fetchHeroContent();
   }, []);
 
   const handleShare = () => {
-    const vText = verse?.text || '«تَعَالَوْا إِلَيَّ يَا جَمِيعَ الْمُتْعَبِينَ وَالثَّقِيلِي الأَحْمَالِ، وَأَنَا أُرِيحُكُمْ.»';
-    const vRef = verse?.reference || 'متى ١١: ٢٨';
-    const shareText = `آية اليوم من كنيسة العذراء مريم بمحرم بك:\n"${vText}"\n(${vRef})\nشاركونا بركة الكلمة!`;
-
-    navigator.clipboard.writeText(shareText)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2500);
-      })
-      .catch((err) => {
-        console.error('Clipboard copy failed:', err);
-        alert(shareText);
-      });
+    if (!verse) return;
+    const textToCopy = `"${verse.text}"\n— ${verse.reference}\n(كنيسة السيدة العذراء مريم بمحرم بك)\nhttps://www.tibarthenos.com/`;
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
-  const defaultVerseText = '«تَعَالَوْا إِلَيَّ يَا جَمِيعَ الْمُتْعَبِينَ وَالثَّقِيلِي الأَحْمَالِ، وَأَنَا أُرِيحُكُمْ.»';
-  const defaultVerseRef = 'إنجيل متى (١١ : ٢٨)';
+  const defaultVerseText = "لأَنَّهُ هكَذَا أَحَبَّ اللهُ الْعَالَمَ حَتَّى بَذَلَ ابْنَهُ الْوَحِيدَ، لِكَيْ لاَ يَهْلِكَ كُلُّ مَنْ يُؤْمِنُ بِهِ، بَلْ تَكُونُ لَهُ الْحَيَاةُ الأَبَدِيَّةُ.";
+  const defaultVerseRef = "إنجيل يوحنا 3: 16";
 
   return (
-    <div className="flex flex-col gap-12 pb-16">
+    <div className="space-y-12 sm:space-y-16 pb-16 font-cairo text-right" dir="rtl">
       <Helmet>
         <title>كنيسة السيدة العذراء مريم محرم بك - اسكندرية - الموقع الرسمي</title>
-        <meta name="description" content="الموقع والمنصة الرقمية الرسمية لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية. جدول القداسات الإلهية، عظات الآباء الكهنة، البث المباشر، قطمارس وسنكسار اليوم، وتاريخ الكنيسة منذ 1934." />
-        <meta name="keywords" content="كنيسة العذراء محرم بك, كنيسة السيدة العذراء مريم بمحرم بك, كنيسة العذراء اسكندرية, قداسات كنيسة العذراء محرم بك, تاريخ كنيسة العذراء محرم بك, كهنة كنيسة العذراء محرم بك, بث مباشر كنيسة العذراء محرم بك, St Mary Moharam Bek, St Mary Church Alexandria, كنيسة قبطية ارثوذكسية محرم بك" />
+        <meta name="description" content="الموقع الرسمي لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية. مواعيد القداسات، عظات الآباء الكهنة، البث المباشر، السنكسار والقراءات اليومية، وتاريخ الكنيسة." />
         <link rel="canonical" href="https://www.tibarthenos.com/" />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Church",
-            "name": "كنيسة السيدة العذراء مريم محرم بك - اسكندرية - الموقع الرسمي",
-            "alternateName": "St. Mary Coptic Orthodox Church Moharam Bek",
-            "url": "https://www.tibarthenos.com/",
-            "logo": "https://www.tibarthenos.com/favicon.svg",
-            "image": "https://www.tibarthenos.com/church.jpeg",
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": "شارع الراضى، محرم بك",
-              "addressLocality": "الإسكندرية",
-              "addressRegion": "محافظة الإسكندرية",
-              "addressCountry": "EG"
-            }
-          })}
-        </script>
       </Helmet>
-      
-      {/* Hero Section */}
-      <section className="relative min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center bg-[#00113a] overflow-hidden text-white border-b-4 border-[#d4af37]">
-        {/* Background Image with opacity */}
-        <div 
-          className="absolute inset-0 bg-cover z-0" 
-          style={{ 
-            backgroundImage: `url('${heroContent.image_url}')`, 
-            opacity: 0.78,
-            backgroundPosition: "center bottom"
-          }}
-        />
-        {/* Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#00113a]/80 via-[#00113a]/40 to-[#00113a]/75 z-10" />
 
-        <div className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6 py-16">
-          <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 border border-[#fed65b]/40 text-[#fed65b] text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-inner animate-fade-in">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-r from-[#00174a] via-[#002366] to-[#00113a] text-white py-16 sm:py-24 lg:py-28 px-4 sm:px-6 lg:px-8 border-b-2 border-[#d4af37]">
+        <div 
+          className="absolute inset-0 opacity-15 bg-cover bg-center pointer-events-none mix-blend-overlay"
+          style={{ backgroundImage: `url(${heroContent.image_url})` }}
+        />
+        
+        <div className="relative max-w-4xl mx-auto text-center space-y-6 animate-fade-in">
+          <div className="inline-flex items-center gap-2 bg-[#fed65b] text-[#00174a] px-4 py-1.5 rounded-full text-xs font-extrabold shadow-md mb-2">
             <Sparkles className="w-4 h-4" />
-            <span>البوابة الرقمية الموحدة لخدمات الكنيسة</span>
+            <span>البوابة الرقمية الرسمية لكنيسة السيدة العذراء مريم</span>
           </div>
 
           <h1 className="font-tajawal text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight drop-shadow-md">
@@ -277,6 +277,92 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
       {/* Daily Katamaros & Synaxarium Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <DailyReadingsCard />
+      </section>
+
+      {/* ── APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-gradient-to-br from-[#00174a] via-[#002366] to-[#00113a] text-white rounded-3xl p-6 sm:p-10 border-2 border-[#d4af37]/40 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#d4af37]/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center relative z-10">
+            
+            {/* Right: Info & Features */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="inline-flex items-center gap-2 bg-[#fed65b] text-[#00174a] text-xs font-extrabold px-3.5 py-1 rounded-full shadow-md">
+                <Smartphone className="w-4 h-4" />
+                <span>تطبيق كنيسة السيدة العذراء محرم بك للهواتف الذكية</span>
+              </div>
+
+              <h2 className="font-tajawal text-2xl sm:text-4xl font-extrabold text-[#fed65b] leading-tight">
+                تطبيق الكنيسة دائماً معك على شاشة هاتفك 📱
+              </h2>
+
+              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">
+                احصل على تجربة سريعة وسلسة: تابع البث المباشر للقداسات، استقبل آية اليوم صباحاً، وتصفح السنكسار والأجبية في أي وقت حتى بدون اتصال بالإنترنت!
+              </p>
+
+              {/* Feature Badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                <div className="bg-white/10 border border-white/15 p-2.5 rounded-2xl flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-[#fed65b] shrink-0" />
+                  <span className="text-[11px] font-bold text-slate-100">إشعارات وتنبيهات فورية</span>
+                </div>
+
+                <div className="bg-white/10 border border-white/15 p-2.5 rounded-2xl flex items-center gap-2">
+                  <Radio className="w-4 h-4 text-[#fed65b] shrink-0" />
+                  <span className="text-[11px] font-bold text-slate-100">بث مباشر للصلوات</span>
+                </div>
+
+                <div className="bg-white/10 border border-white/15 p-2.5 rounded-2xl flex items-center gap-2 col-span-2 sm:col-span-1">
+                  <WifiOff className="w-4 h-4 text-[#fed65b] shrink-0" />
+                  <span className="text-[11px] font-bold text-slate-100">يعمل بدون إنترنت</span>
+                </div>
+              </div>
+
+              {/* CTA Action Buttons */}
+              <div className="pt-4 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  onClick={handleInstallApp}
+                  className="w-full sm:w-auto bg-[#fed65b] hover:bg-[#ffe088] text-[#00174a] font-extrabold text-xs px-6 py-3 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>{installSuccess ? 'تم التثبيت بنجاح!' : 'تثبيت التطبيق على هاتفك الآن 📲'}</span>
+                </button>
+
+                {notificationStatus !== 'granted' ? (
+                  <button
+                    onClick={handleEnableNotifications}
+                    className="w-full sm:w-auto bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold text-xs px-6 py-3 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <Bell className="w-4 h-4 text-[#fed65b]" />
+                    <span>تفعيل إشعارات الكنيسة 🔔</span>
+                  </button>
+                ) : (
+                  <span className="bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-bold text-xs px-4 py-2.5 rounded-2xl flex items-center justify-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>الإشعارات مفعلة على هذا الهاتف ✅</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Left: App Icon & Visual */}
+            <div className="flex flex-col items-center justify-center p-6 bg-white/5 border border-white/10 rounded-3xl text-center space-y-3">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-1 shadow-2xl animate-bounce">
+                <div className="w-full h-full rounded-2xl bg-[#00174a] flex items-center justify-center border-2 border-[#fed65b]">
+                  <Cross className="w-12 h-12 text-[#fed65b]" />
+                </div>
+              </div>
+              <h3 className="font-tajawal text-base font-extrabold text-white">
+                العذراء محرم بك
+              </h3>
+              <p className="text-[11px] text-slate-300 font-semibold">
+                الإصدار الرقمي الرسمي V2.0 • مجاني 100%
+              </p>
+            </div>
+
+          </div>
+        </div>
       </section>
 
       {/* Digital Services Cards Section */}

@@ -38,6 +38,7 @@ const AlbumsManagementPage = lazy(() => import('./pages/admin/AlbumsManagementPa
 const PriestsManagementPage = lazy(() => import('./pages/admin/PriestsManagementPage').then(m => ({ default: m.PriestsManagementPage })));
 const SiteBuilderPage = lazy(() => import('./pages/super-admin/SiteBuilderPage').then(m => ({ default: m.SiteBuilderPage })));
 const CommunicationsPage = lazy(() => import('./pages/admin/CommunicationsPage').then(m => ({ default: m.CommunicationsPage })));
+const PushNotificationsPage = lazy(() => import('./pages/admin/PushNotificationsPage').then(m => ({ default: m.PushNotificationsPage })));
 const DynamicPage = lazy(() => import('./pages/DynamicPage').then(m => ({ default: m.DynamicPage })));
 
 // Priest Dashboards (Lazy Loaded)
@@ -197,6 +198,7 @@ const AppLayout: React.FC = () => {
             <Route path="/admin/priests" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><PriestsManagementPage /></ProtectedRoute>} />
             <Route path="/admin/site-builder" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_CONTENT}><SiteBuilderPage /></ProtectedRoute>} />
             <Route path="/admin/communications" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><CommunicationsPage /></ProtectedRoute>} />
+            <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><PushNotificationsPage /></ProtectedRoute>} />
 
             {/* Priest Routes */}
             <Route path="/priest" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><PriestDashboardPage /></ProtectedRoute>} />
