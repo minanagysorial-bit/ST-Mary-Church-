@@ -348,10 +348,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
 
             {/* Left: App Icon & Visual */}
             <div className="flex flex-col items-center justify-center p-6 bg-white/5 border border-white/10 rounded-3xl text-center space-y-3">
-              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-1 shadow-2xl animate-bounce">
-                <div className="w-full h-full rounded-2xl bg-[#00174a] flex items-center justify-center border-2 border-[#fed65b]">
-                  <Cross className="w-12 h-12 text-[#fed65b]" />
-                </div>
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-1 shadow-2xl overflow-hidden">
+                <img src="/app-icon-512.png" alt="Church App Icon" className="w-full h-full rounded-2xl object-cover" />
               </div>
               <h3 className="font-tajawal text-base font-extrabold text-white">
                 العذراء محرم بك

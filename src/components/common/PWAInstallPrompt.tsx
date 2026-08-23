@@ -56,10 +56,8 @@ export const PWAInstallPrompt: React.FC = () => {
       <div className="bg-[#00174a]/95 backdrop-blur-md border border-[#d4af37]/60 text-white p-4 rounded-3xl shadow-2xl flex items-center justify-between gap-3">
         
         {/* App Icon */}
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-0.5 shrink-0 shadow-md">
-          <div className="w-full h-full rounded-2xl bg-[#00174a] flex items-center justify-center">
-            <Cross className="w-6 h-6 text-[#fed65b]" />
-          </div>
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-0.5 shrink-0 shadow-md overflow-hidden">
+          <img src="/app-icon-192.png" alt="Church App Icon" className="w-full h-full rounded-2xl object-cover" />
         </div>
 
         {/* Text Details */}

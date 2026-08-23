@@ -13,14 +13,20 @@
   "categories": ["lifestyle", "social", "education"],
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "48x48 72x72 96x96 128x128 256x256 512x512",
-      "type": "image/svg+xml",
+      "src": "/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
       "src": "/church.jpeg",
-      "sizes": "512x512",
+      "sizes": "768x1024",
       "type": "image/jpeg",
       "purpose": "any"
     }
