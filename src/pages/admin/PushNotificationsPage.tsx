@@ -141,6 +141,9 @@ export const PushNotificationsPage: React.FC = () => {
       navigator.vibrate([200, 100, 200]);
     }
 
+    const saved = localStorage.getItem('church_push_sub');
+    const userSub = saved ? JSON.parse(saved) : null;
+
     const payload = {
       title,
       body,
@@ -149,22 +152,22 @@ export const PushNotificationsPage: React.FC = () => {
       url: targetUrl
     };
 
-    const success = await triggerLocalNotification(payload);
+    // Show locally on this device immediately
+    await triggerLocalNotification(payload);
 
-    // Also trigger server push if subscription registered
-    fetch('/api/send-push', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).catch(() => {});
-
-    if (success) {
-      setSuccessMsg('تم إرسال إشعار تجريبي لشاشة هاتفك / جهازك بنجاح! 🔔 تفقد شريط الإشعارات بالأعلى.');
-      setTimeout(() => setSuccessMsg(null), 4000);
-    } else {
-      setSuccessMsg('تم إرسال الإشعار! إذا لم يظهر على شاشتك، تأكد من عدم تفعيل وضع "عدم الإزعاج (DND)" في الهاتف.');
-      setTimeout(() => setSuccessMsg(null), 4000);
+    // Send via server to ALL registered devices in DB
+    try {
+      const res = await fetch('/api/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, subscription: userSub })
+      });
+      const data = await res.json();
+      setSuccessMsg(`تم إرسال الإشعار! 🔔 وصل لـ ${data.delivered ?? 0} جهاز. تفقد شريط الإشعارات بالأعلى.`);
+    } catch {
+      setSuccessMsg('تم إرسال الإشعار محلياً. تحقق من اتصالك بالإنترنت لإرسال السيرفر.');
     }
+    setTimeout(() => setSuccessMsg(null), 5000);
   };
 
   const handleBroadcastToAll = async (e: React.FormEvent) => {
