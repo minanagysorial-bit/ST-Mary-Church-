@@ -1,0 +1,28 @@
+{
+  "name": "كنيسة السيدة العذراء مريم - محرم بك",
+  "short_name": "العذراء محرم بك",
+  "description": "البوابة الرقمية الموحدة لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#00113a",
+  "theme_color": "#00174a",
+  "orientation": "portrait-primary",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["lifestyle", "social", "education"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "48x48 72x72 96x96 128x128 256x256 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/church.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

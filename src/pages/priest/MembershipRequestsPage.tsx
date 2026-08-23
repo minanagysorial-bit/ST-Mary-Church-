@@ -60,6 +60,9 @@ export const MembershipRequestsPage: React.FC = () => {
   // Image Lightbox / Fullscreen state
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
 
+  // Search Query
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Rejection reason dialog state
   const [rejectingReqId, setRejectingReqId] = useState<string | null>(null);
   const [rejectionNote, setRejectionNote] = useState('');
@@ -218,6 +221,65 @@ export const MembershipRequestsPage: React.FC = () => {
     }
   };
 
+  const filteredRequests = useMemo(() => {
+    if (!searchQuery.trim()) return requests;
+    const q = searchQuery.trim().toLowerCase();
+    return requests.filter(r => {
+      const parsed = parseRequestAddress(r.address);
+      return (
+        r.full_name?.toLowerCase().includes(q) ||
+        r.national_id?.toLowerCase().includes(q) ||
+        r.phone?.toLowerCase().includes(q) ||
+        parsed.cleanAddress?.toLowerCase().includes(q) ||
+        parsed.area?.toLowerCase().includes(q) ||
+        parsed.confessionPriest?.toLowerCase().includes(q)
+      );
+    });
+  }, [requests, searchQuery]);
+
+  const handleExportCSV = () => {
+    const headers = [
+      'اسم مقدم الطلب',
+      'الرقم القومي',
+      'رقم الهاتف',
+      'العنوان',
+      'المنطقة',
+      'أب الاعتراف',
+      'تاريخ الميلاد',
+      'الوظيفة',
+      'عدد أفراد الأسرة',
+      'تاريخ التقديم',
+      'حالة الطلب'
+    ];
+
+    const rows = filteredRequests.map(r => {
+      const parsed = parseRequestAddress(r.address);
+      return [
+        `"${r.full_name || ''}"`,
+        `\t${r.national_id || ''}`,
+        `\t${r.phone || ''}`,
+        `"${parsed.cleanAddress || ''}"`,
+        `"${parsed.area || ''}"`,
+        `"${parsed.confessionPriest || ''}"`,
+        `"${parsed.birthDate || ''}"`,
+        `"${parsed.job || ''}"`,
+        `"${parsed.familyMembers?.length || 0}"`,
+        `"${new Date(r.created_at).toLocaleDateString('ar-EG')}"`,
+        `"${r.status === 'approved' ? 'معتمد' : r.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}"`
+      ].join(',');
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `كشف_طلبات_العضوية_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -249,61 +311,107 @@ export const MembershipRequestsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Tabs Filter */}
-        <div className="flex border-b border-slate-100 bg-white p-1 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.01)] w-fit">
-          <button
-            onClick={() => setActiveTab('pending')}
-            className={`px-6 py-2.5 rounded-lg text-xs font-bold font-tajawal transition-all flex items-center gap-2 ${
-              activeTab === 'pending'
-                ? 'bg-[#002366] text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <span>قيد المراجعة</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-              activeTab === 'pending' ? 'bg-[#fed65b] text-[#00113a]' : 'bg-slate-100 text-slate-600'
-            }`}>
-              {activeTab === 'pending' ? requests.length : '؟'}
-            </span>
-          </button>
+        {/* Toolbar: Tabs Filter + Search + Export */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+          
+          {/* Tabs Filter */}
+          <div className="flex border-b border-slate-100 bg-white p-1 rounded-xl shadow-sm w-fit">
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`px-5 py-2 rounded-lg text-xs font-bold font-tajawal transition-all flex items-center gap-2 ${
+                activeTab === 'pending'
+                  ? 'bg-[#002366] text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <span>قيد المراجعة</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                activeTab === 'pending' ? 'bg-[#fed65b] text-[#00113a]' : 'bg-slate-100 text-slate-600'
+              }`}>
+                {activeTab === 'pending' ? requests.length : '؟'}
+              </span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('approved')}
-            className={`px-6 py-2.5 rounded-lg text-xs font-bold font-tajawal transition-all ${
-              activeTab === 'approved'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            المقبولة والمعتمدة
-          </button>
+            <button
+              onClick={() => setActiveTab('approved')}
+              className={`px-5 py-2 rounded-lg text-xs font-bold font-tajawal transition-all ${
+                activeTab === 'approved'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              المقبولة والمعتمدة
+            </button>
 
-          <button
-            onClick={() => setActiveTab('rejected')}
-            className={`px-6 py-2.5 rounded-lg text-xs font-bold font-tajawal transition-all ${
-              activeTab === 'rejected'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            المرفوضة
-          </button>
+            <button
+              onClick={() => setActiveTab('rejected')}
+              className={`px-5 py-2 rounded-lg text-xs font-bold font-tajawal transition-all ${
+                activeTab === 'rejected'
+                  ? 'bg-rose-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              المرفوضة
+            </button>
+          </div>
+
+          {/* Search Bar and Export Excel */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            <div className="relative flex-1 sm:w-72">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="ابحث بالاسم، الرقم القومي، أو الهاتف..."
+                className="w-full bg-white border border-slate-200 rounded-xl pr-4 pl-8 py-2 text-xs font-bold text-slate-800 outline-none focus:border-[#002366] shadow-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={handleExportCSV}
+              disabled={filteredRequests.length === 0}
+              className="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5 shrink-0 self-end sm:self-auto"
+              title="تصدير كشف طلبات العضوية إلى ملف Excel / CSV"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>تصدير Excel ({filteredRequests.length})</span>
+            </button>
+          </div>
+
         </div>
 
         {/* Requests Cards List */}
         <div className="space-y-4">
           {loading ? (
-            <div className="bg-white rounded-2xl p-12 text-center text-slate-400 font-bold border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+            <div className="bg-white rounded-2xl p-12 text-center text-slate-400 font-bold border border-slate-100 shadow-sm">
               جاري تحميل طلبات العضوية...
             </div>
-          ) : requests.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 text-center text-slate-400 font-bold border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] space-y-2">
+          ) : filteredRequests.length === 0 ? (
+            <div className="bg-white rounded-2xl p-12 text-center text-slate-400 font-bold border border-slate-100 shadow-sm space-y-2">
               <ClipboardList className="w-10 h-10 mx-auto text-slate-300" />
-              <p className="text-sm">لا توجد طلبات عضوية في هذا القسم حالياً.</p>
+              <p className="text-sm">
+                {searchQuery ? `لا توجد طلبات تطابق كلمة البحث "${searchQuery}"` : 'لا توجد طلبات عضوية في هذا القسم حالياً.'}
+              </p>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-xs text-[#002366] underline font-bold"
+                >
+                  عرض كافة الطلبات
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {requests.map(req => {
+              {filteredRequests.map(req => {
                 const parsed = parseRequestAddress(req.address);
                 const hasDocs = Boolean(parsed.idFrontUrl || parsed.idBackUrl);
 
