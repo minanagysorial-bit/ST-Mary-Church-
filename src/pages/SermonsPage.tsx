@@ -44,7 +44,37 @@ export const SermonsPage: React.FC<SermonsPageProps> = ({ onSelectSermonForModal
     try {
       const res = await fetch('/api/sync-sermons');
       if (res.ok) {
-        await fetchSermons();
+        const syncData = await res.json();
+        if (syncData.sermons && syncData.sermons.length > 0) {
+          // Merge fresh YouTube sermons with DB sermons (deduplicate by youtube_url)
+          setSermons(prev => {
+            const seen = new Set();
+            const merged: Sermon[] = [];
+
+            // Add fresh YouTube videos first
+            for (const s of syncData.sermons) {
+              if (s.youtube_url && !seen.has(s.youtube_url)) {
+                seen.add(s.youtube_url);
+                merged.push(s);
+              }
+            }
+
+            // Add remaining DB sermons
+            for (const s of prev) {
+              if (s.youtube_url && !seen.has(s.youtube_url)) {
+                seen.add(s.youtube_url);
+                merged.push(s);
+              } else if (!s.youtube_url && !seen.has(s.id)) {
+                seen.add(s.id);
+                merged.push(s);
+              }
+            }
+
+            return merged.sort((a, b) => new Date(b.sermon_date || '').getTime() - new Date(a.sermon_date || '').getTime());
+          });
+        } else {
+          await fetchSermons();
+        }
       }
     } catch (err) {
       console.error('Sync error:', err);
