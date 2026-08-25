@@ -62,8 +62,10 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'servant':
         return [
           { label: 'نظرة عامة', path: '/servant', icon: 'dashboard' },
+          { label: 'نقاط مدارس الأحد 🌟', path: '/servant/points', icon: 'stars' },
+          { label: 'خريطة الافتقاد 🗺️', path: '/servant/visitation-map', icon: 'map' },
           { label: 'إدارة الأسر', path: '/servant/families', icon: 'family_restroom', permission: PERMISSIONS.MANAGE_FAMILIES },
-          { label: 'سجل الافتقاد', path: '/servant/visitation', icon: 'volunteer_activism', permission: PERMISSIONS.MANAGE_VISITATION },
+          { label: 'سجل الافتقاد', path: '/servant/visitations', icon: 'volunteer_activism', permission: PERMISSIONS.MANAGE_VISITATION },
           { label: 'تفقد الحضور', path: '/servant/attendance', icon: 'checklist', permission: PERMISSIONS.MANAGE_ATTENDANCE },
           { label: 'طلبات الصلاة والرسائل', path: '/servant/communications', icon: 'chat', permission: PERMISSIONS.VIEW_PRAYERS_AND_CONTACT },
           { label: 'مسابقات تفاعلية', path: '/quiz', icon: 'sports_esports', permission: PERMISSIONS.MANAGE_QUIZZES },

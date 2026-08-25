@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
-import { BookOpen, Users, Calendar, CheckSquare, Heart, Plus, Trash2, Download, Search, Sparkles, X, CheckCircle2 } from 'lucide-react';
+import { BookOpen, Users, Calendar, CheckSquare, Heart, Plus, Trash2, Download, Search, Sparkles, X, CheckCircle2, Award, MapPin, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../../lib/api';
 import type { Family, Sermon, Member } from '../../lib/database.types';
@@ -112,6 +112,51 @@ export const ServantDashboardPage: React.FC = () => {
           <span className="bg-[#002366]/5 text-[#d4af37] border border-[#d4af37]/20 text-xs font-bold px-4 py-2 rounded-full font-tajawal self-start sm:self-auto shadow-sm">
             نظام الافتقاد الرقمي
           </span>
+        </div>
+
+        {/* Quick Highlights Banners for Points & Visitation Map */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link
+            to="/servant/points"
+            className="bg-gradient-to-r from-[#002366] to-[#00174a] text-white p-5 rounded-3xl border border-[#d4af37]/40 shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-between group"
+          >
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 bg-[#fed65b]/20 text-[#fed65b] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                <Sparkles className="w-3 h-3" />
+                <span>خدمة تفاعلية جديدة</span>
+              </div>
+              <h3 className="font-tajawal text-lg font-extrabold text-white group-hover:text-[#fed65b] transition-colors">
+                نظام نقاط وبطاقات مدارس الأحد 🌟
+              </h3>
+              <p className="text-xs text-slate-300">
+                تسجيل الحضور بالباركود، منح النقاط، ولوحة الشرف ومتجر الجوائز.
+              </p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-bold shadow-md shrink-0 mr-3">
+              <Award className="w-6 h-6" />
+            </div>
+          </Link>
+
+          <Link
+            to="/servant/visitation-map"
+            className="bg-gradient-to-r from-[#00174a] to-[#002366] text-white p-5 rounded-3xl border border-[#d4af37]/40 shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-between group"
+          >
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                <Navigation className="w-3 h-3" />
+                <span>خريطة ذكية تفاعلية</span>
+              </div>
+              <h3 className="font-tajawal text-lg font-extrabold text-white group-hover:text-[#fed65b] transition-colors">
+                خريطة افتقاد الأسر للمنطقة 🗺️
+              </h3>
+              <p className="text-xs text-slate-300">
+                توزيع جغرافي للأسر، دبابيس ملونة لحالة الافتقاد، واتصال سريع.
+              </p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shrink-0 mr-3">
+              <MapPin className="w-6 h-6" />
+            </div>
+          </Link>
         </div>
 
         {/* Stats */}
