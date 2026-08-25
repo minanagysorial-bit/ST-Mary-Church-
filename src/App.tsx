@@ -26,8 +26,6 @@ import { LiveStreamPage } from './pages/LiveStreamPage';
 import { ContactUsPage } from './pages/ContactUsPage';
 import { LiturgiesSchedulePage } from './pages/LiturgiesSchedulePage';
 import { ReadingsPage } from './pages/ReadingsPage';
-import { AgpeyaPage } from './pages/AgpeyaPage';
-import { AudioBiblePage } from './pages/AudioBiblePage';
 import { MembershipRegistrationPage } from './pages/MembershipRegistrationPage';
 
 // Admin Dashboards (Lazy Loaded for Speed & Code Splitting)
@@ -171,9 +169,6 @@ const AppLayout: React.FC = () => {
             {/* Public Pages */}
             <Route path="/" element={<HomePage onOpenPrayerModal={() => setIsPrayerModalOpen(true)} />} />
             <Route path="/readings" element={<ReadingsPage onOpenPrayerModal={() => setIsPrayerModalOpen(true)} />} />
-            <Route path="/agpeya" element={<AgpeyaPage />} />
-            <Route path="/bible" element={<AudioBiblePage />} />
-            <Route path="/audio-bible" element={<AudioBiblePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/about/history" element={<HistoryPage />} />
             <Route path="/about/priests" element={<PriestsPage />} />
