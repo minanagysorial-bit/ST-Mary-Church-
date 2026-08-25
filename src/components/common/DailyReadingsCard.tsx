@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Sparkles, ChevronLeft, Calendar, Heart } from 'lucide-react';
-import { getDailyReadings } from '../../lib/copticReadings';
+import { getDailyReadings, fetchLiveDailyReadings, type DailyReadingData } from '../../lib/copticReadings';
 
 export const DailyReadingsCard: React.FC = () => {
-  const readings = getDailyReadings(new Date());
+  const [readings, setReadings] = useState<DailyReadingData>(() => getDailyReadings(new Date()));
+
+  useEffect(() => {
+    fetchLiveDailyReadings(new Date()).then(setReadings).catch(console.warn);
+  }, []);
 
   return (
     <div className="bg-gradient-to-br from-[#00174a] via-[#002366] to-[#00113a] text-white rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-[#d4af37]/40 relative overflow-hidden font-cairo">

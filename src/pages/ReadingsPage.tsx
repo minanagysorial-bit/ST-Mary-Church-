@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BookOpen, Calendar, ChevronRight, ChevronLeft, Sparkles,
   Copy, Check, Heart, Type, ArrowRight, Shield, ScrollText, Flame
 } from 'lucide-react';
-import { getDailyReadings, type DailyReadingData } from '../lib/copticReadings';
+import { getDailyReadings, fetchLiveDailyReadings, type DailyReadingData } from '../lib/copticReadings';
 import { SEO } from '../components/common/SEO';
 
 interface ReadingsPageProps {
@@ -16,10 +16,17 @@ export const ReadingsPage: React.FC<ReadingsPageProps> = ({ onOpenPrayerModal })
   const [activeTab, setActiveTab] = useState<'synaxarium' | 'gospel' | 'epistles' | 'matins' | 'reflection'>('synaxarium');
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
   const [copied, setCopied] = useState(false);
+  const [readings, setReadings] = useState<DailyReadingData>(() => getDailyReadings(new Date()));
 
-  // Dynamic recalculation when selectedDate changes
-  const readings: DailyReadingData = useMemo(() => {
-    return getDailyReadings(selectedDate);
+  // Dynamic fetch when selectedDate changes
+  useEffect(() => {
+    // 1. Instant sync update from offline database
+    setReadings(getDailyReadings(selectedDate));
+
+    // 2. Fetch verified live liturgical readings
+    fetchLiveDailyReadings(selectedDate).then(data => {
+      setReadings(data);
+    }).catch(console.warn);
   }, [selectedDate]);
 
   const handlePrevDay = () => {
