@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { api, Verse, Announcement } from '../lib/api';
 import { DailyReadingsCard } from '../components/common/DailyReadingsCard';
+import { AudioSpiritualHubCard } from '../components/common/AudioSpiritualHubCard';
 import { requestNotificationPermission, getNotificationPermission } from '../lib/pushNotifications';
 
 interface HomePageProps {
@@ -309,6 +310,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
       {/* Daily Katamaros & Synaxarium Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <DailyReadingsCard />
+      </section>
+
+      {/* Audio Agpeya & Audio Bible Spiritual Hub */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <AudioSpiritualHubCard />
       </section>
 
       {/* ── APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX (WHITE COMPACT CARD) ── */}

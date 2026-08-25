@@ -105,6 +105,36 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
               عن الكنيسة
             </Link>
             <Link
+              to="/readings"
+              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
+                isActive('/readings')
+                  ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              القطمارس
+            </Link>
+            <Link
+              to="/agpeya"
+              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
+                isActive('/agpeya')
+                  ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              الأجبية 🕊️
+            </Link>
+            <Link
+              to="/bible"
+              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
+                isActive('/bible') || isActive('/audio-bible')
+                  ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              الإنجيل المسموع 🎧
+            </Link>
+            <Link
               to="/liturgies-schedule"
               className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
                 isActive('/liturgies-schedule')
@@ -213,6 +243,33 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
             }`}
           >
             عن الكنيسة
+          </Link>
+          <Link
+            to="/readings"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              isActive('/readings') ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40' : 'text-slate-100 hover:bg-white/10'
+            }`}
+          >
+            القطمارس والسنكسار
+          </Link>
+          <Link
+            to="/agpeya"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              isActive('/agpeya') ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40' : 'text-slate-100 hover:bg-white/10'
+            }`}
+          >
+            الأجبية المسموعة 🕊️
+          </Link>
+          <Link
+            to="/bible"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`block px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              isActive('/bible') || isActive('/audio-bible') ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40' : 'text-slate-100 hover:bg-white/10'
+            }`}
+          >
+            الإنجيل المسموع 🎧
           </Link>
           <Link
             to="/liturgies-schedule"
