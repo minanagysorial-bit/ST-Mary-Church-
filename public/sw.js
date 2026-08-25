@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stmary-v5';
+const CACHE_NAME = 'stmary-v7';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -27,14 +27,14 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Network-First for Navigation (HTML), Cache-First for versioned assets
+// Network-First for Navigation (HTML) & API, Cache-First for versioned static assets with fallback
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
   const url = new URL(event.request.url);
 
-  // If HTML document navigation, ALWAYS go Network First
-  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+  // If HTML document navigation or API, ALWAYS go Network First
+  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html' || url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
@@ -49,19 +49,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Assets: Cache with Network Fallback
-  if (url.origin === self.location.origin && (url.pathname.startsWith('/assets/') || STATIC_ASSETS.includes(url.pathname))) {
+  // Network First with Cache Fallback for Assets
+  if (url.origin === self.location.origin) {
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) return cachedResponse;
-        return fetch(event.request).then((networkResponse) => {
+      fetch(event.request)
+        .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
           }
           return networkResponse;
-        });
-      })
+        })
+        .catch(() => caches.match(event.request))
     );
   }
 });
