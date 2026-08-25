@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import {
   Volume2, Play, Pause, RotateCcw, RotateCw, BookOpen,
   Sparkles, ChevronRight, ChevronLeft, WifiOff, Clock, Heart,
-  Copy, Check, Moon, Sun, Type, Share2, Shield, Download
+  Copy, Check, Moon, Sun, Type, Share2, Shield, Download, Square
 } from 'lucide-react';
 import { AGPEYA_PRAYERS, AgpeyaPrayer } from '../lib/agpeyaData';
 import { getAgpeyaTimedSections, AgpeyaSection } from '../lib/bibleChaptersEngine';
+import { SpiritualAudioPlayer } from '../lib/spiritualAudioEngine';
 import { SEO } from '../components/common/SEO';
 
 export const AgpeyaPage: React.FC = () => {
@@ -22,85 +23,80 @@ export const AgpeyaPage: React.FC = () => {
   );
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [playbackRate, setPlaybackRate] = useState(1);
+  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
+  const [playbackRate, setPlaybackRate] = useState<number>(1);
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
   const [copied, setCopied] = useState(false);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const activeSectionRef = useRef<HTMLDivElement | null>(null);
+  const playerRef = useRef<SpiritualAudioPlayer | null>(null);
+  const activeSectionElementRef = useRef<HTMLDivElement | null>(null);
+
+  // Initialize Player
+  useEffect(() => {
+    playerRef.current = new SpiritualAudioPlayer();
+    return () => {
+      playerRef.current?.stop();
+    };
+  }, []);
+
+  // Update Player verses when prayer sections change
+  useEffect(() => {
+    if (playerRef.current && agpeyaSections.length > 0) {
+      const sectionTexts = agpeyaSections.map(s => `${s.title}: ${s.text}`);
+      playerRef.current.setVerses(
+        sectionTexts,
+        (idx) => {
+          setActiveSectionIndex(idx);
+          if (activeSectionElementRef.current) {
+            activeSectionElementRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        },
+        (playing) => {
+          setIsPlaying(playing);
+        }
+      );
+    }
+  }, [agpeyaSections]);
 
   const handleSelectPrayer = (prayer: AgpeyaPrayer) => {
     setSelectedPrayer(prayer);
-    setAgpeyaSections(
-      getAgpeyaTimedSections(
-        prayer.id,
-        prayer.openingPrayer,
-        prayer.gospelText,
-        prayer.litanies,
-        prayer.absolutionText
-      )
+    const sections = getAgpeyaTimedSections(
+      prayer.id,
+      prayer.openingPrayer,
+      prayer.gospelText,
+      prayer.litanies,
+      prayer.absolutionText
     );
+    setAgpeyaSections(sections);
+    setActiveSectionIndex(0);
+    playerRef.current?.stop();
     setIsPlaying(false);
-    setCurrentTime(0);
-  };
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      const curr = audioRef.current.currentTime;
-      setCurrentTime(curr);
-      setDuration(audioRef.current.duration || 0);
-
-      if (activeSectionRef.current) {
-        activeSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    }
   };
 
   const handleTogglePlay = () => {
-    if (!audioRef.current) return;
+    if (!playerRef.current) return;
     if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
+      playerRef.current.pause();
     } else {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(err => {
-        console.warn('Audio play error:', err);
-        setIsPlaying(true);
-      });
+      playerRef.current.resume();
     }
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = Number(e.target.value);
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
+  const handleStop = () => {
+    playerRef.current?.stop();
+    setActiveSectionIndex(0);
   };
 
-  const handleSkip = (seconds: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = Math.max(0, Math.min(duration, audioRef.current.currentTime + seconds));
-    }
+  const handleSectionClick = (index: number) => {
+    setActiveSectionIndex(index);
+    playerRef.current?.jumpToVerse(index);
   };
 
   const handleRateChange = () => {
-    const rates = [1, 1.25, 1.5];
+    const rates = [0.8, 1.0, 1.2, 1.4];
     const nextRate = rates[(rates.indexOf(playbackRate) + 1) % rates.length];
     setPlaybackRate(nextRate);
-    if (audioRef.current) {
-      audioRef.current.playbackRate = nextRate;
-    }
-  };
-
-  const formatTime = (secs: number) => {
-    if (isNaN(secs)) return '0:00';
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
+    playerRef.current?.setRate(nextRate);
   };
 
   const handleCopyPrayer = () => {
@@ -128,15 +124,6 @@ export const AgpeyaPage: React.FC = () => {
         description="صلوات السواعي القبطية الأرثوذكسية كاملة بصوت نقي ومكتوبة مع الهايلايتر التفاعلي الذكي. صلاة باكر، الثالثة، السادسة، التاسعة، الغروب، النوم، نصف الليل، والستار."
         keywords={['الاجبية المسموعة', 'صلوات السواعي', 'صلاة باكر', 'صلاة النوم', 'الاجبية القبطية']}
         canonicalUrl="https://www.tibarthenos.com/agpeya"
-      />
-
-      <audio
-        ref={audioRef}
-        src={selectedPrayer.audioUrl}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={() => setIsPlaying(false)}
-        onLoadedMetadata={handleTimeUpdate}
-        preload="metadata"
       />
 
       {/* Hero Header */}
@@ -240,23 +227,7 @@ export const AgpeyaPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Progress Slider */}
-          <div className="space-y-1">
-            <input
-              type="range"
-              min="0"
-              max={duration || 100}
-              value={currentTime}
-              onChange={handleSeek}
-              className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#fed65b]"
-            />
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
-              <span>{formatTime(currentTime)}</span>
-              <span>{duration > 0 ? formatTime(duration) : selectedPrayer.durationEstimate}</span>
-            </div>
-          </div>
-
-          {/* Player Buttons */}
+          {/* Controls */}
           <div className="flex items-center justify-between pt-1">
             <button
               onClick={handleRateChange}
@@ -267,26 +238,19 @@ export const AgpeyaPage: React.FC = () => {
 
             <div className="flex items-center gap-4">
               <button
-                onClick={() => handleSkip(-10)}
-                className="p-2 text-slate-300 hover:text-white transition-colors"
-                title="تأخير ١٠ ثواني"
+                onClick={handleStop}
+                className="p-2 text-slate-300 hover:text-rose-300 transition-colors"
+                title="إيقاف كامل"
               >
-                <RotateCcw className="w-5 h-5" />
+                <Square className="w-5 h-5 fill-current" />
               </button>
 
               <button
                 onClick={handleTogglePlay}
-                className="w-12 h-12 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-black shadow-lg hover:scale-105 active:scale-95 transition-all"
+                className="px-6 py-3 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center gap-2 font-black shadow-lg hover:scale-105 active:scale-95 transition-all text-sm"
               >
-                {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current translate-x-[-1px]" />}
-              </button>
-
-              <button
-                onClick={() => handleSkip(10)}
-                className="p-2 text-slate-300 hover:text-white transition-colors"
-                title="تقديم ١٠ ثواني"
-              >
-                <RotateCw className="w-5 h-5" />
+                {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
+                <span>{isPlaying ? 'إيقاف مؤقت' : 'تشغيل الصلاة بصوت واضح'}</span>
               </button>
             </div>
 
@@ -312,29 +276,26 @@ export const AgpeyaPage: React.FC = () => {
             </div>
           </div>
 
-          {agpeyaSections.map((sec) => {
-            const isActive = currentTime >= sec.startSec && currentTime < sec.endSec;
+          <div className="text-xs text-slate-400 font-bold mb-2">💡 اضغط على أي قسم للاستماع إليه فوراً</div>
+
+          {agpeyaSections.map((sec, idx) => {
+            const isSectionActive = isPlaying && activeSectionIndex === idx;
             return (
               <div
                 key={sec.id}
-                ref={isActive ? activeSectionRef : null}
-                onClick={() => {
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = sec.startSec;
-                    setCurrentTime(sec.startSec);
-                  }
-                }}
+                ref={isSectionActive ? activeSectionElementRef : null}
+                onClick={() => handleSectionClick(idx)}
                 className={`p-5 rounded-3xl transition-all cursor-pointer border ${
-                  isActive
-                    ? 'bg-amber-50 text-[#00174a] font-bold border-[#d4af37] shadow-lg scale-[1.01] ring-2 ring-[#d4af37]/30'
+                  isSectionActive
+                    ? 'bg-amber-50 text-[#00174a] font-bold border-[#d4af37] shadow-lg scale-[1.01] ring-2 ring-[#d4af37]/40'
                     : 'bg-slate-50/70 hover:bg-slate-100 border-slate-100 text-slate-800'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2 pb-1 border-b border-black/5">
-                  <span className={`font-tajawal text-xs font-black ${isActive ? 'text-[#002366]' : 'text-slate-600'}`}>
+                  <span className={`font-tajawal text-xs font-black ${isSectionActive ? 'text-[#002366]' : 'text-slate-600'}`}>
                     {sec.title}
                   </span>
-                  <span className="font-mono text-[10px] text-slate-400">{formatTime(sec.startSec)}</span>
+                  <span className="font-mono text-[10px] text-slate-400">قسم {idx + 1}</span>
                 </div>
                 <p className={`${fontClasses} leading-relaxed`}>{sec.text}</p>
               </div>
