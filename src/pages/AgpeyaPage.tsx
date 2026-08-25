@@ -6,10 +6,21 @@ import {
   Copy, Check, Moon, Sun, Type, Share2, Shield, Download
 } from 'lucide-react';
 import { AGPEYA_PRAYERS, AgpeyaPrayer } from '../lib/agpeyaData';
+import { getAgpeyaTimedSections, AgpeyaSection } from '../lib/bibleChaptersEngine';
 import { SEO } from '../components/common/SEO';
 
 export const AgpeyaPage: React.FC = () => {
   const [selectedPrayer, setSelectedPrayer] = useState<AgpeyaPrayer>(AGPEYA_PRAYERS[0]);
+  const [agpeyaSections, setAgpeyaSections] = useState<AgpeyaSection[]>(() =>
+    getAgpeyaTimedSections(
+      AGPEYA_PRAYERS[0].id,
+      AGPEYA_PRAYERS[0].openingPrayer,
+      AGPEYA_PRAYERS[0].gospelText,
+      AGPEYA_PRAYERS[0].litanies,
+      AGPEYA_PRAYERS[0].absolutionText
+    )
+  );
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -18,20 +29,32 @@ export const AgpeyaPage: React.FC = () => {
   const [copied, setCopied] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const activeSectionRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      setCurrentTime(0);
-    }
-  }, [selectedPrayer]);
+  const handleSelectPrayer = (prayer: AgpeyaPrayer) => {
+    setSelectedPrayer(prayer);
+    setAgpeyaSections(
+      getAgpeyaTimedSections(
+        prayer.id,
+        prayer.openingPrayer,
+        prayer.gospelText,
+        prayer.litanies,
+        prayer.absolutionText
+      )
+    );
+    setIsPlaying(false);
+    setCurrentTime(0);
+  };
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+      const curr = audioRef.current.currentTime;
+      setCurrentTime(curr);
       setDuration(audioRef.current.duration || 0);
+
+      if (activeSectionRef.current) {
+        activeSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
   };
 
@@ -102,12 +125,11 @@ export const AgpeyaPage: React.FC = () => {
     <div className="min-h-screen bg-[#fcfbf9] font-cairo text-right" dir="rtl">
       <SEO
         title="كتاب الأجبية المسموعة والمقروءة | كنيسة السيدة العذراء محرم بك"
-        description="صلوات السواعي القبطية الأرثوذكسية كاملة بصوت نقي ومكتوبة: صلاة باكر، الثالثة، السادسة، التاسعة، الغروب، النوم، نصف الليل، والستار. تعمل بدون إنترنت."
+        description="صلوات السواعي القبطية الأرثوذكسية كاملة بصوت نقي ومكتوبة مع الهايلايتر التفاعلي الذكي. صلاة باكر، الثالثة، السادسة، التاسعة، الغروب، النوم، نصف الليل، والستار."
         keywords={['الاجبية المسموعة', 'صلوات السواعي', 'صلاة باكر', 'صلاة النوم', 'الاجبية القبطية']}
         canonicalUrl="https://www.tibarthenos.com/agpeya"
       />
 
-      {/* Hidden Audio Element */}
       <audio
         ref={audioRef}
         src={selectedPrayer.audioUrl}
@@ -136,11 +158,11 @@ export const AgpeyaPage: React.FC = () => {
           </div>
 
           <h1 className="font-tajawal text-3xl sm:text-5xl font-black tracking-tight text-white">
-            الأجبية المقدسة المسموعة 🕊️
+            الأجبية المقدسة المسموعة والمقروءة 🕊️
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-200 max-w-xl mx-auto leading-relaxed">
-            استمع واقرأ صلوات السواعي على مدار اليوم، بصوت نقي ونصوص كاملة تعمل أونلاين وأوفلاين بدون إنترنت.
+            استمع واقرأ صلوات السواعي على مدار اليوم، مع المتابعة المباشرة بالهايلايتر التفاعلي.
           </p>
         </div>
       </section>
@@ -155,7 +177,7 @@ export const AgpeyaPage: React.FC = () => {
             return (
               <button
                 key={prayer.id}
-                onClick={() => setSelectedPrayer(prayer)}
+                onClick={() => handleSelectPrayer(prayer)}
                 className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
                   isSelected
                     ? 'bg-[#002366] text-[#fed65b] border-[#d4af37] shadow-lg font-black scale-105'
@@ -170,7 +192,7 @@ export const AgpeyaPage: React.FC = () => {
           })}
         </div>
 
-        {/* Floating / Sticky Audio Player Bar */}
+        {/* Audio Controller Bar */}
         <div className="bg-gradient-to-r from-[#00174a] via-[#002366] to-[#00174a] text-white p-5 sm:p-6 rounded-3xl border-2 border-[#d4af37]/40 shadow-xl space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="space-y-1">
@@ -270,80 +292,54 @@ export const AgpeyaPage: React.FC = () => {
 
             <span className="text-[11px] text-slate-300 flex items-center gap-1 font-bold">
               <WifiOff className="w-3.5 h-3.5 text-[#fed65b]" />
-              <span className="hidden sm:inline">يعمل بدون إنترنت</span>
+              <span className="hidden sm:inline">أوفلاين</span>
             </span>
           </div>
         </div>
 
-        {/* Full Text Content Sections */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-8">
+        {/* Interactive Sections with Karaoke-style Highlighter */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
           
-          {/* 1. Opening Prayer */}
-          <div className="space-y-2 border-b border-slate-100 pb-6">
-            <h3 className="font-tajawal text-base font-extrabold text-[#002366] flex items-center gap-2">
-              <span>⛪ مقدمة الصلاة</span>
-            </h3>
-            <p className={`${fontClasses} text-slate-700 bg-amber-50/60 p-4 rounded-2xl border border-amber-100`}>
-              {selectedPrayer.openingPrayer}
-            </p>
-          </div>
-
-          {/* 2. Psalms List */}
-          <div className="space-y-3 border-b border-slate-100 pb-6">
-            <h3 className="font-tajawal text-base font-extrabold text-[#002366] flex items-center gap-2">
-              <span>🎵 مزامير {selectedPrayer.name} ({selectedPrayer.psalmsSummary.length} مزمور)</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-bold text-slate-700">
+          {/* Psalms list summary */}
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 mb-4">
+            <h4 className="font-tajawal text-xs font-extrabold text-[#002366] mb-2">🎵 مزامير صلاة {selectedPrayer.name}:</h4>
+            <div className="flex flex-wrap gap-1.5 text-[11px] font-bold text-slate-600">
               {selectedPrayer.psalmsSummary.map((psalm, idx) => (
-                <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[#002366]/10 text-[#002366] flex items-center justify-center text-[10px] shrink-0 font-extrabold">
-                    {idx + 1}
+                <span key={idx} className="bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                  {psalm}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {agpeyaSections.map((sec) => {
+            const isActive = currentTime >= sec.startSec && currentTime < sec.endSec;
+            return (
+              <div
+                key={sec.id}
+                ref={isActive ? activeSectionRef : null}
+                onClick={() => {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = sec.startSec;
+                    setCurrentTime(sec.startSec);
+                  }
+                }}
+                className={`p-5 rounded-3xl transition-all cursor-pointer border ${
+                  isActive
+                    ? 'bg-amber-50 text-[#00174a] font-bold border-[#d4af37] shadow-lg scale-[1.01] ring-2 ring-[#d4af37]/30'
+                    : 'bg-slate-50/70 hover:bg-slate-100 border-slate-100 text-slate-800'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2 pb-1 border-b border-black/5">
+                  <span className={`font-tajawal text-xs font-black ${isActive ? 'text-[#002366]' : 'text-slate-600'}`}>
+                    {sec.title}
                   </span>
-                  <span className="truncate">{psalm}</span>
+                  <span className="font-mono text-[10px] text-slate-400">{formatTime(sec.startSec)}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 3. Gospel Reading */}
-          <div className="space-y-3 border-b border-slate-100 pb-6">
-            <div className="flex items-center justify-between">
-              <h3 className="font-tajawal text-base font-extrabold text-[#002366] flex items-center gap-2">
-                <span>📜 إنجيل الصلاة</span>
-              </h3>
-              <span className="text-xs font-bold bg-[#002366] text-[#fed65b] px-3 py-1 rounded-full">
-                {selectedPrayer.gospelTitle}
-              </span>
-            </div>
-            <blockquote className={`${fontClasses} font-bold text-slate-800 bg-slate-50 p-5 rounded-2xl border border-slate-200`}>
-              {selectedPrayer.gospelText}
-            </blockquote>
-          </div>
-
-          {/* 4. Litanies */}
-          <div className="space-y-3 border-b border-slate-100 pb-6">
-            <h3 className="font-tajawal text-base font-extrabold text-[#002366] flex items-center gap-2">
-              <span>✨ القطع والتضرعات</span>
-            </h3>
-            <div className="space-y-3">
-              {selectedPrayer.litanies.map((litany, idx) => (
-                <div key={idx} className={`${fontClasses} text-slate-700 bg-slate-50/80 p-4 rounded-2xl border border-slate-100`}>
-                  {litany}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 5. Absolution */}
-          <div className="space-y-3">
-            <h3 className="font-tajawal text-base font-extrabold text-[#002366] flex items-center gap-2">
-              <span>🕊️ التحليل وبركة الصلاة</span>
-            </h3>
-            <p className={`${fontClasses} text-slate-800 bg-gradient-to-r from-amber-50 to-blue-50 p-5 rounded-2xl border border-amber-200/80 font-bold`}>
-              {selectedPrayer.absolutionText}
-            </p>
-          </div>
-
+                <p className={`${fontClasses} leading-relaxed`}>{sec.text}</p>
+              </div>
+            );
+          })}
         </div>
 
       </main>

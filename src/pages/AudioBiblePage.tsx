@@ -3,36 +3,57 @@ import { Link } from 'react-router-dom';
 import {
   Volume2, Play, Pause, RotateCcw, RotateCw, BookOpen,
   Sparkles, ChevronRight, ChevronLeft, WifiOff, Clock, Heart,
-  Search, Book, Layers, ArrowRight, Download, Filter
+  Search, Book, Layers, ArrowRight, Download, Filter, Type, Copy, Check
 } from 'lucide-react';
 import { AUDIO_BIBLE_BOOKS, BibleBook } from '../lib/audioBibleData';
+import { getChapterData, BibleChapterData } from '../lib/bibleChaptersEngine';
 import { SEO } from '../components/common/SEO';
 
 export const AudioBiblePage: React.FC = () => {
+  const [testament, setTestament] = useState<'new' | 'old'>('new');
   const [selectedBook, setSelectedBook] = useState<BibleBook>(AUDIO_BIBLE_BOOKS[0]);
-  const [selectedSection, setSelectedSection] = useState<string>('الكل');
+  const [selectedChapterNum, setSelectedChapterNum] = useState<number>(1);
+  const [chapterData, setChapterData] = useState<BibleChapterData>(() =>
+    getChapterData('matthew', 1, 'إنجيل متى', 'الأناجيل', 'new')
+  );
+
+  const [step, setStep] = useState<'books' | 'chapters' | 'reader'>('books');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
+  const [copied, setCopied] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const activeVerseRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      setCurrentTime(0);
-    }
-  }, [selectedBook]);
+  const handleSelectBook = (book: BibleBook) => {
+    setSelectedBook(book);
+    setSelectedChapterNum(1);
+    setStep('chapters');
+  };
+
+  const handleSelectChapter = (chNum: number) => {
+    setSelectedChapterNum(chNum);
+    const data = getChapterData(selectedBook.id, chNum, selectedBook.name, selectedBook.section, selectedBook.testament);
+    setChapterData(data);
+    setStep('reader');
+    setIsPlaying(false);
+    setCurrentTime(0);
+  };
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+      const curr = audioRef.current.currentTime;
+      setCurrentTime(curr);
       setDuration(audioRef.current.duration || 0);
+
+      if (activeVerseRef.current) {
+        activeVerseRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
   };
 
@@ -81,27 +102,40 @@ export const AudioBiblePage: React.FC = () => {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const sections = ['الكل', 'الأناجيل', 'أعمال الرسل', 'رسائل بولس', 'الرسائل الجامعة', 'الرؤيا', 'المزامير'];
+  const handleCopyChapter = () => {
+    const text = `📖 ${chapterData.bookName} - الأصحاح ${chapterData.chapterNumber}\n\n` +
+      chapterData.verses.map(v => `(${v.verseNumber}) ${v.text}`).join('\n') +
+      `\n\nكنيسة السيدة العذراء مريم بمحرم بك`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   const filteredBooks = AUDIO_BIBLE_BOOKS.filter(book => {
-    const matchSection = selectedSection === 'الكل' || book.section === selectedSection;
+    const matchTestament = book.testament === testament;
     const matchSearch = book.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         book.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchSection && matchSearch;
+    return matchTestament && matchSearch;
   });
+
+  const fontClasses = {
+    normal: 'text-sm sm:text-base leading-loose',
+    large: 'text-base sm:text-lg leading-loose',
+    xlarge: 'text-lg sm:text-xl leading-loose font-medium'
+  }[fontSize];
 
   return (
     <div className="min-h-screen bg-[#fcfbf9] font-cairo text-right" dir="rtl">
       <SEO
-        title="الكتاب المقدس المسموع | كنيسة السيدة العذراء محرم بك"
-        description="استمع إلى أسفار العهد الجديد وسفر المزامير بصوت نقي باللغة العربية (ترجمة فان دايك). استماع فوري يعمل أونلاين وأوفلاين."
+        title="الكتاب المقدس المسموع والمقروء | كنيسة السيدة العذراء محرم بك"
+        description="استمع واقرأ أسفار العهد الجديد والعهد القديم وسفر المزامير مع ميزة المتابعة الصوتية الذكية (Highlighter) للآيات. يعمل أونلاين وأوفلاين."
         keywords={['الانجيل المسموع', 'الكتاب المقدس صوتي', 'العهد الجديد مسموع', 'المزامير مسموعة']}
         canonicalUrl="https://www.tibarthenos.com/bible"
       />
 
       <audio
         ref={audioRef}
-        src={selectedBook.audioBaseUrl}
+        src={chapterData.audioUrl}
         onTimeUpdate={handleTimeUpdate}
         onEnded={() => setIsPlaying(false)}
         onLoadedMetadata={handleTimeUpdate}
@@ -127,178 +161,282 @@ export const AudioBiblePage: React.FC = () => {
           </div>
 
           <h1 className="font-tajawal text-3xl sm:text-5xl font-black tracking-tight text-white">
-            الكتاب المقدس المسموع 📖🎧
+            الكتاب المقدس المسموع والمقروء 📖🎧
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-200 max-w-xl mx-auto leading-relaxed">
-            استمع لكلمة الإنجيل وسفر المزامير ورسائل الرسل القديسين بصوت نقي وترجمة معتمدة في كل وقت.
+            استمع للأصحاحات مع متابعة الآية المقروءة في الوقت الفعلي عبر الهايلايتر الذكي.
           </p>
         </div>
       </section>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         
-        {/* Floating Player Console */}
-        <div className="bg-gradient-to-r from-[#00174a] via-[#002366] to-[#00174a] text-white p-5 sm:p-6 rounded-3xl border-2 border-[#d4af37]/40 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-bold text-[#fed65b]">{selectedBook.section}</span>
+        {/* Step 1: Books Grid */}
+        {step === 'books' && (
+          <div className="space-y-6">
+            
+            {/* Testament Selector Tabs */}
+            <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-full sm:w-auto justify-center">
+                <button
+                  onClick={() => setTestament('new')}
+                  className={`px-5 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                    testament === 'new' ? 'bg-[#002366] text-[#fed65b] shadow-sm scale-105' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  العهد الجديد (٢٧ سفراً)
+                </button>
+                <button
+                  onClick={() => setTestament('old')}
+                  className={`px-5 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                    testament === 'old' ? 'bg-[#002366] text-[#fed65b] shadow-sm scale-105' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  العهد القديم (المزامير والأسفار)
+                </button>
               </div>
-              <h2 className="font-tajawal text-xl sm:text-2xl font-black text-white">
-                {selectedBook.name} ({selectedBook.chaptersCount} أصحاح)
-              </h2>
-              <p className="text-xs text-slate-300 font-medium">
-                {selectedBook.description}
-              </p>
+
+              {/* Search */}
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="بحث في الأسفار..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-3 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-[#002366] transition-all text-right"
+                />
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10 text-xs font-bold text-[#fed65b] flex items-center gap-1.5">
-                <WifiOff className="w-3.5 h-3.5" />
-                <span>متاح أوفلاين</span>
-              </span>
-            </div>
-          </div>
-
-          {/* Progress Slider */}
-          <div className="space-y-1">
-            <input
-              type="range"
-              min="0"
-              max={duration || 100}
-              value={currentTime}
-              onChange={handleSeek}
-              className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#fed65b]"
-            />
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
-              <span>{formatTime(currentTime)}</span>
-              <span>{duration > 0 ? formatTime(duration) : 'تسجيل نقي'}</span>
-            </div>
-          </div>
-
-          {/* Player Buttons */}
-          <div className="flex items-center justify-between pt-1">
-            <button
-              onClick={handleRateChange}
-              className="px-3 py-1 bg-white/10 hover:bg-white/20 text-[#fed65b] rounded-xl text-xs font-mono font-bold"
-            >
-              {playbackRate}x
-            </button>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => handleSkip(-10)}
-                className="p-2 text-slate-300 hover:text-white transition-colors"
-                title="تأخير ١٠ ثواني"
-              >
-                <RotateCcw className="w-5 h-5" />
-              </button>
-
-              <button
-                onClick={handleTogglePlay}
-                className="w-12 h-12 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-black shadow-lg hover:scale-105 active:scale-95 transition-all"
-              >
-                {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current translate-x-[-1px]" />}
-              </button>
-
-              <button
-                onClick={() => handleSkip(10)}
-                className="p-2 text-slate-300 hover:text-white transition-colors"
-                title="تقديم ١٠ ثواني"
-              >
-                <RotateCw className="w-5 h-5" />
-              </button>
-            </div>
-
-            <Link
-              to="/agpeya"
-              className="text-xs font-bold text-slate-300 hover:text-[#fed65b] transition-colors"
-            >
-              صلوات الأجبية 🕊️
-            </Link>
-          </div>
-        </div>
-
-        {/* Search & Section Filter */}
-        <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-thin">
-            {sections.map((sec) => (
-              <button
-                key={sec}
-                onClick={() => setSelectedSection(sec)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all ${
-                  selectedSection === sec
-                    ? 'bg-[#002366] text-[#fed65b] shadow-sm'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
-                }`}
-              >
-                {sec}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="بحث في أسفار الكتاب..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-3 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-[#002366] transition-all text-right"
-            />
-          </div>
-        </div>
-
-        {/* Books Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredBooks.map((book) => {
-            const isSelected = selectedBook.id === book.id;
-            return (
-              <div
-                key={book.id}
-                onClick={() => setSelectedBook(book)}
-                className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-3 ${
-                  isSelected
-                    ? 'bg-gradient-to-br from-amber-50 to-white border-[#d4af37] shadow-md ring-2 ring-[#d4af37]/30 scale-[1.02]'
-                    : 'bg-white hover:bg-slate-50 border-slate-200 shadow-sm'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-sm ${
-                      isSelected ? 'bg-[#002366] text-[#fed65b]' : 'bg-slate-100 text-[#002366]'
-                    }`}>
-                      <Book className="w-5 h-5" />
+            {/* Books Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredBooks.map((book) => (
+                <div
+                  key={book.id}
+                  onClick={() => handleSelectBook(book)}
+                  className="p-5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#d4af37] rounded-3xl shadow-sm hover:shadow-md transition-all cursor-pointer space-y-3 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-[#002366]/10 text-[#002366] group-hover:bg-[#002366] group-hover:text-[#fed65b] flex items-center justify-center font-bold transition-all">
+                        <Book className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-tajawal font-black text-base text-[#00174a] group-hover:text-[#002366]">
+                          {book.name}
+                        </h3>
+                        <p className="text-[11px] text-slate-400 font-bold">{book.section}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-tajawal font-black text-base text-[#00174a]">{book.name}</h3>
-                      <p className="text-[11px] text-slate-400 font-bold">{book.section}</p>
-                    </div>
+
+                    <span className="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1 rounded-xl">
+                      {book.chaptersCount} أصحاح
+                    </span>
                   </div>
 
-                  <span className="text-xs font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-xl">
-                    {book.chaptersCount} أصحاح
-                  </span>
+                  <p className="text-xs text-slate-600 font-medium line-clamp-2 leading-relaxed">
+                    {book.description}
+                  </p>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#002366]">
+                    <span>فتح الأصحاحات</span>
+                    <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Chapters Selection */}
+        {step === 'chapters' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <button
+                onClick={() => setStep('books')}
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#002366] hover:underline"
+              >
+                <ChevronRight className="w-4 h-4" />
+                <span>الرجوع للأسفار</span>
+              </button>
+
+              <div className="text-left sm:text-right">
+                <h2 className="font-tajawal text-xl font-black text-[#00174a]">{selectedBook.name}</h2>
+                <p className="text-xs text-slate-400 font-bold">{selectedBook.chaptersCount} أصحاح — اختر الأصحاح للاستماع</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 gap-3">
+              {Array.from({ length: selectedBook.chaptersCount }, (_, i) => i + 1).map((chNum) => (
+                <button
+                  key={chNum}
+                  onClick={() => handleSelectChapter(chNum)}
+                  className="p-4 bg-slate-50 hover:bg-[#002366] hover:text-[#fed65b] text-slate-800 rounded-2xl border border-slate-200 font-tajawal font-black text-base transition-all hover:scale-105 shadow-sm active:scale-95 flex flex-col items-center justify-center gap-1"
+                >
+                  <span className="text-xs opacity-75 font-normal">أصحاح</span>
+                  <span>{chNum}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Interactive Chapter Reader with Verse Highlighter */}
+        {step === 'reader' && (
+          <div className="space-y-6">
+            
+            {/* Navigation & Chapter Bar */}
+            <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
+              <button
+                onClick={() => setStep('chapters')}
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#002366] hover:underline"
+              >
+                <ChevronRight className="w-4 h-4" />
+                <span>تغيير الأصحاح ({selectedBook.name})</span>
+              </button>
+
+              <h2 className="font-tajawal text-base sm:text-lg font-black text-[#00174a]">
+                {chapterData.bookName} — الأصحاح {chapterData.chapterNumber}
+              </h2>
+
+              <div className="flex items-center gap-2">
+                <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                  <button
+                    onClick={() => setFontSize('normal')}
+                    className={`px-2 py-1 rounded-lg ${fontSize === 'normal' ? 'bg-[#002366] text-white' : 'text-slate-600'}`}
+                  >
+                    A
+                  </button>
+                  <button
+                    onClick={() => setFontSize('large')}
+                    className={`px-2 py-1 rounded-lg ${fontSize === 'large' ? 'bg-[#002366] text-white' : 'text-slate-600'}`}
+                  >
+                    A+
+                  </button>
+                  <button
+                    onClick={() => setFontSize('xlarge')}
+                    className={`px-2 py-1 rounded-lg ${fontSize === 'xlarge' ? 'bg-[#002366] text-white' : 'text-slate-600'}`}
+                  >
+                    A++
+                  </button>
                 </div>
 
-                <p className="text-xs text-slate-600 font-medium line-clamp-2 leading-relaxed">
-                  {book.description}
-                </p>
+                <button
+                  onClick={handleCopyChapter}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all border border-slate-200 text-xs flex items-center gap-1"
+                  title="نسخ الأصحاح"
+                >
+                  {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
 
-                <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-[#002366] font-bold flex items-center gap-1">
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>{isSelected && isPlaying ? 'جاري التشغيل...' : 'استماع للسفر'}</span>
-                  </span>
-                  <span className="text-slate-400 font-mono text-[11px]">فان دايك</span>
+            {/* Audio Controller Bar */}
+            <div className="bg-gradient-to-r from-[#00174a] via-[#002366] to-[#00174a] text-white p-5 sm:p-6 rounded-3xl border-2 border-[#d4af37]/40 shadow-xl space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs font-bold text-[#fed65b]">المتابعة الصوتية الذكية (Verse Highlighter)</span>
+                  </div>
+                  <h3 className="font-tajawal text-lg sm:text-xl font-black text-white">
+                    {chapterData.bookName} — الأصحاح {chapterData.chapterNumber}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRateChange}
+                    className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[#fed65b] rounded-xl text-xs font-mono font-bold"
+                  >
+                    {playbackRate}x
+                  </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Progress Slider */}
+              <div className="space-y-1">
+                <input
+                  type="range"
+                  min="0"
+                  max={duration || 100}
+                  value={currentTime}
+                  onChange={handleSeek}
+                  className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#fed65b]"
+                />
+                <div className="flex items-center justify-between text-[11px] font-mono text-slate-300">
+                  <span>{formatTime(currentTime)}</span>
+                  <span>{duration > 0 ? formatTime(duration) : chapterData.totalDurationEstimate}</span>
+                </div>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center justify-center gap-4 pt-1">
+                <button
+                  onClick={() => handleSkip(-10)}
+                  className="p-2 text-slate-300 hover:text-white transition-colors"
+                  title="تأخير ١٠ ثواني"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={handleTogglePlay}
+                  className="w-12 h-12 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-black shadow-lg hover:scale-105 active:scale-95 transition-all"
+                >
+                  {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current translate-x-[-1px]" />}
+                </button>
+
+                <button
+                  onClick={() => handleSkip(10)}
+                  className="p-2 text-slate-300 hover:text-white transition-colors"
+                  title="تقديم ١٠ ثواني"
+                >
+                  <RotateCw className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Verses Karaoke List */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-3 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+              {chapterData.verses.map((v) => {
+                const isVerseActive = currentTime >= v.startSec && currentTime < v.endSec;
+                return (
+                  <div
+                    key={v.verseNumber}
+                    ref={isVerseActive ? activeVerseRef : null}
+                    onClick={() => {
+                      if (audioRef.current) {
+                        audioRef.current.currentTime = v.startSec;
+                        setCurrentTime(v.startSec);
+                      }
+                    }}
+                    className={`p-4 rounded-2xl transition-all cursor-pointer border ${
+                      isVerseActive
+                        ? 'bg-amber-50 text-[#00174a] font-extrabold border-[#d4af37] shadow-md scale-[1.01] ring-2 ring-[#d4af37]/30'
+                        : 'bg-slate-50/70 hover:bg-slate-100 border-slate-100 text-slate-800 font-medium'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className={`px-2.5 py-1 rounded-xl text-xs font-black font-mono shrink-0 ${
+                        isVerseActive ? 'bg-[#002366] text-[#fed65b]' : 'bg-slate-200 text-slate-700'
+                      }`}>
+                        {v.verseNumber}
+                      </span>
+                      <p className={`${fontClasses} flex-1 leading-relaxed`}>
+                        {v.text}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        )}
 
       </main>
     </div>

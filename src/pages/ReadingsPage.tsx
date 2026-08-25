@@ -464,41 +464,6 @@ export const ReadingsPage: React.FC<ReadingsPageProps> = ({ onOpenPrayerModal })
 
         </div>
 
-        {/* Official Christian Source Accreditation Banner */}
-        <div className="bg-gradient-to-r from-amber-50 via-white to-blue-50 p-5 rounded-3xl border border-amber-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-cairo">
-          <div className="flex items-center gap-3 text-right">
-            <div className="w-10 h-10 rounded-2xl bg-[#002366] text-[#fed65b] flex items-center justify-center shrink-0 font-extrabold shadow-sm">
-              ✝️
-            </div>
-            <div>
-              <p className="font-extrabold text-[#00174a] text-sm">المصدر الطقسي المعتمد للقراءات</p>
-              <p className="text-slate-500 text-[11px] font-medium">
-                مربوط آلياً بالقطمارس القبطي السنوي وموقع الأنبا تكلا هيمانوت (St-Takla.org) وواجهة Coptic.io الرسمية.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
-            <a
-              href="https://st-takla.org/Coptic-Faith-Creed-Dogma/Coptic-Rite-n-Ritual-Taks/Katamaros-Coptic-Daily-Readings.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-[#002366] hover:bg-[#00174a] text-white rounded-xl font-bold text-[11px] transition-all flex items-center gap-1.5 shadow-sm"
-            >
-              <span>موقع الأنبا تكلا</span>
-              <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-            </a>
-            <a
-              href="https://copticchurch.net/synaxarium"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl font-bold text-[11px] transition-all border border-slate-200 shadow-sm"
-            >
-              <span>السنكسار القبطي</span>
-            </a>
-          </div>
-        </div>
-
       </main>
     </div>
   );
