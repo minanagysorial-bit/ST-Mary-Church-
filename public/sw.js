@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stmary-v7';
+const CACHE_NAME = 'stmary-v9';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -27,16 +27,23 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Skip waiting message listener for instant updates
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Network-First for Navigation (HTML) & API, Cache-First for versioned static assets with fallback
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
   const url = new URL(event.request.url);
 
-  // If HTML document navigation or API, ALWAYS go Network First
+  // If HTML document navigation or API, ALWAYS go Network First with no-cache revalidation
   if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html' || url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-cache' })
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
@@ -107,7 +114,7 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Notification Click Handler (Open Target Link)
+// Notification Click Handler
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const urlToOpen = event.notification.data?.url || '/';

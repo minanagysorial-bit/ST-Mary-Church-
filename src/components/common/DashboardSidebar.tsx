@@ -179,7 +179,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Navigation Links */}
-        <nav className="flex flex-col gap-1.5 flex-grow overflow-y-auto overflow-x-hidden mt-1 pr-0.5 pl-0.5 no-scrollbar">
+        <nav className="flex flex-col gap-1.5 flex-grow overflow-y-auto overflow-x-hidden mt-1 pr-1 pl-1 dashboard-sidebar-scroll">
           {links.map((link) => {
             const active = location.pathname === link.path;
             return (

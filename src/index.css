@@ -52,6 +52,26 @@
   background: #d4af37;
 }
 
+/* Dashboard Sidebar Ruler & Scrollbar */
+.dashboard-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #fed65b rgba(255, 255, 255, 0.08);
+}
+.dashboard-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.dashboard-sidebar-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+.dashboard-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #fed65b;
+  border-radius: 8px;
+}
+.dashboard-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
 /* Custom Glassmorphism Utility */
 .glass-panel {
   background: rgba(255, 255, 255, 0.85);

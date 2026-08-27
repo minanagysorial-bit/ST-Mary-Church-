@@ -28,15 +28,16 @@ function parseXmlEntries(xml) {
       const description = descMatch ? descMatch[1].trim() : 'عظة وكلمة روحية من كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية.';
 
       let topic = 'تعليم وعظة';
-      if (rawTitle.includes('عشية') || rawTitle.includes('تسبحة')) topic = 'عشيات وتسابيح';
-      else if (rawTitle.includes('قداس')) topic = 'قداسات إلهية';
-      else if (rawTitle.includes('نهضة') || rawTitle.includes('صوم')) topic = 'نهضات ومناسبات';
-      else if (rawTitle.includes('شباب') || rawTitle.includes('شبان')) topic = 'اجتماعات الشباب';
-      else if (rawTitle.includes('دراسة') || rawTitle.includes('تفسير')) topic = 'كتاب مقدس';
+      if (rawTitle.includes('عشية') || rawTitle.includes('تسبحة') || rawTitle.includes('تسابيح')) topic = 'عشيات وتسابيح';
+      else if (rawTitle.includes('قداس') || rawTitle.includes('ذبيحة')) topic = 'قداسات إلهية';
+      else if (rawTitle.includes('نهضة') || rawTitle.includes('صوم') || rawTitle.includes('عيد')) topic = 'نهضات ومناسبات';
+      else if (rawTitle.includes('شباب') || rawTitle.includes('شبان') || rawTitle.includes('جامعيين')) topic = 'اجتماعات الشباب';
+      else if (rawTitle.includes('دراسة') || rawTitle.includes('تفسير') || rawTitle.includes('إنجيل')) topic = 'كتاب مقدس';
+      else if (rawTitle.includes('لحن') || rawTitle.includes('ألحان') || rawTitle.includes('طقس')) topic = 'ألحان وطقوس';
 
-      let speaker = 'آباء الكنيسة';
+      let speaker = 'آباء كنيسة العذراء محرم بك';
       if (rawTitle.includes('أبونا') || rawTitle.includes('القمص') || rawTitle.includes('القس')) {
-        const speakerMatch = rawTitle.match(/(أبونا\s+[\u0621-\u064A]+|القمص\s+[\u0621-\u064A]+|القس\s+[\u0621-\u064A]+)/);
+        const speakerMatch = rawTitle.match(/(أبونا\s+[\u0621-\u064A]+|القمص\s+[\u0621-\u064A]+|القس\s+[\u0621-\u064A]+|الأنبا\s+[\u0621-\u064A]+)/);
         if (speakerMatch) speaker = speakerMatch[1];
       }
 
@@ -83,7 +84,7 @@ export default async function handler(req, res) {
       urlsToFetch.push(`https://www.youtube.com/feeds/videos.xml?playlist_id=${playlistId}`);
     } else {
       urlsToFetch.push(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`);
-      // Also fetch uploads playlist (UU...)
+      // Uploads playlist feed (UU...)
       const uploadsPlaylist = `UU${channelId.replace(/^UC/, '')}`;
       urlsToFetch.push(`https://www.youtube.com/feeds/videos.xml?playlist_id=${uploadsPlaylist}`);
     }
@@ -118,46 +119,46 @@ export default async function handler(req, res) {
     // Sort descending by date
     uniqueEntries.sort((a, b) => new Date(b.sermon_date).getTime() - new Date(a.sermon_date).getTime());
 
-    // Try inserting into Supabase
-    let newSermonsCount = 0;
-    try {
-      const { data: existingSermons } = await supabase.from('sermons').select('youtube_url, id');
-      const existingUrls = new Set((existingSermons || []).map(s => s.youtube_url).filter(Boolean));
-
-      const toInsert = uniqueEntries
-        .filter(item => !existingUrls.has(item.youtube_url))
-        .map(item => ({
-          title: item.title,
-          speaker: item.speaker,
-          topic: item.topic,
-          sermon_date: item.sermon_date,
-          duration_minutes: item.duration_minutes,
-          youtube_url: item.youtube_url,
-          audio_url: null,
-          description: item.description,
-          featured: false,
-          play_count: 0,
-          created_by: null
-        }));
-
-      if (toInsert.length > 0) {
-        const { error: insertError } = await supabase.from('sermons').insert(toInsert);
-        if (!insertError) {
-          newSermonsCount = toInsert.length;
-        } else {
-          console.warn('Supabase sermon insert error (RLS):', insertError.message);
-        }
+    // Official Channel Playlists Information
+    const playlists = [
+      {
+        id: `UU${channelId.replace(/^UC/, '')}`,
+        title: 'جميع الفيديوهات والعظات المرفوعة',
+        embedUrl: `https://www.youtube.com/embed/videoseries?list=UU${channelId.replace(/^UC/, '')}`,
+        url: `https://www.youtube.com/playlist?list=UU${channelId.replace(/^UC/, '')}`,
+        type: 'all'
+      },
+      {
+        id: 'liturgies',
+        title: 'القداسات الإلهية والعشيات',
+        embedUrl: `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent('كنيسة العذراء محرم بك قداس')}`,
+        url: `https://www.youtube.com/results?search_query=${encodeURIComponent('كنيسة العذراء محرم بك قداس')}`,
+        type: 'liturgy'
+      },
+      {
+        id: 'sermons',
+        title: 'عظات وكلمات الآباء الكهنة',
+        embedUrl: `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent('كنيسة العذراء محرم بك عظة')}`,
+        url: `https://www.youtube.com/results?search_query=${encodeURIComponent('كنيسة العذراء محرم بك عظة')}`,
+        type: 'sermons'
+      },
+      {
+        id: 'feasts',
+        title: 'نهضات الأعياد وصوم السيدة العذراء',
+        embedUrl: `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent('نهضة كنيسة العذراء محرم بك')}`,
+        url: `https://www.youtube.com/results?search_query=${encodeURIComponent('نهضة كنيسة العذراء محرم بك')}`,
+        type: 'feasts'
       }
-    } catch (dbErr) {
-      console.warn('DB Sync warning:', dbErr.message);
-    }
+    ];
 
     res.status(200).json({
       success: true,
+      channelId,
+      channelUrl: `https://www.youtube.com/channel/${channelId}`,
       totalFoundInYouTube: uniqueEntries.length,
-      newlySyncedCount: newSermonsCount,
       sermons: uniqueEntries,
-      latestSermon: uniqueEntries[0]
+      playlists,
+      latestSermon: uniqueEntries[0] || null
     });
   } catch (err) {
     console.error('Sync Sermons Error:', err);
