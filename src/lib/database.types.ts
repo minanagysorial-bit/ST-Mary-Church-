@@ -126,7 +126,8 @@ export type ChurchServiceCategory =
   | 'شابات ثانوي'
   | 'خدمة شباب جامعة'
   | 'خدمة شابات جامعة'
-  | 'خريجين';
+  | 'خريجين'
+  | 'عرس قانا الجليل';
 
 export interface ChurchService {
   id: string;

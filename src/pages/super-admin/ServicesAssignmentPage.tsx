@@ -28,15 +28,16 @@ import {
 } from '../../lib/attendanceStatusHelper';
 
 const APPROVED_CATEGORIES: { category: ChurchServiceCategory; icon: string; description: string }[] = [
-  { category: 'ابتدائي بنين', icon: 'boy', description: 'خدمة مرحلة ابتدائي للبنين من الصف الأول للسادس' },
-  { category: 'ابتدائي بنات', icon: 'girl', description: 'خدمة مرحلة ابتدائي للبنات من الصف الأول للسادس' },
-  { category: 'فتيان إعدادي', icon: 'school', description: 'خدمة فتيان المرحلة الإعدادية (أولى - ثانية - ثالثة إعدادي)' },
-  { category: 'فتيات إعدادي', icon: 'school', description: 'خدمة فتيات المرحلة الإعدادية (أولى - ثانية - ثالثة إعدادي)' },
-  { category: 'شباب ثانوي', icon: 'groups', description: 'خدمة شباب المرحلة الثانوية' },
-  { category: 'شابات ثانوي', icon: 'groups_2', description: 'خدمة شابات المرحلة الثانوية' },
-  { category: 'خدمة شباب جامعة', icon: 'local_library', description: 'خدمة الشباب والطلبة الجامعيين' },
-  { category: 'خدمة شابات جامعة', icon: 'local_library', description: 'خدمة الشابات والطالبات الجامعيات' },
-  { category: 'خريجين', icon: 'work', description: 'خدمة الخريجين وسوق العمل والمهنيين' },
+  { category: 'ابتدائي بنين', icon: 'boy', description: 'خدمة مرحلة ابتدائي للبنين (الجمعة 2:30 ظهراً)' },
+  { category: 'ابتدائي بنات', icon: 'girl', description: 'خدمة مرحلة ابتدائي للبنات (الجمعة 10:30 صباحاً)' },
+  { category: 'فتيان إعدادي', icon: 'school', description: 'خدمة فتيان المرحلة الإعدادية (الجمعة 4:30 مساءً)' },
+  { category: 'فتيات إعدادي', icon: 'school', description: 'خدمة فتيات المرحلة الإعدادية (الجمعة 11:00 صباحاً)' },
+  { category: 'شباب ثانوي', icon: 'groups', description: 'خدمة شباب المرحلة الثانوية (الجمعة 9:00 صباحاً)' },
+  { category: 'شابات ثانوي', icon: 'groups_2', description: 'خدمة شابات المرحلة الثانوية (الخميس 6:00 مساءً)' },
+  { category: 'خدمة شباب جامعة', icon: 'local_library', description: 'خدمة الشباب والطلبة الجامعيين (الثلاثاء 7:00 مساءً)' },
+  { category: 'خدمة شابات جامعة', icon: 'local_library', description: 'خدمة الشابات والطالبات الجامعيات (الخميس 7:00 مساءً)' },
+  { category: 'خريجين', icon: 'work', description: 'خدمة الخريجين وسوق العمل والمهنيين (الأحد 7:00 مساءً)' },
+  { category: 'عرس قانا الجليل', icon: 'favorite', description: 'خدمة المقبلين على الزواج والمتزوجين حديثاً (الأربعاء 7:00 مساءً)' },
 ];
 
 const DAYS_LIST: DayOfWeekArabic[] = [
