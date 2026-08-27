@@ -93,6 +93,9 @@ export async function adminCreateUser(
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName = fullName.trim();
+
   // Instantiate client with non-persisted state to protect admin's current session
   const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
@@ -103,31 +106,87 @@ export async function adminCreateUser(
   });
 
   const { data, error } = await tempClient.auth.signUp({
-    email: email.trim(),
+    email: cleanEmail,
     password,
     options: {
       data: {
-        full_name: fullName,
+        full_name: cleanName,
         role
       }
     }
   });
 
-  if (error) throw error;
+  if (error) {
+    // If user already registered in auth, try to sync profile anyway
+    console.warn('Auth signup warning:', error.message);
+    if (!error.message.includes('already registered')) {
+      throw error;
+    }
+  }
 
-  const userId = data.user?.id;
+  const userId = data?.user?.id;
+  
   if (userId) {
+    // 1. Upsert to profiles table
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
         id: userId,
-        email: email.trim(),
-        full_name: fullName,
+        email: cleanEmail,
+        full_name: cleanName,
         role,
       }, { onConflict: 'id' });
 
     if (profileError) {
       console.warn('Profile upsert after signup returned error:', profileError);
+    }
+  } else {
+    // Fallback search profile by email
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', cleanEmail)
+      .maybeSingle();
+
+    if (existingProfile) {
+      await supabase
+        .from('profiles')
+        .update({ full_name: cleanName, role })
+        .eq('id', existingProfile.id);
+    }
+  }
+
+  // 2. Cross-sync to Priests directory if role is priest
+  if (role === 'priest') {
+    try {
+      await supabase
+        .from('priests')
+        .insert({
+          name: cleanName.startsWith('القمص') || cleanName.startsWith('القس') || cleanName.startsWith('أبونا') 
+            ? cleanName 
+            : `أبونا ${cleanName}`,
+          title: 'كاهن بكنيسة السيدة العذراء بمحرم بك',
+          status: 'active',
+          bio: 'كاهن موقر بكنيسة السيدة العذراء بمحرم بك بالإسكندرية.'
+        });
+    } catch (priestErr) {
+      console.warn('Priest table auto-sync notice:', priestErr);
+    }
+  }
+
+  // 3. Cross-sync to Members & Servants directory if role is servant or service_leader
+  if (role === 'servant' || role === 'service_leader') {
+    try {
+      await supabase
+        .from('members')
+        .insert({
+          full_name: cleanName,
+          email: cleanEmail,
+          status: 'نشط',
+          service: role === 'service_leader' ? 'أمين خدمة' : 'خادم تربية كنسية',
+        });
+    } catch (memberErr) {
+      console.warn('Members table auto-sync notice:', memberErr);
     }
   }
 

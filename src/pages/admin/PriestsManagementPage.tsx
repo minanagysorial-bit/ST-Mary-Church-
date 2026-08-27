@@ -39,8 +39,29 @@ export const PriestsManagementPage: React.FC = () => {
   const fetchPriests = async () => {
     setLoading(true);
     try {
-      const data = await api.getPriests();
-      setPriests(data);
+      const [priestsData, profilesData] = await Promise.all([
+        api.getPriests(),
+        api.getProfiles().catch(() => [])
+      ]);
+      
+      const combined = [...priestsData];
+      const existingNames = new Set(priestsData.map(p => p.name.trim()));
+
+      profilesData.forEach(p => {
+        if (p.role === 'priest' && !existingNames.has(p.full_name.trim())) {
+          combined.push({
+            id: p.id,
+            name: p.full_name,
+            title: 'كاهن بكنيسة السيدة العذراء بمحرم بك',
+            image_url: p.avatar_url || '',
+            status: 'active',
+            bio: 'كاهن موقر بكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية.',
+            created_at: p.created_at || new Date().toISOString()
+          } as Priest);
+        }
+      });
+
+      setPriests(combined);
     } catch (err: any) {
       console.error(err);
       setErrorMsg('فشل تحميل قائمة الآباء الكهنة.');

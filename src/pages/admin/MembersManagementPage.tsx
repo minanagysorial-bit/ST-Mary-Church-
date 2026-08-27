@@ -23,8 +23,32 @@ export const MembersManagementPage: React.FC = () => {
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      const data = await api.getMembers();
-      setMembers(data);
+      const [membersData, profilesData] = await Promise.all([
+        api.getMembers(),
+        api.getProfiles().catch(() => [])
+      ]);
+      
+      const combined = [...membersData];
+      const existingEmails = new Set(membersData.map(m => m.email?.toLowerCase()).filter(Boolean));
+      const existingNames = new Set(membersData.map(m => m.full_name.trim()));
+
+      profilesData.forEach(p => {
+        if ((p.role === 'servant' || p.role === 'service_leader' || p.role === 'admin') && 
+            !existingEmails.has(p.email.toLowerCase()) && 
+            !existingNames.has(p.full_name.trim())) {
+          combined.push({
+            id: p.id,
+            full_name: p.full_name,
+            email: p.email,
+            phone: p.phone || '',
+            status: 'نشط',
+            service: p.role === 'service_leader' ? 'أمين خدمة' : (p.role === 'admin' ? 'مسؤول نظام' : 'خادم تربية كنسية'),
+            created_at: p.created_at || new Date().toISOString()
+          } as Member);
+        }
+      });
+
+      setMembers(combined);
     } catch (err: any) {
       console.error(err);
       setError('خطأ في تحميل كشوفات الأعضاء');
