@@ -27,6 +27,7 @@ import {
 import { api, Verse, Announcement } from '../lib/api';
 import { DailyReadingsCard } from '../components/common/DailyReadingsCard';
 import { requestNotificationPermission, getNotificationPermission } from '../lib/pushNotifications';
+import { getDailyAutoVerse } from '../lib/comfortVerses';
 
 interface HomePageProps {
   onOpenPrayerModal: () => void;
@@ -102,28 +103,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
   };
 
   useEffect(() => {
-    const fetchRandomVerse = async () => {
+    const loadContent = async () => {
+      let settings: Record<string, string> = {};
       try {
-        setLoadingVerse(true);
-        const data = await api.getRandomVerse();
-        setVerse(data);
-      } catch (err) {
-        console.error('Failed to load random verse:', err);
-      } finally {
-        setLoadingVerse(false);
-      }
-    };
-    const fetchAnnouncements = async () => {
-      try {
-        const data = await api.getActiveAnnouncements();
-        setActiveAnnouncements(data);
-      } catch (err) {
-        console.error('Error fetching announcements:', err);
-      }
-    };
-    const fetchHeroContent = async () => {
-      try {
-        const settings = await api.getSiteSettings();
+        settings = await api.getSiteSettings();
         setHeroContent({
           title: settings.hero_title || 'كنيسة السيدة العذراء مريم',
           subtitle: settings.hero_subtitle || 'بمحرم بك - الإسكندرية',
@@ -133,11 +116,67 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
       } catch (err) {
         console.error('Error fetching hero content:', err);
       }
+
+      // Load Verse according to mode (auto vs manual)
+      try {
+        setLoadingVerse(true);
+        const mode = settings.verse_display_mode || 'auto';
+        
+        if (mode === 'auto') {
+          const autoV = getDailyAutoVerse(new Date());
+          setVerse({
+            id: autoV.id,
+            text: autoV.text,
+            reference: autoV.reference,
+            created_by: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        } else {
+          // Manual mode
+          const activeId = settings.active_manual_verse_id;
+          const allVerses = await api.getVerses().catch(() => []);
+          const activeCustom = allVerses.find(v => v.id === activeId);
+          if (activeCustom) {
+            setVerse(activeCustom);
+          } else if (allVerses.length > 0) {
+            setVerse(allVerses[0]);
+          } else {
+            const autoV = getDailyAutoVerse(new Date());
+            setVerse({
+              id: autoV.id,
+              text: autoV.text,
+              reference: autoV.reference,
+              created_by: null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load verse:', err);
+        const autoV = getDailyAutoVerse(new Date());
+        setVerse({
+          id: autoV.id,
+          text: autoV.text,
+          reference: autoV.reference,
+          created_by: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      } finally {
+        setLoadingVerse(false);
+      }
+
+      try {
+        const data = await api.getActiveAnnouncements();
+        setActiveAnnouncements(data);
+      } catch (err) {
+        console.error('Error fetching announcements:', err);
+      }
     };
 
-    fetchRandomVerse();
-    fetchAnnouncements();
-    fetchHeroContent();
+    loadContent();
   }, []);
 
   const handleShare = () => {
