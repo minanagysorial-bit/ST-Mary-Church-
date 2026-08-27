@@ -14,10 +14,18 @@ import {
   Sparkles,
   Layers,
   CheckCircle2,
-  FolderOpen
+  FolderOpen,
+  Calendar,
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import { api, Profile, ChurchServiceCategory } from '../../lib/api';
 import { useToast } from '../../components/common/Toast';
+import { 
+  type DayOfWeekArabic, 
+  type ServiceScheduleConfig,
+  DEFAULT_SERVICE_SCHEDULES 
+} from '../../lib/attendanceStatusHelper';
 
 const APPROVED_CATEGORIES: { category: ChurchServiceCategory; icon: string; description: string }[] = [
   { category: 'ابتدائي بنين', icon: 'boy', description: 'خدمة مرحلة ابتدائي للبنين من الصف الأول للسادس' },
@@ -31,16 +39,20 @@ const APPROVED_CATEGORIES: { category: ChurchServiceCategory; icon: string; desc
   { category: 'خريجين', icon: 'work', description: 'خدمة الخريجين وسوق العمل والمهنيين' },
 ];
 
-interface ServiceAssignmentConfig {
-  priest_ids: string[];
-  leader_ids: string[];
-  notes?: string;
-}
+const DAYS_LIST: DayOfWeekArabic[] = [
+  'الجمعة',
+  'الأحد',
+  'السبت',
+  'الخميس',
+  'الأربعاء',
+  'الثلاثاء',
+  'الإثنين'
+];
 
 export const ServicesAssignmentPage: React.FC = () => {
   const toast = useToast();
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [assignments, setAssignments] = useState<Record<string, ServiceAssignmentConfig>>({});
+  const [assignments, setAssignments] = useState<Record<string, ServiceScheduleConfig>>({});
   const [loading, setLoading] = useState(true);
   const [savingCategory, setSavingCategory] = useState<string | null>(null);
 
@@ -48,6 +60,9 @@ export const ServicesAssignmentPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<ChurchServiceCategory | null>(null);
   const [selectedPriests, setSelectedPriests] = useState<string[]>([]);
   const [selectedLeaders, setSelectedLeaders] = useState<string[]>([]);
+  const [serviceDay, setServiceDay] = useState<DayOfWeekArabic>('الجمعة');
+  const [startTime, setStartTime] = useState<string>('09:00');
+  const [endTime, setEndTime] = useState<string>('11:30');
   const [serviceNotes, setServiceNotes] = useState<string>('');
 
   const loadData = async () => {
@@ -61,26 +76,61 @@ export const ServicesAssignmentPage: React.FC = () => {
       setProfiles(profilesData);
 
       // Parse saved assignments from siteSettings or local defaults
-      const configMap: Record<string, ServiceAssignmentConfig> = {};
+      const configMap: Record<string, ServiceScheduleConfig> = {};
       APPROVED_CATEGORIES.forEach(item => {
+        const defaultSched = DEFAULT_SERVICE_SCHEDULES[item.category] || { day: 'الجمعة', start: '09:00', end: '11:30' };
         const raw = settings[`service_assignment_${item.category}`];
         if (raw) {
           try {
-            configMap[item.category] = JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+            configMap[item.category] = {
+              priest_ids: parsed.priest_ids || [],
+              leader_ids: parsed.leader_ids || [],
+              day_of_week: parsed.day_of_week || defaultSched.day,
+              start_time: parsed.start_time || defaultSched.start,
+              end_time: parsed.end_time || defaultSched.end,
+              notes: parsed.notes || ''
+            };
           } catch {
-            configMap[item.category] = { priest_ids: [], leader_ids: [] };
+            configMap[item.category] = {
+              priest_ids: [],
+              leader_ids: [],
+              day_of_week: defaultSched.day,
+              start_time: defaultSched.start,
+              end_time: defaultSched.end
+            };
           }
         } else {
           // Check localStorage backup
           const local = localStorage.getItem(`church_service_assign_${item.category}`);
           if (local) {
             try {
-              configMap[item.category] = JSON.parse(local);
+              const parsed = JSON.parse(local);
+              configMap[item.category] = {
+                priest_ids: parsed.priest_ids || [],
+                leader_ids: parsed.leader_ids || [],
+                day_of_week: parsed.day_of_week || defaultSched.day,
+                start_time: parsed.start_time || defaultSched.start,
+                end_time: parsed.end_time || defaultSched.end,
+                notes: parsed.notes || ''
+              };
             } catch {
-              configMap[item.category] = { priest_ids: [], leader_ids: [] };
+              configMap[item.category] = {
+                priest_ids: [],
+                leader_ids: [],
+                day_of_week: defaultSched.day,
+                start_time: defaultSched.start,
+                end_time: defaultSched.end
+              };
             }
           } else {
-            configMap[item.category] = { priest_ids: [], leader_ids: [] };
+            configMap[item.category] = {
+              priest_ids: [],
+              leader_ids: [],
+              day_of_week: defaultSched.day,
+              start_time: defaultSched.start,
+              end_time: defaultSched.end
+            };
           }
         }
       });
@@ -102,18 +152,31 @@ export const ServicesAssignmentPage: React.FC = () => {
   const allServiceLeaders = profiles.filter(p => p.role === 'service_leader' || p.role === 'servant');
 
   const handleOpenEdit = (category: ChurchServiceCategory) => {
-    const current = assignments[category] || { priest_ids: [], leader_ids: [] };
+    const defaultSched = DEFAULT_SERVICE_SCHEDULES[category] || { day: 'الجمعة', start: '09:00', end: '11:30' };
+    const current = assignments[category] || { 
+      priest_ids: [], 
+      leader_ids: [],
+      day_of_week: defaultSched.day,
+      start_time: defaultSched.start,
+      end_time: defaultSched.end
+    };
     setActiveCategory(category);
     setSelectedPriests(current.priest_ids || []);
     setSelectedLeaders(current.leader_ids || []);
+    setServiceDay(current.day_of_week || defaultSched.day);
+    setStartTime(current.start_time || defaultSched.start);
+    setEndTime(current.end_time || defaultSched.end);
     setServiceNotes(current.notes || '');
   };
 
   const handleSaveAssignment = async (category: ChurchServiceCategory) => {
     setSavingCategory(category);
-    const config: ServiceAssignmentConfig = {
+    const config: ServiceScheduleConfig = {
       priest_ids: selectedPriests,
       leader_ids: selectedLeaders,
+      day_of_week: serviceDay,
+      start_time: startTime,
+      end_time: endTime,
       notes: serviceNotes.trim()
     };
 
@@ -126,13 +189,13 @@ export const ServicesAssignmentPage: React.FC = () => {
       localStorage.setItem(`church_service_assign_${category}`, JSON.stringify(config));
 
       setAssignments(prev => ({ ...prev, [category]: config }));
-      toast.success(`تم حفظ وتعيين مشرفي وأمناء ${category} بنجاح ✨`);
+      toast.success(`تم حفظ موعد وتعيين مشرفي وأمناء ${category} بنجاح ✨`);
       setActiveCategory(null);
     } catch (err: any) {
       console.warn('API save warning, saving locally:', err);
       localStorage.setItem(`church_service_assign_${category}`, JSON.stringify(config));
       setAssignments(prev => ({ ...prev, [category]: config }));
-      toast.success(`تم حفظ تعيينات ${category} بنجاح`);
+      toast.success(`تم حفظ تعيينات ومواعيد ${category} بنجاح`);
       setActiveCategory(null);
     } finally {
       setSavingCategory(null);
@@ -151,10 +214,10 @@ export const ServicesAssignmentPage: React.FC = () => {
             </div>
             <div>
               <h1 className="font-tajawal text-2xl sm:text-3xl font-extrabold text-[#00174a]">
-                تعيين كهنة وأمناء الخدمات
+                تعيين كهنة وأمناء ومواعيد الخدمات
               </h1>
               <p className="text-xs text-slate-500 font-bold mt-1">
-                صلاحية السوبر أدمن: تعيين كاهن أو أكثر وأمين خدمة أو أكثر لكل خدمة من خدمات الكنيسة التسعة
+                صلاحية السوبر أدمن: تعيين المشرفين وتحديد اليوم الأسبوعي وتوقيت الخدمة لرصد الحضور والغياب آلياً ⏰🔴
               </p>
             </div>
           </div>
@@ -163,12 +226,19 @@ export const ServicesAssignmentPage: React.FC = () => {
         {/* Categories Grid */}
         {loading ? (
           <div className="bg-white rounded-3xl p-12 text-center text-slate-400 font-bold border border-slate-200 shadow-sm">
-            جاري تحميل قطاعات الخدمات والمسؤولين...
+            جاري تحميل قطاعات الخدمات والمسؤولين والمواعيد...
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {APPROVED_CATEGORIES.map(({ category, icon, description }) => {
-              const current = assignments[category] || { priest_ids: [], leader_ids: [] };
+              const defaultSched = DEFAULT_SERVICE_SCHEDULES[category] || { day: 'الجمعة', start: '09:00', end: '11:30' };
+              const current = assignments[category] || { 
+                priest_ids: [], 
+                leader_ids: [],
+                day_of_week: defaultSched.day,
+                start_time: defaultSched.start,
+                end_time: defaultSched.end 
+              };
               const assignedPriests = (current.priest_ids || []).map(id => profiles.find(p => p.id === id)).filter(Boolean);
               const assignedLeaders = (current.leader_ids || []).map(id => profiles.find(p => p.id === id)).filter(Boolean);
 
@@ -186,10 +256,10 @@ export const ServicesAssignmentPage: React.FC = () => {
                       <button
                         onClick={() => handleOpenEdit(category)}
                         className="bg-slate-100 hover:bg-[#002366] text-[#002366] hover:text-[#fed65b] p-2.5 rounded-xl font-bold text-xs transition-colors flex items-center gap-1.5 shadow-xs"
-                        title="تعديل وتعيين المسؤولين"
+                        title="تعديل وتعيين المسؤولين والمواعيد"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
-                        <span>تعيين</span>
+                        <span>تعديل</span>
                       </button>
                     </div>
 
@@ -200,6 +270,18 @@ export const ServicesAssignmentPage: React.FC = () => {
                       <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
                         {description}
                       </p>
+                    </div>
+
+                    {/* Schedule Badge */}
+                    <div className="flex items-center justify-between p-2.5 bg-blue-50/70 border border-blue-100 rounded-2xl text-xs font-bold text-blue-900">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-blue-700" />
+                        <span>يوم: {current.day_of_week || defaultSched.day}</span>
+                      </span>
+                      <span className="flex items-center gap-1 font-mono text-blue-800 text-[11px]">
+                        <Clock className="w-3.5 h-3.5 text-blue-600" />
+                        <span>{current.start_time || defaultSched.start} - {current.end_time || defaultSched.end}</span>
+                      </span>
                     </div>
 
                     {/* Assigned Priests */}
@@ -257,7 +339,7 @@ export const ServicesAssignmentPage: React.FC = () => {
                       className="w-full bg-[#002366] hover:bg-[#00113a] text-[#fed65b] font-bold text-xs py-2.5 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
-                      <span>تعديل وتعيين الكهنة والأمناء</span>
+                      <span>تعديل المواعيد والمسؤولين</span>
                     </button>
                   </div>
                 </div>
@@ -266,7 +348,7 @@ export const ServicesAssignmentPage: React.FC = () => {
           </div>
         )}
 
-        {/* Modal: Assign Priests & Service Leaders */}
+        {/* Modal: Assign Priests, Service Leaders, and Schedule */}
         {activeCategory && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-100 text-right animate-scale-in" dir="rtl">
@@ -277,9 +359,9 @@ export const ServicesAssignmentPage: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-tajawal text-lg font-bold text-[#00174a]">
-                      تعيين مسؤولي: {activeCategory}
+                      إعدادات ومسؤولي: {activeCategory}
                     </h3>
-                    <p className="text-xs text-slate-400 font-semibold">اختر كاهن أو أكثر وأمين خدمة أو أكثر</p>
+                    <p className="text-xs text-slate-400 font-semibold">تحديد يوم وتوقيت الخدمة والمشرفين والأمناء</p>
                   </div>
                 </div>
                 <button
@@ -291,13 +373,59 @@ export const ServicesAssignmentPage: React.FC = () => {
               </div>
 
               <div className="space-y-5">
-                {/* 1. Priests Assignment */}
+                {/* 1. Schedule Day & Time Window */}
+                <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl space-y-3">
+                  <h4 className="text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-blue-700" />
+                    <span>مواعيد إقامة الخدمة ومهلة تسجيل الغياب ⏰</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">يوم الخدمة *</label>
+                      <select
+                        value={serviceDay}
+                        onChange={(e) => setServiceDay(e.target.value as DayOfWeekArabic)}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#002366]"
+                      >
+                        {DAYS_LIST.map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">وقت البدء *</label>
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 font-mono focus:outline-none focus:border-[#002366]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">المهلة القصوى (انتهاء) *</label>
+                      <input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 font-mono focus:outline-none focus:border-[#002366]"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-blue-800 font-semibold">
+                    🔴 إذا انقضت المهلة المحددة ولم يقم الخادم برفع الحضور والغياب، سيتم إظهار علامة حمراء وإرسال تنبيه آلي للأمين والكاهن.
+                  </p>
+                </div>
+
+                {/* 2. Priests Assignment */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-[#00174a] flex items-center gap-1.5">
                     <Church className="w-4 h-4 text-amber-600" />
                     <span>الآباء الكهنة المشرفون على الخدمة:</span>
                   </label>
-                  <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-2xl p-2 space-y-1.5 bg-slate-50">
+                  <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-2xl p-2 space-y-1.5 bg-slate-50">
                     {allPriests.length === 0 ? (
                       <p className="text-xs text-slate-400 p-2">لا يوجد حسابات برتبة كاهن مسجلة بالنظام</p>
                     ) : (
@@ -306,7 +434,7 @@ export const ServicesAssignmentPage: React.FC = () => {
                         return (
                           <label
                             key={p.id}
-                            className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs transition-colors ${
+                            className={`flex items-center justify-between p-2 rounded-xl cursor-pointer text-xs transition-colors ${
                               isSelected ? 'bg-amber-100 text-amber-900 font-bold border border-amber-300' : 'hover:bg-slate-200 text-slate-700'
                             }`}
                           >
@@ -323,7 +451,7 @@ export const ServicesAssignmentPage: React.FC = () => {
                                 }}
                                 className="hidden"
                               />
-                              <span>{p.full_name} ({p.email})</span>
+                              <span>{p.full_name}</span>
                             </div>
                             {isSelected && <Check className="w-4 h-4 text-amber-800" />}
                           </label>
@@ -333,13 +461,13 @@ export const ServicesAssignmentPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 2. Service Leaders Assignment */}
+                {/* 3. Service Leaders Assignment */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-[#00174a] flex items-center gap-1.5">
                     <Users className="w-4 h-4 text-cyan-600" />
                     <span>أمناء الخدمة المسؤولون:</span>
                   </label>
-                  <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-2xl p-2 space-y-1.5 bg-slate-50">
+                  <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-2xl p-2 space-y-1.5 bg-slate-50">
                     {allServiceLeaders.length === 0 ? (
                       <p className="text-xs text-slate-400 p-2">لا يوجد حسابات خدام مسجلة</p>
                     ) : (
@@ -348,7 +476,7 @@ export const ServicesAssignmentPage: React.FC = () => {
                         return (
                           <label
                             key={l.id}
-                            className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs transition-colors ${
+                            className={`flex items-center justify-between p-2 rounded-xl cursor-pointer text-xs transition-colors ${
                               isSelected ? 'bg-cyan-100 text-cyan-900 font-bold border border-cyan-300' : 'hover:bg-slate-200 text-slate-700'
                             }`}
                           >
@@ -375,12 +503,12 @@ export const ServicesAssignmentPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 3. Notes */}
+                {/* 4. Notes */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">ملاحظات وتوجيهات خاصة بالخدمة</label>
                   <textarea
                     rows={2}
-                    placeholder="ملاحظات حول أهداف الخدمة أو المواعيد..."
+                    placeholder="ملاحظات حول أهداف الخدمة أو مكان الإقامة..."
                     value={serviceNotes}
                     onChange={(e) => setServiceNotes(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-800 font-bold focus:outline-none focus:border-[#002366]"
@@ -403,7 +531,7 @@ export const ServicesAssignmentPage: React.FC = () => {
                     className="bg-[#002366] hover:bg-[#00113a] text-[#fed65b] font-bold text-xs px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-1.5"
                   >
                     <Save className="w-4 h-4" />
-                    <span>{savingCategory ? 'جاري الحفظ...' : 'حفظ التعيينات'}</span>
+                    <span>{savingCategory ? 'جاري الحفظ...' : 'حفظ المواعيد والتعيينات'}</span>
                   </button>
                 </div>
               </div>

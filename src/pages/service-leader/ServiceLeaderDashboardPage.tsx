@@ -13,11 +13,23 @@ import {
   Layers,
   ChevronLeft,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  Clock,
+  Calendar,
+  Send,
+  Check
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { api, type Family, type Profile, type ChurchServiceCategory, type ChurchService } from '../../lib/api';
+import { api, type Family, type Profile, type ChurchServiceCategory, type ChurchService, type FamilyAttendanceRecord } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { 
+  checkFamilyAttendanceStatus, 
+  type ServiceScheduleConfig,
+  type AttendanceStatusResult,
+  DEFAULT_SERVICE_SCHEDULES 
+} from '../../lib/attendanceStatusHelper';
+import { useToast } from '../../components/common/Toast';
 
 const DEFAULT_SERVICE_CATEGORIES: ChurchServiceCategory[] = [
   'ابتدائي بنين',
@@ -33,10 +45,14 @@ const DEFAULT_SERVICE_CATEGORIES: ChurchServiceCategory[] = [
 
 export const ServiceLeaderDashboardPage: React.FC = () => {
   const { profile } = useAuth();
+  const toast = useToast();
   const [families, setFamilies] = useState<Family[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [familyServantsMap, setFamilyServantsMap] = useState<Record<string, string[]>>({});
+  const [attendanceRecords, setAttendanceRecords] = useState<FamilyAttendanceRecord[]>([]);
+  const [serviceConfigs, setServiceConfigs] = useState<Record<string, ServiceScheduleConfig>>({});
   const [loading, setLoading] = useState(true);
+  const [remindedFamilies, setRemindedFamilies] = useState<string[]>([]);
 
   // Stats
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
@@ -44,21 +60,38 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [fetchedFamilies, fetchedProfiles, fetchedRelations] = await Promise.all([
+      const [fetchedFamilies, fetchedProfiles, fetchedRelations, fetchedAttendance, settings] = await Promise.all([
         api.getFamilies(),
         api.getProfiles(),
-        api.getFamilyServantsForAll().catch(() => [])
+        api.getFamilyServantsForAll().catch(() => []),
+        api.getAllFamilyAttendanceRecords().catch(() => []),
+        api.getSiteSettings().catch(() => ({} as Record<string, string>))
       ]);
 
       const relMap: Record<string, string[]> = {};
-      fetchedRelations.forEach(r => {
+      fetchedRelations.forEach((r: any) => {
         if (!relMap[r.family_id]) relMap[r.family_id] = [];
         relMap[r.family_id].push(r.servant_id);
+      });
+
+      // Parse schedule configs
+      const configs: Record<string, ServiceScheduleConfig> = {};
+      DEFAULT_SERVICE_CATEGORIES.forEach(cat => {
+        const raw = settings[`service_assignment_${cat}`];
+        if (raw) {
+          try {
+            configs[cat] = JSON.parse(raw);
+          } catch {
+            configs[cat] = { priest_ids: [], leader_ids: [] };
+          }
+        }
       });
 
       setFamilies(fetchedFamilies);
       setProfiles(fetchedProfiles);
       setFamilyServantsMap(relMap);
+      setAttendanceRecords(fetchedAttendance);
+      setServiceConfigs(configs);
     } catch (err) {
       console.error('Error fetching service leader data:', err);
     } finally {
@@ -75,9 +108,36 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
 
   // Filtered families
   const sundaySchoolFamilies = families.filter(f => f.family_type === 'sunday_school');
-  const filteredFamilies = selectedCategory === 'الكل'
-    ? sundaySchoolFamilies
-    : sundaySchoolFamilies.filter(f => f.stage?.includes(selectedCategory) || f.area?.includes(selectedCategory));
+  
+  // Calculate attendance status for every family
+  const familyAttendanceStatusMap: Record<string, AttendanceStatusResult> = {};
+  sundaySchoolFamilies.forEach(fam => {
+    // Determine category
+    const matchedCategory = DEFAULT_SERVICE_CATEGORIES.find(c => (fam.stage && fam.stage.includes(c)) || (fam.area && fam.area.includes(c))) || 'ابتدائي بنين';
+    const config = serviceConfigs[matchedCategory];
+    
+    // Dates recorded for this family
+    const recordedDates = attendanceRecords
+      .filter(r => r.family_id === fam.id)
+      .map(r => r.date);
+
+    familyAttendanceStatusMap[fam.id] = checkFamilyAttendanceStatus(
+      fam.id,
+      fam.head_name,
+      matchedCategory,
+      config,
+      recordedDates
+    );
+  });
+
+  const overdueFamilies = sundaySchoolFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'OVERDUE');
+  const completedFamilies = sundaySchoolFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'COMPLETED');
+  const pendingFamilies = sundaySchoolFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'PENDING');
+
+  const handleSendReminder = (familyId: string, familyName: string) => {
+    setRemindedFamilies(prev => [...prev, familyId]);
+    toast.success(`تم إرسال تذكير عاجل لخدام أسرة "${familyName}" لتسجيل الغياب 🔔`);
+  };
 
   return (
     <DashboardLayout role="service_leader">
@@ -94,7 +154,7 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
               أهلاً بك يا أستاذ {profile?.full_name || 'أمين الخدمة'} 🌟
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 font-semibold max-w-xl leading-relaxed">
-              إدارة خدمات وأسر التربية الكنسية، إنشاء الفصول وتحديد السن، وتعيين الخدام المسؤولين ومتابعة الحضور والافتقاد.
+              إدارة خدمات وأسر التربية الكنسية، متابعة الحضور والغياب ورصد المواعيد والتنبيهات الحمراء الفورية.
             </p>
           </div>
 
@@ -109,6 +169,92 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
           </div>
         </div>
 
+        {/* 🔴 RED OVERDUE ATTENDANCE ALERT BANNER (If any family missed deadline) */}
+        {overdueFamilies.length > 0 && (
+          <div className="bg-rose-50 border-2 border-rose-500/40 rounded-3xl p-6 shadow-lg space-y-4 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-md animate-pulse">
+                  <AlertTriangle className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-tajawal text-lg font-extrabold text-rose-900 flex items-center gap-2">
+                    <span>🔴 تنبيه عاجل: يوجد {overdueFamilies.length} أسر لم يتم تسجيل الغياب لها بعد انقضاء موعد الخدمة!</span>
+                  </h3>
+                  <p className="text-xs text-rose-700 font-semibold mt-0.5">
+                    انقضت المهلة المحددة للخدمة ولم يقم الخدام المسؤولون برفع الحضور والغياب. تم إشعار الأب الكاهن وأمين الخدمة.
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                to="/servant/attendance"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2.5 rounded-2xl shadow-md transition-all shrink-0 hidden sm:inline-flex items-center gap-1.5"
+              >
+                <span>شاشة الحضور</span>
+                <ChevronLeft className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Overdue Families List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+              {overdueFamilies.map(fam => {
+                const statusInfo = familyAttendanceStatusMap[fam.id];
+                const servantIds = familyServantsMap[fam.id] || (fam.assigned_servant_id ? [fam.assigned_servant_id] : []);
+                const assignedServants = servantIds.map(id => profiles.find(p => p.id === id)).filter(Boolean);
+                const isReminded = remindedFamilies.includes(fam.id);
+
+                return (
+                  <div
+                    key={fam.id}
+                    className="bg-white p-4 rounded-2xl border border-rose-200 shadow-xs flex items-center justify-between gap-3"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping shrink-0" />
+                        <h4 className="font-tajawal text-sm font-bold text-rose-950">{fam.head_name}</h4>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
+                          {fam.area || 'خدمة'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-rose-700 font-semibold">
+                        {statusInfo?.message}
+                      </p>
+                      <div className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                        <span>الخدام:</span>
+                        <span>{assignedServants.map(s => s?.full_name).join('، ') || 'لم يتم تعيين خادم'}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleSendReminder(fam.id, fam.head_name)}
+                      disabled={isReminded}
+                      className={`p-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1 ${
+                        isReminded 
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          : 'bg-rose-100 hover:bg-rose-200 text-rose-900 shadow-xs'
+                      }`}
+                      title="إرسال تذكير للخادم"
+                    >
+                      {isReminded ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>تم التذكير</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5" />
+                          <span>تذكير الخادم</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 4 Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
@@ -121,9 +267,32 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
                 <Layers className="w-6 h-6" />
               </div>
             </div>
-            <p className="text-[11px] text-emerald-600 font-bold mt-4 flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>موزعة على كافة المراحل</span>
+            <div className="flex items-center gap-3 mt-4 text-[11px] font-bold">
+              <span className="text-emerald-600 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                {completedFamilies.length} مسجل
+              </span>
+              <span className="text-rose-600 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                {overdueFamilies.length} متأخر
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-[11px] text-slate-400 font-bold mb-1">حالة الحضور هذا الأسبوع</p>
+                <h4 className="font-tajawal text-3xl font-extrabold text-emerald-600">
+                  {completedFamilies.length} / {sundaySchoolFamilies.length}
+                </h4>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 font-bold mt-4">
+              فصول قامت برفع الغياب بالموعد
             </p>
           </div>
 
@@ -156,30 +325,13 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
               متابعة وإرشاد روحي مستمر
             </p>
           </div>
-
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-[11px] text-slate-400 font-bold mb-1">المخدومون والأولاد</p>
-                <h4 className="font-tajawal text-3xl font-extrabold text-[#002366]">
-                  {sundaySchoolFamilies.reduce((sum, f) => sum + (f.members_count || 0), 0)}
-                </h4>
-              </div>
-              <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
-                <UserCheck className="w-6 h-6" />
-              </div>
-            </div>
-            <p className="text-[11px] text-emerald-600 font-bold mt-4">
-              مسجلون في فصول الأسر
-            </p>
-          </div>
         </div>
 
         {/* 9 Approved Church Services Categories */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-tajawal text-xl font-bold text-[#00174a]">
-              أقسام وقطاعات الخدمة المعتمدة
+              أقسام وقطاعات الخدمة المعتمدة ومواعيدها
             </h2>
             <Link
               to="/service-leader/families"
@@ -192,7 +344,19 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {DEFAULT_SERVICE_CATEGORIES.map(category => {
-              const count = sundaySchoolFamilies.filter(f => f.stage?.includes(category) || f.area?.includes(category)).length;
+              const defaultSched = DEFAULT_SERVICE_SCHEDULES[category] || { day: 'الجمعة', start: '09:00', end: '11:30' };
+              const config = serviceConfigs[category] || { 
+                priest_ids: [], 
+                leader_ids: [],
+                day_of_week: defaultSched.day,
+                start_time: defaultSched.start,
+                end_time: defaultSched.end
+              };
+
+              const categoryFamilies = sundaySchoolFamilies.filter(f => f.stage?.includes(category) || f.area?.includes(category));
+              const catOverdue = categoryFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'OVERDUE').length;
+              const catCompleted = categoryFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'COMPLETED').length;
+
               return (
                 <div
                   key={category}
@@ -204,16 +368,39 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
                         <span className="material-symbols-outlined text-2xl">diversity_3</span>
                       </div>
                       <span className="bg-[#002366]/10 text-[#002366] text-xs font-extrabold px-3 py-1 rounded-full border border-[#002366]/20">
-                        {count} فصول وأسر
+                        {categoryFamilies.length} فصول وأسر
                       </span>
                     </div>
 
                     <h3 className="font-tajawal text-lg font-bold text-[#00174a]">
                       {category}
                     </h3>
-                    <p className="text-xs text-slate-500 font-semibold leading-relaxed">
-                      يشرف عليها كاهن وأمين خدمة، وتضم فصول وأسر التربية الكنسية والخدام المخصصين.
-                    </p>
+
+                    {/* Schedule Indicator */}
+                    <div className="p-2 bg-blue-50/70 rounded-xl text-blue-900 text-xs font-bold flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-blue-700" />
+                        <span>يوم {config.day_of_week || defaultSched.day}</span>
+                      </span>
+                      <span className="flex items-center gap-1 font-mono text-[11px]">
+                        <Clock className="w-3.5 h-3.5 text-blue-600" />
+                        <span>{config.start_time || defaultSched.start} - {config.end_time || defaultSched.end}</span>
+                      </span>
+                    </div>
+
+                    {/* Attendance Status Mini Bar */}
+                    {categoryFamilies.length > 0 && (
+                      <div className="flex items-center justify-between text-[11px] font-bold pt-1">
+                        <span className="text-emerald-700">✅ {catCompleted} تم الحضور</span>
+                        {catOverdue > 0 ? (
+                          <span className="text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                            🔴 {catOverdue} متأخر
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">لا يوجد تأخير</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between">

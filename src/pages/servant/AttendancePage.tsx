@@ -13,9 +13,12 @@ import {
   Check,
   X,
   AlertCircle,
+  AlertTriangle,
   Layers,
-  FileText
+  FileText,
+  Clock
 } from 'lucide-react';
+import { checkFamilyAttendanceStatus, type ServiceScheduleConfig, type AttendanceStatusResult } from '../../lib/attendanceStatusHelper';
 
 export const AttendancePage: React.FC = () => {
   const { profile } = useAuth();
@@ -25,6 +28,7 @@ export const AttendancePage: React.FC = () => {
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [attendanceState, setAttendanceState] = useState<Record<string, boolean>>({});
   const [allAttendanceRecords, setAllAttendanceRecords] = useState<FamilyAttendanceRecord[]>([]);
+  const [serviceConfigs, setServiceConfigs] = useState<Record<string, ServiceScheduleConfig>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -53,7 +57,10 @@ export const AttendancePage: React.FC = () => {
     if (!profile) return;
     setLoading(true);
     try {
-      const allFamilies = await api.getFamilies();
+      const [allFamilies, settings] = await Promise.all([
+        api.getFamilies(),
+        api.getSiteSettings().catch(() => ({} as Record<string, string>))
+      ]);
       
       let myFamilyIds: string[] = [];
       try {
@@ -74,7 +81,19 @@ export const AttendancePage: React.FC = () => {
         );
       }
 
+      // Parse schedule configs from settings
+      const configs: Record<string, ServiceScheduleConfig> = {};
+      Object.keys(settings).forEach(key => {
+        if (key.startsWith('service_assignment_')) {
+          const cat = key.replace('service_assignment_', '');
+          try {
+            configs[cat] = JSON.parse(settings[key]);
+          } catch {}
+        }
+      });
+
       setFamilies(filtered);
+      setServiceConfigs(configs);
 
       if (filtered.length > 0) {
         setSelectedFamilyId(filtered[0].id);
@@ -104,17 +123,15 @@ export const AttendancePage: React.FC = () => {
       records.forEach(rec => {
         stateMap[rec.member_id] = rec.present;
       });
-
-      // Fetch all attendance for statistics/report
-      let allRecords: FamilyAttendanceRecord[] = [];
-      try {
-        allRecords = await api.getFamilyAttendanceStats(selectedFamilyId);
-      } catch (e) {
-        console.warn("Could not get family stats:", e);
-      }
-
       setAttendanceState(stateMap);
-      setAllAttendanceRecords(allRecords);
+
+      // Get all stats for history
+      try {
+        const allRecords = await api.getFamilyAttendanceStats(selectedFamilyId);
+        setAllAttendanceRecords(allRecords);
+      } catch (e) {
+        console.warn("Error loading attendance stats:", e);
+      }
     } catch (err: any) {
       console.error('Error fetching attendance records:', err);
     }
@@ -218,9 +235,49 @@ export const AttendancePage: React.FC = () => {
   const absentCount = members.length - presentCount;
   const attendanceRate = members.length > 0 ? Math.round((presentCount / members.length) * 100) : 0;
 
+  const selectedFamily = families.find(f => f.id === selectedFamilyId);
+  const matchedCategory = selectedFamily ? (['ابتدائي بنين', 'ابتدائي بنات', 'فتيان إعدادي', 'فتيات إعدادي', 'شباب ثانوي', 'شابات ثانوي', 'خدمة شباب جامعة', 'خدمة شابات جامعة', 'خريجين'].find(c => (selectedFamily.stage && selectedFamily.stage.includes(c)) || (selectedFamily.area && selectedFamily.area.includes(c))) || 'ابتدائي بنين') : 'ابتدائي بنين';
+  const config = serviceConfigs[matchedCategory];
+  const recordedDates = allAttendanceRecords.map(r => r.date);
+  const familyStatus = selectedFamily ? checkFamilyAttendanceStatus(selectedFamily.id, selectedFamily.head_name, matchedCategory, config, recordedDates) : null;
+
   return (
     <DashboardLayout role={profile?.role as any || 'servant'}>
       <div className="space-y-8 font-cairo">
+
+        {/* Status Alert Banner (Red if Overdue / Green if Completed) */}
+        {familyStatus?.status === 'OVERDUE' && (
+          <div className="p-5 bg-rose-50 border-2 border-rose-500 rounded-3xl text-rose-900 flex items-center justify-between gap-4 shadow-md animate-scale-in">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center animate-pulse shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="font-tajawal text-base font-extrabold text-rose-950 flex items-center gap-2">
+                  <span>🔴 تنبيه عاجل: لقد انقضى موعد الخدمة والمهلة المحددة!</span>
+                </h3>
+                <p className="text-xs text-rose-800 font-semibold">
+                  {familyStatus.message} — تم إشعار أمين الخدمة والأب الكاهن. يرجى تسجيل وغلق الحضور فوراً بالضغط على "حفظ غياب اليوم".
+                </p>
+              </div>
+            </div>
+            <span className="hidden sm:inline-flex px-3 py-1 bg-rose-200 text-rose-900 rounded-xl text-xs font-extrabold shrink-0">
+              متأخر
+            </span>
+          </div>
+        )}
+
+        {familyStatus?.status === 'COMPLETED' && (
+          <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-900 flex items-center justify-between gap-3 text-xs font-bold">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <span>{familyStatus.message}</span>
+            </div>
+            <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-lg text-[11px]">
+              مكتمل
+            </span>
+          </div>
+        )}
 
         {/* Top Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-[#00123a] to-[#002366] p-6 rounded-3xl text-white shadow-xl border border-[#d4af37]/20">

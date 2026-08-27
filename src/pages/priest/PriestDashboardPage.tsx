@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { Link } from 'react-router-dom';
-import { api, type ContactMessage } from '../../lib/api';
+import { api, type ContactMessage, type Family, type FamilyAttendanceRecord, type Profile } from '../../lib/api';
 import type { MembershipComment, Sermon, Liturgy, PrayerRequest } from '../../lib/database.types';
 import { useToast } from '../../components/common/Toast';
-import { Radio, RefreshCw, Send, Trash2, MailOpen, AlertCircle, Play, Heart, MessageSquare } from 'lucide-react';
+import { Radio, RefreshCw, Send, Trash2, MailOpen, AlertCircle, AlertTriangle, Play, Heart, MessageSquare, Clock, Users, ChevronLeft } from 'lucide-react';
+import { checkFamilyAttendanceStatus, type ServiceScheduleConfig, type AttendanceStatusResult } from '../../lib/attendanceStatusHelper';
 
 export const PriestDashboardPage: React.FC = () => {
   const toast = useToast();
@@ -13,6 +14,9 @@ export const PriestDashboardPage: React.FC = () => {
   const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<FamilyAttendanceRecord[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [submittingStream, setSubmittingStream] = useState(false);
@@ -25,12 +29,15 @@ export const PriestDashboardPage: React.FC = () => {
 
   const fetchPriestDashboardData = async () => {
     try {
-      const [l, c, p, s, msg, settings] = await Promise.all([
+      const [l, c, p, s, msg, f, att, profs, settings] = await Promise.all([
         api.getLiturgies(),
         api.getMembershipComments(),
         api.getPrayerRequests(),
         api.getSermons(),
         api.getContactMessages(),
+        api.getFamilies().catch(() => []),
+        api.getAllFamilyAttendanceRecords().catch(() => []),
+        api.getProfiles().catch(() => []),
         api.getSiteSettings(),
       ]);
       setLiturgies(l);
@@ -38,6 +45,9 @@ export const PriestDashboardPage: React.FC = () => {
       setPrayers(p);
       setSermons(s);
       setContactMessages(msg);
+      setFamilies(f);
+      setAttendanceRecords(att);
+      setProfiles(profs);
       setSiteSettings(settings);
 
       setStreamActive(settings.live_stream_active || 'false');
@@ -104,6 +114,26 @@ export const PriestDashboardPage: React.FC = () => {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
+  // Calculate Overdue Sunday School families
+  const sundaySchoolFamilies = families.filter(f => f.family_type === 'sunday_school');
+  const serviceConfigs: Record<string, ServiceScheduleConfig> = {};
+  Object.keys(siteSettings).forEach(key => {
+    if (key.startsWith('service_assignment_')) {
+      const cat = key.replace('service_assignment_', '');
+      try {
+        serviceConfigs[cat] = JSON.parse(siteSettings[key]);
+      } catch {}
+    }
+  });
+
+  const overdueFamilies = sundaySchoolFamilies.filter(fam => {
+    const matchedCategory = ['ابتدائي بنين', 'ابتدائي بنات', 'فتيان إعدادي', 'فتيات إعدادي', 'شباب ثانوي', 'شابات ثانوي', 'خدمة شباب جامعة', 'خدمة شابات جامعة', 'خريجين'].find(c => (fam.stage && fam.stage.includes(c)) || (fam.area && fam.area.includes(c))) || 'ابتدائي بنين';
+    const config = serviceConfigs[matchedCategory];
+    const recordedDates = attendanceRecords.filter(r => r.family_id === fam.id).map(r => r.date);
+    const res = checkFamilyAttendanceStatus(fam.id, fam.head_name, matchedCategory, config, recordedDates);
+    return res.status === 'OVERDUE';
+  });
+
   // Activity log (dynamic + static fallback)
   const latestPrayer = prayers[0];
   const latestComment = comments[0];
@@ -111,6 +141,43 @@ export const PriestDashboardPage: React.FC = () => {
   return (
     <DashboardLayout role="priest">
       <div className="space-y-8 font-cairo" dir="rtl">
+
+        {/* 🔴 RED OVERDUE ATTENDANCE PASTORAL ALERT */}
+        {overdueFamilies.length > 0 && (
+          <div className="bg-rose-50 border-2 border-rose-500/40 rounded-3xl p-6 shadow-lg space-y-3 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-md animate-pulse shrink-0">
+                  <AlertTriangle className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-tajawal text-base sm:text-lg font-extrabold text-rose-950 flex items-center gap-2">
+                    <span>🔴 تنبيه رعوي: يوجد {overdueFamilies.length} فصول لم يتم تسجيل الحضور والغياب لها بعد انقضاء موعد الخدمة!</span>
+                  </h3>
+                  <p className="text-xs text-rose-800 font-semibold mt-0.5">
+                    الرجاء متابعة أمين الخدمة والخدام المشرفين على هذه الأسر لتسجيل الحضور وتفقد المخدومين.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/priest/services"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2.5 rounded-2xl shadow-md transition-all shrink-0 hidden sm:inline-flex items-center gap-1"
+              >
+                <span>متابعة الفصول</span>
+                <ChevronLeft className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2">
+              {overdueFamilies.map(f => (
+                <div key={f.id} className="p-3 bg-white border border-rose-200 rounded-xl text-xs flex items-center justify-between shadow-xs">
+                  <span className="font-bold text-rose-950">{f.head_name}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">{f.area || 'خدمة'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Greeting Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">

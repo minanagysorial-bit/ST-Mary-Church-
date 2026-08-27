@@ -751,7 +751,17 @@ export const api = {
     const { data, error } = await supabase
       .from('family_attendance_records')
       .select('*')
-      .eq('family_id', familyId);
+      .eq('family_id', familyId)
+      .order('date', { ascending: false });
+    if (error) throw error;
+    return data as FamilyAttendanceRecord[];
+  },
+
+  getAllFamilyAttendanceRecords: async (): Promise<FamilyAttendanceRecord[]> => {
+    const { data, error } = await supabase
+      .from('family_attendance_records')
+      .select('*')
+      .order('date', { ascending: false });
     if (error) throw error;
     return data as FamilyAttendanceRecord[];
   },
