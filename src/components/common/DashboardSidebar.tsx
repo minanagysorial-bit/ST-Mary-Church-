@@ -31,6 +31,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         return [
           { label: 'نظرة عامة', path: '/admin', icon: 'dashboard' },
           { label: 'إعدادات وصلاحيات المستخدمين', path: '/admin/permissions', icon: 'admin_panel_settings', permission: PERMISSIONS.MANAGE_PERMISSIONS },
+          { label: 'تعيين كهنة وأمناء الخدمات', path: '/admin/services', icon: 'shield_person', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'إدارة الأعضاء والخدام', path: '/admin/members', icon: 'badge', permission: PERMISSIONS.MANAGE_MEMBERS },
           { label: 'شعب الكنيسة', path: '/membership/members', icon: 'group', permission: PERMISSIONS.MANAGE_CHURCH_MEMBERS },
           { label: 'طلبات العضوية', path: '/priest/membership-requests', icon: 'app_registration', permission: PERMISSIONS.REVIEW_MEMBERSHIP_REQUESTS },

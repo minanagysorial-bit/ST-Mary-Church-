@@ -38,6 +38,7 @@ const VersesManagementPage = lazy(() => import('./pages/admin/VersesManagementPa
 const AlbumsManagementPage = lazy(() => import('./pages/admin/AlbumsManagementPage').then(m => ({ default: m.AlbumsManagementPage })));
 const PriestsManagementPage = lazy(() => import('./pages/admin/PriestsManagementPage').then(m => ({ default: m.PriestsManagementPage })));
 const SiteBuilderPage = lazy(() => import('./pages/super-admin/SiteBuilderPage').then(m => ({ default: m.SiteBuilderPage })));
+const ServicesAssignmentPage = lazy(() => import('./pages/super-admin/ServicesAssignmentPage').then(m => ({ default: m.ServicesAssignmentPage })));
 const CommunicationsPage = lazy(() => import('./pages/admin/CommunicationsPage').then(m => ({ default: m.CommunicationsPage })));
 const PushNotificationsPage = lazy(() => import('./pages/admin/PushNotificationsPage').then(m => ({ default: m.PushNotificationsPage })));
 const DynamicPage = lazy(() => import('./pages/DynamicPage').then(m => ({ default: m.DynamicPage })));
@@ -216,6 +217,7 @@ const AppLayout: React.FC = () => {
             <Route path="/admin/members" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_MEMBERS}><MembersManagementPage /></ProtectedRoute>} />
             <Route path="/admin/content" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_CONTENT}><ContentManagementPage /></ProtectedRoute>} />
             <Route path="/admin/permissions" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_PERMISSIONS}><PermissionsPage /></ProtectedRoute>} />
+            <Route path="/admin/services" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_PERMISSIONS}><ServicesAssignmentPage /></ProtectedRoute>} />
             <Route path="/admin/verses" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_VERSES}><VersesManagementPage /></ProtectedRoute>} />
             <Route path="/admin/albums" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><AlbumsManagementPage /></ProtectedRoute>} />
             <Route path="/admin/priests" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><PriestsManagementPage /></ProtectedRoute>} />
