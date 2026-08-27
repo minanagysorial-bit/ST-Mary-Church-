@@ -5,6 +5,7 @@ import { ToastProvider } from './components/common/Toast';
 import { HelmetProvider } from 'react-helmet-async';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
+import { MobileBottomNav } from './components/common/MobileBottomNav';
 import { PrayerModal } from './components/common/PrayerModal';
 import { SermonVideoModal } from './components/sermons/SermonVideoModal';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
@@ -275,6 +276,9 @@ const AppLayout: React.FC = () => {
       </div>
 
       {!isDashboard && <Footer />}
+
+      {/* Native Mobile Bottom Navigation Bar */}
+      <MobileBottomNav onOpenPrayerModal={() => setIsPrayerModalOpen(true)} />
 
       {/* Floating PWA Installation Prompt on Mobile */}
       <PWAInstallPrompt />

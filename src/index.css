@@ -150,3 +150,16 @@
 .animate-slideIn {
   animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Mobile Touch & Native App Ergonomics */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 72px);
+  }
+}
+
+button, a, input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
