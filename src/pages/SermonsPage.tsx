@@ -13,17 +13,17 @@ import {
   RefreshCw,
   FolderOpen,
   ListVideo,
-  ExternalLink,
-  Tv
+  Layers,
+  ChevronLeft
 } from 'lucide-react';
 import { Sermon, api } from '../lib/api';
 
-interface PlaylistInfo {
+interface PlaylistSection {
   id: string;
   title: string;
-  embedUrl: string;
-  url: string;
-  type: string;
+  description: string;
+  icon: string;
+  count?: number;
 }
 
 interface SermonsPageProps {
@@ -33,119 +33,122 @@ interface SermonsPageProps {
 export const SermonsPage: React.FC<SermonsPageProps> = () => {
   const [activeTab, setActiveTab] = useState<'videos' | 'playlists'>('videos');
   const [sermons, setSermons] = useState<Sermon[]>([]);
-  const [playlists, setPlaylists] = useState<PlaylistInfo[]>([]);
-  const [activePlaylist, setActivePlaylist] = useState<PlaylistInfo | null>(null);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('الكل');
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const channelId = 'UCLEhdhZFRuxMXHL3pDpg65g';
-  const channelUrl = `https://www.youtube.com/channel/${channelId}`;
-
-  const fetchSermons = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getSermons();
-      setSermons(data);
-    } catch (err) {
-      console.error('Failed to fetch sermons:', err);
-    } finally {
-      setLoading(false);
+  // Defined playlist sections matching church channel categories
+  const playlistSections: PlaylistSection[] = [
+    {
+      id: 'liturgies',
+      title: 'القداسات الإلهية والعشيات',
+      description: 'تسجيلات القداسات الإلهية الأسبوعية، قداسات الأحد، والصلوات الطقسية والعشيات',
+      icon: 'church'
+    },
+    {
+      id: 'sermons',
+      title: 'عظات وكلمات الآباء الكهنة',
+      description: 'العظات والكلمات الروحية لآباء كهنة الكنيسة والآباء المطارنة والأساقفة',
+      icon: 'settings_voice'
+    },
+    {
+      id: 'feasts',
+      title: 'نهضات الأعياد وصوم السيدة العذراء',
+      description: 'صلوات وتسابيح وعظات نهضة صوم العذراء مريم وقداسات أعياد الكنيسة',
+      icon: 'stars'
+    },
+    {
+      id: 'youth',
+      title: 'اجتماعات الشباب والشبان',
+      description: 'عشيات وعظات وموضوعات اجتماعات الشباب والخريجين الأسبوعية',
+      icon: 'groups'
+    },
+    {
+      id: 'bible',
+      title: 'دراسات الكتاب المقدس والعقيدة',
+      description: 'شروحات وتفاسير أسفار العهدين القديم والجديد والمفاهيم اللاهوتية',
+      icon: 'menu_book'
     }
-  };
+  ];
 
-  const handleSyncFromYouTube = async () => {
+  const fetchLiveYouTubeFeed = async () => {
     setIsSyncing(true);
     try {
       const res = await fetch('/api/sync-sermons');
       if (res.ok) {
         const syncData = await res.json();
-        if (syncData.playlists && syncData.playlists.length > 0) {
-          setPlaylists(syncData.playlists);
-          if (!activePlaylist) {
-            setActivePlaylist(syncData.playlists[0]);
-          }
-        }
         if (syncData.sermons && syncData.sermons.length > 0) {
-          setSermons(prev => {
-            const seen = new Set();
-            const merged: Sermon[] = [];
+          // Live YouTube videos are prioritized and sorted descending (newest first)
+          const ytVideos: Sermon[] = syncData.sermons.map((s: any) => ({
+            id: s.id,
+            title: s.title,
+            speaker: s.speaker,
+            topic: s.topic,
+            sermon_date: s.sermon_date,
+            duration_minutes: s.duration_minutes || 45,
+            youtube_url: s.youtube_url,
+            audio_url: s.audio_url || null,
+            description: s.description,
+            featured: false,
+            play_count: s.play_count || 0
+          }));
 
-            // Add fresh YouTube videos first
-            for (const s of syncData.sermons) {
-              if (s.youtube_url && !seen.has(s.youtube_url)) {
-                seen.add(s.youtube_url);
-                merged.push(s);
-              }
-            }
-
-            // Add remaining DB sermons
-            for (const s of prev) {
-              if (s.youtube_url && !seen.has(s.youtube_url)) {
-                seen.add(s.youtube_url);
-                merged.push(s);
-              } else if (!s.youtube_url && !seen.has(s.id)) {
-                seen.add(s.id);
-                merged.push(s);
-              }
-            }
-
-            return merged.sort((a, b) => new Date(b.sermon_date || '').getTime() - new Date(a.sermon_date || '').getTime());
-          });
-        } else {
-          await fetchSermons();
+          setSermons(ytVideos);
+          setLoading(false);
+          return;
         }
       }
     } catch (err) {
-      console.error('Sync error:', err);
+      console.warn('Live YouTube sync fetch warning:', err);
     } finally {
       setIsSyncing(false);
+    }
+
+    // Fallback to database if network / API is unreachable
+    try {
+      const dbSermons = await api.getSermons();
+      setSermons(dbSermons);
+    } catch (err) {
+      console.error('Failed to fetch sermons from DB:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSermons();
+    fetchLiveYouTubeFeed();
     api.getSiteSettings().then(setSiteSettings).catch(console.error);
-    handleSyncFromYouTube();
   }, []);
 
-  // Default playlists fallback if sync is pending
-  const displayPlaylists: PlaylistInfo[] = playlists.length > 0 ? playlists : [
-    {
-      id: `UU${channelId.replace(/^UC/, '')}`,
-      title: 'جميع الفيديوهات والعظات المرفوعة',
-      embedUrl: `https://www.youtube.com/embed/videoseries?list=UU${channelId.replace(/^UC/, '')}`,
-      url: `https://www.youtube.com/playlist?list=UU${channelId.replace(/^UC/, '')}`,
-      type: 'all'
-    },
-    {
-      id: 'liturgies',
-      title: 'القداسات الإلهية والعشيات',
-      embedUrl: `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent('كنيسة العذراء محرم بك قداس')}`,
-      url: `https://www.youtube.com/results?search_query=${encodeURIComponent('كنيسة العذراء محرم بك قداس')}`,
-      type: 'liturgy'
-    },
-    {
-      id: 'sermons',
-      title: 'عظات وكلمات الآباء الكهنة',
-      embedUrl: `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent('كنيسة العذراء محرم بك عظة')}`,
-      url: `https://www.youtube.com/results?search_query=${encodeURIComponent('كنيسة العذراء محرم بك عظة')}`,
-      type: 'sermons'
-    },
-    {
-      id: 'feasts',
-      title: 'نهضات الأعياد وصوم السيدة العذراء',
-      embedUrl: `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent('نهضة كنيسة العذراء محرم بك')}`,
-      url: `https://www.youtube.com/results?search_query=${encodeURIComponent('نهضة كنيسة العذراء محرم بك')}`,
-      type: 'feasts'
-    }
-  ];
+  // Filter video list by playlist category if in playlist view
+  const getPlaylistVideos = (sectionId: string | null) => {
+    if (!sectionId) return sermons;
+    return sermons.filter(s => {
+      const title = (s.title || '').toLowerCase();
+      const topic = (s.topic || '').toLowerCase();
+      const desc = (s.description || '').toLowerCase();
 
-  const currentActivePlaylist = activePlaylist || displayPlaylists[0];
+      switch (sectionId) {
+        case 'liturgies':
+          return title.includes('قداس') || title.includes('عشية') || topic.includes('قداس') || topic.includes('عشيات');
+        case 'sermons':
+          return title.includes('عظة') || title.includes('كلمة') || topic.includes('عظة') || topic.includes('تعليم');
+        case 'feasts':
+          return title.includes('نهضة') || title.includes('صوم') || title.includes('عيد') || title.includes('صعود') || topic.includes('نهضات');
+        case 'youth':
+          return title.includes('شبان') || title.includes('شباب') || topic.includes('شباب') || desc.includes('شبان');
+        case 'bible':
+          return title.includes('دراسة') || title.includes('تفسير') || title.includes('إنجيل') || topic.includes('كتاب مقدس');
+        default:
+          return true;
+      }
+    });
+  };
 
-  // Extract unique topics / departments from available sermons
+  // Extract unique topics for the filter chips
   const topics = ['الكل', ...Array.from(new Set(sermons.map(s => s.topic).filter(Boolean)))];
 
   const filteredSermons = sermons.filter(s => {
@@ -157,6 +160,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
     return matchesSearch && matchesTopic;
   });
 
+  // Always the absolute newest video is the featured hero sermon
   const featuredSermon = sermons.length > 0 ? sermons[0] : null;
 
   const extractVideoId = (url: string | null): string | null => {
@@ -214,12 +218,12 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 font-cairo text-right" dir="rtl">
       <Helmet>
         <title>مكتبة العظات وفيديوهات القناة | كنيسة السيدة العذراء بمحرم بك بالإسكندرية</title>
-        <meta name="description" content="استمع وشاهد أحدث العظات والكلمات الروحية والقداسات وقوائم التشغيل لآباء كهنة كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية." />
-        <meta name="keywords" content="عظات كنيسة العذراء محرم بك, قوائم تشغيل يوتيوب كنيسة العذراء محرم بك, عظات مسيحية ارثوذكسية, قداسات كنيسة العذراء محرم بك" />
+        <meta name="description" content="استمع وشاهد أحدث العظات والكلمات الروحية والقداسات لآباء كهنة كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية. مكتبة متجددة تلقائياً من قناة اليوتيوب الرسمية." />
+        <meta name="keywords" content="عظات كنيسة العذراء محرم بك, عظات مسيحية ارثوذكسية, قداسات كنيسة العذراء محرم بك" />
         <link rel="canonical" href="https://www.tibarthenos.com/sermons" />
       </Helmet>
 
-      {/* Header & Main Controls */}
+      {/* Header & Main Search */}
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
@@ -227,12 +231,12 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
               {siteSettings.sermons_title || 'مكتبة العظات وفيديوهات القناة'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 mt-1 font-semibold">
-              {siteSettings.sermons_subtitle || 'مربوطة مباشرة بالقناة الرسمية لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية'}
+              {siteSettings.sermons_subtitle || 'مربوطة مباشرة بالقناة الرسمية لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية وتتحدث تلقائياً'}
             </p>
           </div>
 
-          {/* Search Box & YouTube Channel Link */}
-          <div className="flex items-center gap-3 max-w-lg w-full">
+          {/* Search Box & Refresh Button */}
+          <div className="flex items-center gap-3 max-w-md w-full">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -245,7 +249,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
             </div>
 
             <button
-              onClick={handleSyncFromYouTube}
+              onClick={fetchLiveYouTubeFeed}
               disabled={isSyncing}
               className="p-2.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-[#002366] transition-colors shadow-sm shrink-0 flex items-center gap-1.5 text-xs font-bold"
               title="تحديث وسحب أحدث الفيديوهات من يوتيوب"
@@ -253,24 +257,13 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
               <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-[#d4af37]' : ''}`} />
               <span className="hidden sm:inline">تحديث</span>
             </button>
-
-            <a
-              href={channelUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-red-600 hover:bg-red-700 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-2xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shrink-0"
-              title="زيارة قناة اليوتيوب الرسمية"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span className="hidden sm:inline">قناة اليوتيوب</span>
-            </a>
           </div>
         </div>
 
-        {/* Top View Selector Tabs */}
+        {/* View Selector Tabs */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setActiveTab('videos')}
+            onClick={() => { setActiveTab('videos'); setSelectedPlaylistId(null); }}
             className={`px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 transition-all shadow-sm ${
               activeTab === 'videos'
                 ? 'bg-[#002366] text-[#fed65b] shadow-md shadow-[#002366]/20'
@@ -290,7 +283,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
             }`}
           >
             <ListVideo className="w-4 h-4" />
-            <span>قوائم التشغيل الكاملة (Playlists)</span>
+            <span>أقسام وقوائم التشغيل (Playlists)</span>
           </button>
         </div>
 
@@ -318,76 +311,136 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
         )}
       </div>
 
-      {/* VIEW 1: PLAYLISTS TAB */}
+      {/* VIEW 1: PLAYLISTS / SECTIONS TAB */}
       {activeTab === 'playlists' && (
         <div className="space-y-8 animate-fade-in">
-          {/* Playlist selector bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {displayPlaylists.map(pl => (
-              <button
-                key={pl.id}
-                onClick={() => setActivePlaylist(pl)}
-                className={`p-4 rounded-3xl border text-right transition-all flex flex-col justify-between space-y-2 ${
-                  currentActivePlaylist.id === pl.id
-                    ? 'bg-[#002366] text-white border-[#d4af37] shadow-xl ring-2 ring-[#fed65b]'
-                    : 'bg-white text-slate-800 border-slate-200 hover:border-[#002366]/40 shadow-sm'
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className={`p-2 rounded-xl ${currentActivePlaylist.id === pl.id ? 'bg-[#fed65b] text-[#00174a]' : 'bg-slate-100 text-[#002366]'}`}>
-                    <ListVideo className="w-4 h-4" />
-                  </span>
-                  <span className="text-[10px] font-bold opacity-75">قائمة تشغيل</span>
+          {/* If no playlist is selected, show list of playlist cards */}
+          {!selectedPlaylistId ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {playlistSections.map(section => {
+                const sectionVideos = getPlaylistVideos(section.id);
+                return (
+                  <div
+                    key={section.id}
+                    onClick={() => setSelectedPlaylistId(section.id)}
+                    className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-[#002366] shadow-md hover:shadow-2xl transition-all cursor-pointer group flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="w-12 h-12 rounded-2xl bg-[#00174a] text-[#fed65b] flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                          <span className="material-symbols-outlined text-2xl">{section.icon}</span>
+                        </div>
+                        <span className="bg-[#002366]/10 text-[#002366] text-xs font-extrabold px-3 py-1 rounded-full border border-[#002366]/20">
+                          {sectionVideos.length} فيديو
+                        </span>
+                      </div>
+
+                      <h3 className="font-tajawal text-lg font-bold text-[#00174a] group-hover:text-[#002366] transition-colors leading-snug">
+                        {section.title}
+                      </h3>
+
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                        {section.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#002366]">
+                      <span>عرض جميع فيديوهات القسم</span>
+                      <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Inside Selected Playlist: List all available videos */
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex items-center justify-between bg-slate-50 p-4 sm:p-6 rounded-3xl border border-slate-200">
+                <div>
+                  <button
+                    onClick={() => setSelectedPlaylistId(null)}
+                    className="text-xs font-bold text-slate-500 hover:text-[#002366] flex items-center gap-1 mb-1"
+                  >
+                    <span>← العودة لجميع القوائم</span>
+                  </button>
+                  <h3 className="font-tajawal text-xl font-bold text-[#00174a]">
+                    {playlistSections.find(p => p.id === selectedPlaylistId)?.title}
+                  </h3>
                 </div>
-                <h4 className="font-tajawal text-sm font-bold leading-snug">{pl.title}</h4>
-              </button>
-            ))}
-          </div>
 
-          {/* Embedded Playlist Player */}
-          <div className="bg-slate-900 rounded-3xl p-4 sm:p-6 border border-slate-800 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between text-white border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Tv className="w-5 h-5 text-[#fed65b]" />
-                <h3 className="font-tajawal text-lg font-bold text-[#fed65b]">
-                  {currentActivePlaylist.title}
-                </h3>
+                <span className="bg-[#002366] text-[#fed65b] text-xs font-bold px-4 py-2 rounded-2xl shadow-sm">
+                  {getPlaylistVideos(selectedPlaylistId).length} فيديو متاح
+                </span>
               </div>
-              <a
-                href={currentActivePlaylist.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1"
-              >
-                <span>فتح على تطبيق YouTube</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
 
-            <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-2xl bg-black">
-              <iframe
-                src={currentActivePlaylist.embedUrl}
-                title={currentActivePlaylist.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {getPlaylistVideos(selectedPlaylistId).map(sermon => (
+                  <div
+                    key={sermon.id}
+                    className="bg-white rounded-3xl p-5 border border-slate-200 shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4 group"
+                  >
+                    <div className="space-y-3">
+                      {renderSermonImage(sermon.youtube_url, sermon.id)}
+
+                      <div className="flex items-center justify-between">
+                        <span className="bg-[#002366]/10 text-[#002366] text-xs font-bold px-2.5 py-1 rounded-full border border-[#002366]/20">
+                          {sermon.topic || 'تعليم وعظة'}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-[#d4af37]" />
+                          <span>{sermon.sermon_date}</span>
+                        </span>
+                      </div>
+
+                      <Link to={`/sermons/${sermon.id}`} className="block">
+                        <h4 className="font-tajawal text-base font-bold text-[#00174a] group-hover:text-[#002366] transition-colors leading-snug line-clamp-2">
+                          {sermon.title}
+                        </h4>
+                      </Link>
+
+                      <p className="text-xs text-slate-500 line-clamp-2 font-medium">
+                        {sermon.description && !sermon.description.includes('مستوردة') ? sermon.description : 'عظة وكلمة روحية مباركة من كنيسة السيدة العذراء مريم بمحرم بك.'}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-[#00174a] text-[#fed65b] flex items-center justify-center font-bold text-xs">
+                          <User className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-slate-400 font-bold">الملقي / الخطيب</p>
+                          <p className="text-xs font-bold text-[#00174a]">{sermon.speaker || 'آباء الكنيسة'}</p>
+                        </div>
+                      </div>
+
+                      <Link
+                        to={`/sermons/${sermon.id}`}
+                        className="w-10 h-10 rounded-xl bg-[#002366] hover:bg-[#00113a] text-[#fed65b] flex items-center justify-center transition-all shadow-md active:scale-95 group-hover:bg-[#fed65b] group-hover:text-[#00174a]"
+                        title="تشغيل الفيديو"
+                      >
+                        <Play className="w-4 h-4 fill-current mr-0.5" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* VIEW 2: VIDEOS & SERMONS TAB */}
+      {/* VIEW 2: ALL VIDEOS TAB */}
       {activeTab === 'videos' && (
         <div className="space-y-10 animate-fade-in">
-          {/* Featured Sermon Top Hero Player Card */}
+          {/* Featured Sermon Top Hero Player Card (ALWAYS ABSOLUTE NEWEST VIDEO FROM CHANNEL) */}
           {featuredSermon && (
             <div className="bg-gradient-to-r from-[#00174a] via-[#002366] to-[#00113a] text-white rounded-3xl p-6 sm:p-8 border border-[#d4af37]/40 shadow-2xl relative overflow-hidden grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
               <div className="lg:col-span-2 space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="bg-[#fed65b] text-[#00174a] text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>أحدث فيديو من القناة</span>
+                    <span>أحدث فيديو نزل على القناة</span>
                   </span>
                   <span className="bg-white/10 text-white text-xs font-bold px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1">
                     <FolderOpen className="w-3 h-3 text-[#fed65b]" />
