@@ -97,12 +97,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
     );
   }
 
-  if (!session) {
+  if (!session || !profile) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Security gate: block test/hacker accounts
+  const emailLower = (profile.email || '').toLowerCase();
+  if (
+    emailLower.includes('hacker') ||
+    emailLower.includes('fakeadmin') ||
+    emailLower.includes('@test.com') ||
+    (profile.role as string) === 'pending' ||
+    (profile.role as string) === 'unauthorized'
+  ) {
     return <Navigate to="/login" replace />;
   }
 
   const isSystemAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
-  if (!profile || (!allowedRoles.includes(profile.role) && !isSystemAdmin)) {
+  if (!allowedRoles.includes(profile.role) && !isSystemAdmin) {
     const userRole = profile?.role;
     switch (userRole) {
       case 'priest':
@@ -114,7 +126,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
       case 'membership':
         return <Navigate to="/membership" replace />;
       default:
-        return <Navigate to="/" replace />;
+        return <Navigate to="/login" replace />;
     }
   }
 
@@ -130,7 +142,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
       case 'membership':
         return <Navigate to="/membership" replace />;
       default:
-        return <Navigate to="/" replace />;
+        return <Navigate to="/login" replace />;
     }
   }
 

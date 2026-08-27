@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Cross, User, Lock, Eye, EyeOff, ShieldCheck, ArrowRight, HelpCircle, AlertCircle } from 'lucide-react';
+import { Cross, User, Lock, Eye, EyeOff, ShieldCheck, ArrowRight, HelpCircle, AlertCircle, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+
+// Explicit blocklist for known test/hacker accounts
+const FORBIDDEN_EMAIL_PATTERNS = [
+  'hacker',
+  'fakeadmin',
+  'faketest',
+  '@test.com',
+  '@example.com',
+  '@mailinator.com',
+  '@tempmail.com'
+];
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -14,12 +25,24 @@ export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isForbiddenEmail = (emailStr: string): boolean => {
+    const lower = emailStr.toLowerCase().trim();
+    return FORBIDDEN_EMAIL_PATTERNS.some(pattern => lower.includes(pattern));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // Instant proactive security gate
+    if (isForbiddenEmail(cleanEmail)) {
+      setLoading(false);
+      setError('تم حظر هذا الحساب تلقائياً لأسباب أمنية. الدخول مخصص فقط لخدام وآباء الكنيسة المعتمدين.');
+      return;
+    }
 
     try {
       // 1. Strict Authentication via Supabase Auth (Checks actual hashed password)
@@ -31,16 +54,28 @@ export const LoginPage: React.FC = () => {
         throw new Error('لم يتم التحقق من الحساب. يرجى المحاولة مرة أخرى.');
       }
 
+      // Security check on authenticated user email
+      if (user.email && isForbiddenEmail(user.email)) {
+        await supabase.auth.signOut();
+        throw new Error('تم حظر هذا الحساب تلقائياً لأسباب أمنية. الدخول مخصص فقط لخدام وآباء الكنيسة المعتمدين.');
+      }
+
       // 3. Verify user profile and role in database
       const { data: profile, error: profileErr } = await supabase
         .from('profiles')
-        .select('role')
+        .select('id, email, role, full_name')
         .eq('id', user.id)
         .maybeSingle();
 
       if (profileErr || !profile || !profile.role) {
         await supabase.auth.signOut();
-        throw new Error('هذا الحساب ليس لديه صلاحيات مسجلة للوصول إلى لوحة التحكم. يرجى التواصل مع مسؤول النظام.');
+        throw new Error('هذا الحساب ليس لديه ملف خدمة معتمد. يرجى مراجعة إدارة الكنيسة لاعتماد حسابك.');
+      }
+
+      // Check for unapproved or pending roles
+      if (profile.role === 'pending' || profile.role === 'unauthorized' as any) {
+        await supabase.auth.signOut();
+        throw new Error('حسابك قيد المراجعة والاعتماد من قبل إدارة الكنيسة. لا تملك صلاحية دخول للخدمة حتى الآن.');
       }
 
       const role = profile.role;
@@ -115,7 +150,7 @@ export const LoginPage: React.FC = () => {
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-bold p-3.5 rounded-2xl flex items-start gap-2.5 shadow-sm">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
             <span className="leading-relaxed">{error}</span>
           </div>
         )}
