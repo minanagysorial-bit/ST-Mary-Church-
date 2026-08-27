@@ -1,10 +1,10 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { PERMISSIONS } from '../../lib/permissions';
 import type { UserRole } from '../../lib/database.types';
-import { Menu, ChevronRight, X } from 'lucide-react';
+import { Menu, ChevronRight, X, LogOut, Home, ExternalLink } from 'lucide-react';
 
 interface SidebarProps {
   role: UserRole;
@@ -22,8 +22,19 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
   setMobileOpen
 }) => {
   const location = useLocation();
-  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const { hasPermission } = usePermissions();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      if (setMobileOpen) setMobileOpen(false);
+      navigate('/login', { replace: true });
+    } catch (err) {
+      console.error('Error signing out:', err);
+    }
+  };
 
   const getLinks = () => {
     switch (role) {
@@ -56,7 +67,6 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           { label: 'إدارة الآيات اليومية', path: '/admin/verses', icon: 'menu_book', permission: PERMISSIONS.MANAGE_VERSES },
           { label: 'الإشعارات الفورية', path: '/admin/notifications', icon: 'notifications_active', permission: PERMISSIONS.MANAGE_NOTIFICATIONS },
           { label: 'إدارة الإعلانات', path: '/admin/content?tab=announcements', icon: 'campaign', permission: PERMISSIONS.MANAGE_ANNOUNCEMENTS },
-          // Any extra permissions granted by Super Admin:
           { label: 'شعب الكنيسة', path: '/membership/members', icon: 'group', permission: PERMISSIONS.MANAGE_CHURCH_MEMBERS },
           { label: 'طلبات العضوية', path: '/priest/membership-requests', icon: 'app_registration', permission: PERMISSIONS.REVIEW_MEMBERSHIP_REQUESTS },
           { label: 'طلبات الصلاة والرسائل', path: '/admin/communications', icon: 'chat', permission: PERMISSIONS.VIEW_PRAYERS_AND_CONTACT },
@@ -208,15 +218,39 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           })}
         </nav>
 
-        {/* Desktop Collapse Toggle */}
-        <div className="pt-2 border-t border-white/10 hidden md:block">
-          <button
-            onClick={() => setIsCollapsed && setIsCollapsed(!isCollapsed)}
-            className="w-full flex items-center justify-center p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
-            title={isCollapsed ? "توسيع القائمة" : "تصغير القائمة"}
+        {/* Bottom Actions: View Site & Log Out */}
+        <div className="pt-3 border-t border-white/10 space-y-1.5">
+          {/* Link to public homepage */}
+          <Link
+            to="/"
+            onClick={handleLinkClick}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all text-xs font-bold group"
+            title={isCollapsed ? "العودة للموقع الرئيسي" : undefined}
           >
-            <ChevronRight className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
+            <Home className="w-4 h-4 text-[#fed65b] group-hover:scale-110 transition-transform shrink-0" />
+            {!isCollapsed && <span className="truncate">العودة للموقع الرئيسي</span>}
+          </Link>
+
+          {/* Direct Red Logout Button */}
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white transition-all text-xs font-bold group border border-rose-500/20 active:scale-95"
+            title={isCollapsed ? "تسجيل الخروج من النظام" : undefined}
+          >
+            <LogOut className="w-4 h-4 text-rose-400 group-hover:text-white group-hover:scale-110 transition-transform shrink-0" />
+            {!isCollapsed && <span className="truncate font-extrabold">تسجيل الخروج</span>}
           </button>
+
+          {/* Desktop Collapse Toggle */}
+          <div className="hidden md:block pt-1">
+            <button
+              onClick={() => setIsCollapsed && setIsCollapsed(!isCollapsed)}
+              className="w-full flex items-center justify-center p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+              title={isCollapsed ? "توسيع القائمة" : "تصغير القائمة"}
+            >
+              <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
         </div>
       </aside>
     </>

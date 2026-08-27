@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Cross, Menu, X, User } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Cross, Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { api } from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface NavbarProps {
   onOpenPrayerModal: () => void;
@@ -10,7 +11,40 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { session, profile, signOut } = useAuth();
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setMobileMenuOpen(false);
+      navigate('/login', { replace: true });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const getDashboardPath = () => {
+    if (!profile) return '/login';
+    switch (profile.role) {
+      case 'super_admin':
+      case 'admin':
+        return '/admin';
+      case 'priest':
+        return '/priest';
+      case 'service_leader':
+        return '/service-leader';
+      case 'servant':
+        return '/servant';
+      case 'membership':
+        return '/membership';
+      case 'board':
+        return '/board';
+      default:
+        return '/login';
+    }
+  };
 
   const [tickerAnnouncements, setTickerAnnouncements] = useState<string[]>([]);
   const [isLiveActive, setIsLiveActive] = useState<boolean>(false);
@@ -163,25 +197,55 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
           </nav>
 
           {/* Actions CTA */}
-          <div className="hidden sm:flex items-center gap-3">
-            <Link
-              to="/login"
-              className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] hover:from-[#c29f2d] hover:to-[#eec045] text-[#00174a] font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center gap-1.5 transform hover:-translate-y-0.5"
-            >
-              <User className="w-4 h-4" />
-              <span>دخول للنظام</span>
-            </Link>
+          <div className="hidden sm:flex items-center gap-2">
+            {profile ? (
+              <div className="flex items-center gap-2">
+                <Link
+                  to={getDashboardPath()}
+                  className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] hover:from-[#c29f2d] hover:to-[#eec045] text-[#00174a] font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 transform hover:-translate-y-0.5"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>لوحة التحكم</span>
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 px-3 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-1 active:scale-95"
+                  title="تسجيل الخروج"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>خروج</span>
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] hover:from-[#c29f2d] hover:to-[#eec045] text-[#00174a] font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center gap-1.5 transform hover:-translate-y-0.5"
+              >
+                <User className="w-4 h-4" />
+                <span>دخول للنظام</span>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center gap-2">
-            <Link
-              to="/login"
-              className="bg-[#fed65b] text-[#00174a] p-2 rounded-lg font-bold text-xs"
-              title="دخول للنظام"
-            >
-              <User className="w-5 h-5" />
-            </Link>
+            {profile ? (
+              <Link
+                to={getDashboardPath()}
+                className="bg-[#fed65b] text-[#00174a] p-2 rounded-lg font-bold text-xs"
+                title="لوحة التحكم"
+              >
+                <LayoutDashboard className="w-5 h-5" />
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="bg-[#fed65b] text-[#00174a] p-2 rounded-lg font-bold text-xs"
+                title="دخول للنظام"
+              >
+                <User className="w-5 h-5" />
+              </Link>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
@@ -275,13 +339,33 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
             >
               طلب صلاة على المذبح
             </button>
-            <Link
-              to="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center bg-gradient-to-r from-[#d4af37] to-[#fed65b] text-[#00174a] font-bold text-xs py-2.5 rounded-xl shadow-md"
-            >
-              تسجيل الدخول للنظام الإداري
-            </Link>
+            {profile ? (
+              <>
+                <Link
+                  to={getDashboardPath()}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center bg-gradient-to-r from-[#d4af37] to-[#fed65b] text-[#00174a] font-bold text-xs py-2.5 rounded-xl shadow-md flex items-center justify-center gap-2"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>لوحة التحكم الإدارية</span>
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full text-center bg-rose-600/20 text-rose-300 border border-rose-500/30 hover:bg-rose-600 hover:text-white font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>تسجيل الخروج من الحساب</span>
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-center bg-gradient-to-r from-[#d4af37] to-[#fed65b] text-[#00174a] font-bold text-xs py-2.5 rounded-xl shadow-md"
+              >
+                تسجيل الدخول للنظام الإداري
+              </Link>
+            )}
           </div>
         </div>
       )}
