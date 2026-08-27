@@ -146,7 +146,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
                   : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
-              مواعيد القداسات
+              قداسات وخدمات
             </Link>
             <Link
               to="/sermons"
@@ -285,7 +285,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
               isActive('/liturgies-schedule') ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40' : 'text-slate-100 hover:bg-white/10'
             }`}
           >
-            مواعيد القداسات
+            قداسات وخدمات
           </Link>
           <Link
             to="/sermons"
