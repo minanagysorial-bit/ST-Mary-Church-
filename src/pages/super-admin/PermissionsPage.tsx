@@ -186,15 +186,19 @@ export const PermissionsPage: React.FC = () => {
   const getRoleBadgeClass = (r: UserRole) => {
     switch (r) {
       case 'super_admin':
-        return 'bg-rose-50 border-rose-200 text-rose-700';
+        return 'bg-rose-50 border-rose-200 text-rose-700 font-extrabold';
       case 'admin':
-        return 'bg-purple-50 border-purple-200 text-purple-700';
+        return 'bg-purple-50 border-purple-200 text-purple-700 font-bold';
       case 'priest':
-        return 'bg-amber-50 border-amber-200 text-amber-700';
+        return 'bg-amber-50 border-amber-200 text-amber-700 font-bold';
+      case 'service_leader':
+        return 'bg-cyan-50 border-cyan-200 text-cyan-800 font-bold';
       case 'servant':
-        return 'bg-blue-50 border-blue-200 text-blue-700';
+        return 'bg-blue-50 border-blue-200 text-blue-700 font-bold';
+      case 'membership':
+        return 'bg-teal-50 border-teal-200 text-teal-700 font-bold';
       case 'board':
-        return 'bg-emerald-50 border-emerald-200 text-emerald-700';
+        return 'bg-emerald-50 border-emerald-200 text-emerald-700 font-bold';
       default:
         return 'bg-slate-50 border-slate-200 text-slate-700';
     }
@@ -203,17 +207,19 @@ export const PermissionsPage: React.FC = () => {
   const getRoleLabel = (r: UserRole) => {
     switch (r) {
       case 'super_admin':
-        return 'مدير عام نظام';
+        return 'مدير عام نظام (Super Admin)';
       case 'admin':
-        return 'مسؤول نظام';
+        return 'مسؤول نظام (Admin)';
       case 'priest':
-        return 'كاهن';
+        return 'كاهن (Priest)';
+      case 'service_leader':
+        return 'أمين خدمة (Service Leader)';
       case 'servant':
-        return 'خادم متابعة';
-      case 'board':
-        return 'عضو مجلس';
+        return 'خادم متابعة (Servant)';
       case 'membership':
-        return 'مسؤول عضوية';
+        return 'مسؤول عضوية (Membership)';
+      case 'board':
+        return 'عضو مجلس (Board)';
       default:
         return r;
     }
@@ -342,9 +348,10 @@ export const PermissionsPage: React.FC = () => {
                                 <option value="super_admin">مدير عام نظام (Super Admin)</option>
                                 <option value="admin">مسؤول نظام (Admin)</option>
                                 <option value="priest">كاهن الكنيسة (Priest)</option>
+                                <option value="service_leader">أمين خدمة (Service Leader)</option>
                                 <option value="servant">خادم متابعة (Servant)</option>
-                                <option value="board">عضو المجلس (Board)</option>
                                 <option value="membership">مسؤول عضوية (Membership)</option>
+                                <option value="board">عضو المجلس (Board)</option>
                               </select>
                             </td>
                             <td className="p-4 flex items-center justify-center gap-2">
@@ -520,9 +527,10 @@ export const PermissionsPage: React.FC = () => {
                     <option value="super_admin">مدير عام نظام (Super Admin)</option>
                     <option value="admin">مسؤول نظام (Admin)</option>
                     <option value="priest">كاهن الكنيسة (Priest)</option>
+                    <option value="service_leader">أمين خدمة (Service Leader)</option>
                     <option value="servant">خادم متابعة (Servant)</option>
-                    <option value="board">عضو المجلس (Board)</option>
                     <option value="membership">مسؤول عضوية (Membership)</option>
+                    <option value="board">عضو المجلس (Board)</option>
                   </select>
                 </div>
 

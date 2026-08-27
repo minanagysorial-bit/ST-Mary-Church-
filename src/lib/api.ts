@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import type {
   Sermon, Member, Meeting, Project, FinancialRecord,
   Family, FamilyServant, FamilyAttendanceRecord, ServiceArea, PrayerRequest, MembershipComment, Liturgy,
-  ChurchService, ServiceGroup, ServiceGroupServant, ServiceGroupMember, VisitationLog, AttendanceRecord,
+  ChurchService, ChurchServiceCategory, ServiceGroup, ServiceGroupServant, ServiceGroupMember, VisitationLog, AttendanceRecord,
   Quiz, QuizQuestion, QuizSession, QuizPlayer, QuizAnswer, QuizQuestionOption,
   SermonInsert, MemberInsert, FinancialRecordInsert,
   MeetingInsert, ProjectInsert, FamilyInsert, FamilyMember, FamilyMemberInsert, FamilyServantInsert, FamilyAttendanceRecordInsert, MembershipCommentInsert, LiturgyInsert,
@@ -21,7 +21,7 @@ import type {
 // Re-export types for backward compatibility
 export type {
   Sermon, Member, Meeting, Project, FinancialRecord, Profile, UserRole, Liturgy,
-  ChurchService, ServiceGroup, ServiceGroupServant, ServiceGroupMember, VisitationLog, AttendanceRecord,
+  ChurchService, ChurchServiceCategory, ServiceGroup, ServiceGroupServant, ServiceGroupMember, VisitationLog, AttendanceRecord,
   Family, FamilyMember, FamilyServant, FamilyAttendanceRecord,
   Quiz, QuizQuestion, QuizSession, QuizPlayer, QuizAnswer, QuizQuestionOption,
   Verse, VerseInsert, UserPermission, UserPermissionInsert,

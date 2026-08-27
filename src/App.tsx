@@ -9,7 +9,7 @@ import { PrayerModal } from './components/common/PrayerModal';
 import { SermonVideoModal } from './components/sermons/SermonVideoModal';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { NotificationPermissionModal } from './components/common/NotificationPermissionModal';
-import type { Sermon } from './lib/api';
+import type { Sermon, UserRole } from './lib/api';
 import { PERMISSIONS } from './lib/permissions';
 
 // Public Core Pages (Eagerly loaded for instant load)
@@ -57,6 +57,10 @@ const MemberVisitationPage = lazy(() => import('./pages/priest/MemberVisitationP
 const MembershipDashboardPage = lazy(() => import('./pages/membership/MembershipDashboardPage').then(m => ({ default: m.MembershipDashboardPage })));
 const ChurchMembersPage = lazy(() => import('./pages/membership/ChurchMembersPage').then(m => ({ default: m.ChurchMembersPage })));
 
+// Service Leader Dashboards (Lazy Loaded)
+const ServiceLeaderDashboardPage = lazy(() => import('./pages/service-leader/ServiceLeaderDashboardPage').then(m => ({ default: m.ServiceLeaderDashboardPage })));
+const ServiceFamiliesManagementPage = lazy(() => import('./pages/service-leader/ServiceFamiliesManagementPage').then(m => ({ default: m.ServiceFamiliesManagementPage })));
+
 // Servant Dashboards (Lazy Loaded)
 const ServantDashboardPage = lazy(() => import('./pages/servant/ServantDashboardPage').then(m => ({ default: m.ServantDashboardPage })));
 const FamilyManagementPage = lazy(() => import('./pages/servant/FamilyManagementPage').then(m => ({ default: m.FamilyManagementPage })));
@@ -79,7 +83,7 @@ const QuizPlayerPage = lazy(() => import('./pages/quiz/QuizPlayerPage').then(m =
 
 interface ProtectedRouteProps {
   children: React.ReactElement;
-  allowedRoles: ('super_admin' | 'admin' | 'priest' | 'servant' | 'board' | 'membership')[];
+  allowedRoles: UserRole[];
   requiredPermission?: string;
 }
 
@@ -113,18 +117,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles,
     return <Navigate to="/login" replace />;
   }
 
-  const isSystemAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
-  if (!allowedRoles.includes(profile.role) && !isSystemAdmin) {
+  const isSuperAdmin = profile?.role === 'super_admin';
+  if (!allowedRoles.includes(profile.role) && !isSuperAdmin) {
     const userRole = profile?.role;
     switch (userRole) {
       case 'priest':
         return <Navigate to="/priest" replace />;
+      case 'service_leader':
+        return <Navigate to="/service-leader" replace />;
       case 'board':
         return <Navigate to="/board" replace />;
       case 'servant':
         return <Navigate to="/servant" replace />;
       case 'membership':
         return <Navigate to="/membership" replace />;
+      case 'admin':
+        return <Navigate to="/admin" replace />;
       default:
         return <Navigate to="/login" replace />;
     }
@@ -220,11 +228,18 @@ const AppLayout: React.FC = () => {
             <Route path="/priest/liturgies" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><PriestLiturgiesPage /></ProtectedRoute>} />
             <Route path="/priest/sermons" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><PriestSermonPage /></ProtectedRoute>} />
             <Route path="/priest/announcements" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><PriestAnnouncementsPage /></ProtectedRoute>} />
+            <Route path="/priest/services" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><ServicesFamiliesPage /></ProtectedRoute>} />
             <Route path="/priest/services-families" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><ServicesFamiliesPage /></ProtectedRoute>} />
             <Route path="/priest/monitoring" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><PriestMonitoringPage /></ProtectedRoute>} />
-            <Route path="/priest/membership-requests" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><MembershipRequestsPage /></ProtectedRoute>} />
-            <Route path="/priest/membership-comments" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><MembershipCommentsPage /></ProtectedRoute>} />
-            <Route path="/priest/member-visitation" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin']}><MemberVisitationPage /></ProtectedRoute>} />
+            <Route path="/priest/membership-requests" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin', 'membership']}><MembershipRequestsPage /></ProtectedRoute>} />
+            <Route path="/priest/membership-comments" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin', 'membership']}><MembershipCommentsPage /></ProtectedRoute>} />
+            <Route path="/priest/comments" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin', 'membership']}><MembershipCommentsPage /></ProtectedRoute>} />
+            <Route path="/priest/member-visitation" element={<ProtectedRoute allowedRoles={['priest', 'super_admin', 'admin', 'membership']}><MemberVisitationPage /></ProtectedRoute>} />
+
+            {/* Service Leader Routes */}
+            <Route path="/service-leader" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServiceLeaderDashboardPage /></ProtectedRoute>} />
+            <Route path="/service-leader/families" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServiceFamiliesManagementPage /></ProtectedRoute>} />
+            <Route path="/service-leader/servants" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServiceFamiliesManagementPage /></ProtectedRoute>} />
 
             {/* Servant Routes */}
             <Route path="/servant" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><ServantDashboardPage /></ProtectedRoute>} />

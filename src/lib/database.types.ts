@@ -2,7 +2,7 @@
 // Database Types — matches the Supabase PostgreSQL schema
 // ===================================================================
 
-export type UserRole = 'super_admin' | 'admin' | 'priest' | 'servant' | 'board' | 'membership';
+export type UserRole = 'super_admin' | 'admin' | 'priest' | 'service_leader' | 'servant' | 'board' | 'membership';
 export type MemberStatus = 'نشط' | 'قيد الانتظار' | 'موقوف';
 export type MeetingStatus = 'مجدول' | 'مكتمل' | 'ملغي';
 export type ProjectStatus = 'قيد التنفيذ' | 'مكتمل' | 'مخطط';
@@ -117,9 +117,40 @@ export interface FamilyMember {
   updated_at: string;
 }
 
+export type ChurchServiceCategory =
+  | 'ابتدائي بنين'
+  | 'ابتدائي بنات'
+  | 'فتيان إعدادي'
+  | 'فتيات إعدادي'
+  | 'شباب ثانوي'
+  | 'شابات ثانوي'
+  | 'خدمة شباب جامعة'
+  | 'خدمة شابات جامعة'
+  | 'خريجين';
+
+export interface ChurchService {
+  id: string;
+  name: string;
+  category: ChurchServiceCategory;
+  priest_ids?: string[];
+  leader_ids?: string[];
+  priests_names?: string[];
+  leaders_names?: string[];
+  families_count?: number;
+  servants_count?: number;
+  makhdoumeen_count?: number;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Family {
   id: string;
   head_name: string;
+  name?: string;
+  service_id?: string | null;
+  stage?: string | null;
+  age_group?: string | null;
   address: string;
   area: string;
   members_count: number;

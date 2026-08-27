@@ -115,15 +115,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = (key: string): boolean => {
     if (!profile) return false;
-    // Super Admin and Admin have full access
-    if (profile.role === 'super_admin' || profile.role === 'admin') return true;
+    // Super Admin has full access
+    if (profile.role === 'super_admin') return true;
     
-    // Check user dynamic permissions
-    if (permissions.length > 0) {
-      return permissions.includes(key);
+    // Check user dynamic permissions override
+    if (permissions.length > 0 && permissions.includes(key)) {
+      return true;
     }
     
     // Default role permissions
+    if (profile.role === 'admin') {
+      return ['manage_liturgies', 'manage_verses', 'manage_notifications', 'manage_announcements'].includes(key);
+    }
     if (profile.role === 'priest') {
       return [
         'manage_liturgies',
@@ -133,7 +136,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'monitor_servants',
         'manage_membership_comments',
         'review_membership_requests',
-        'view_member_visitations'
+        'manage_church_members',
+        'view_member_visitations',
+        'view_prayers_and_contact'
+      ].includes(key);
+    }
+    if (profile.role === 'service_leader') {
+      return [
+        'manage_services',
+        'create_families',
+        'assign_servants',
+        'manage_families',
+        'manage_visitation',
+        'manage_attendance',
+        'manage_servant_tools',
+        'manage_quizzes'
       ].includes(key);
     }
     if (profile.role === 'servant') {
@@ -145,19 +162,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'manage_quizzes'
       ].includes(key);
     }
-    if (profile.role === 'board') {
-      return [
-        'view_financials',
-        'manage_projects',
-        'manage_meetings'
-      ].includes(key);
-    }
     if (profile.role === 'membership') {
       return [
         'manage_church_members',
         'review_membership_requests',
         'view_member_visitations',
         'manage_membership_comments'
+      ].includes(key);
+    }
+    if (profile.role === 'board') {
+      return [
+        'view_financials',
+        'manage_projects',
+        'manage_meetings'
       ].includes(key);
     }
     
