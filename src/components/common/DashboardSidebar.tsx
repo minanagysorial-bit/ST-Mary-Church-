@@ -92,6 +92,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           { label: 'فصول وأسر التربية الكنسية', path: '/service-leader/families', icon: 'family_restroom', permission: PERMISSIONS.CREATE_FAMILIES },
           { label: 'تعيين وتوزيع الخدام', path: '/service-leader/servants', icon: 'badge', permission: PERMISSIONS.ASSIGN_SERVANTS },
           { label: 'تفقد الحضور والغياب', path: '/servant/attendance', icon: 'checklist', permission: PERMISSIONS.MANAGE_ATTENDANCE },
+          { label: 'بنك تحضير الدروس 📖', path: '/servant/lesson-bank', icon: 'menu_book' },
           { label: 'نقاط مدارس الأحد 🌟', path: '/servant/points', icon: 'stars' },
           { label: 'سجل الافتقاد', path: '/servant/visitations', icon: 'volunteer_activism', permission: PERMISSIONS.MANAGE_VISITATION },
           { label: 'خريطة الافتقاد 🗺️', path: '/servant/visitation-map', icon: 'map' },
@@ -103,6 +104,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         return [
           { label: 'نظرة عامة', path: '/servant', icon: 'dashboard' },
           { label: 'أسرتي وفصلي ومخدومي', path: '/servant/families', icon: 'family_restroom', permission: PERMISSIONS.MANAGE_FAMILIES },
+          { label: 'بنك تحضير الدروس 📖', path: '/servant/lesson-bank', icon: 'menu_book' },
           { label: 'نقاط مدارس الأحد 🌟', path: '/servant/points', icon: 'stars' },
           { label: 'تفقد الحضور', path: '/servant/attendance', icon: 'checklist', permission: PERMISSIONS.MANAGE_ATTENDANCE },
           { label: 'سجل الافتقاد', path: '/servant/visitations', icon: 'volunteer_activism', permission: PERMISSIONS.MANAGE_VISITATION },

@@ -70,6 +70,7 @@ const AttendancePage = lazy(() => import('./pages/servant/AttendancePage').then(
 const ServantToolsPage = lazy(() => import('./pages/servant/ServantToolsPage').then(m => ({ default: m.ServantToolsPage })));
 const SundaySchoolPointsPage = lazy(() => import('./pages/servant/SundaySchoolPointsPage').then(m => ({ default: m.SundaySchoolPointsPage })));
 const SmartVisitationMapPage = lazy(() => import('./pages/servant/SmartVisitationMapPage').then(m => ({ default: m.SmartVisitationMapPage })));
+const LessonBankPage = lazy(() => import('./pages/servant/LessonBankPage').then(m => ({ default: m.LessonBankPage })));
 
 // Board Dashboards (Lazy Loaded)
 const BoardDashboardPage = lazy(() => import('./pages/board/BoardDashboardPage').then(m => ({ default: m.BoardDashboardPage })));
@@ -251,8 +252,10 @@ const AppLayout: React.FC = () => {
             <Route path="/servant/tools" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><ServantToolsPage /></ProtectedRoute>} />
             <Route path="/servant/points" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><SundaySchoolPointsPage /></ProtectedRoute>} />
             <Route path="/servant/sunday-school" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><SundaySchoolPointsPage /></ProtectedRoute>} />
-            <Route path="/servant/visitation-map" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><SmartVisitationMapPage /></ProtectedRoute>} />
-            <Route path="/servant/map" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><SmartVisitationMapPage /></ProtectedRoute>} />
+            <Route path="/servant/visitation-map" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><SmartVisitationMapPage /></ProtectedRoute>} />
+            <Route path="/servant/map" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><SmartVisitationMapPage /></ProtectedRoute>} />
+            <Route path="/servant/lesson-bank" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><LessonBankPage /></ProtectedRoute>} />
+            <Route path="/servant/lessons" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><LessonBankPage /></ProtectedRoute>} />
 
             {/* Board Routes */}
             <Route path="/board" element={<ProtectedRoute allowedRoles={['board', 'super_admin', 'admin']}><BoardDashboardPage /></ProtectedRoute>} />

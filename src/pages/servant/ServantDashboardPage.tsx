@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
-import { BookOpen, Users, Calendar, CheckSquare, Heart, Plus, Trash2, Download, Search, Sparkles, X, CheckCircle2, Award, MapPin, Navigation } from 'lucide-react';
+import { 
+  BookOpen, Users, Calendar, CheckSquare, Heart, Plus, Trash2, Download, Search, Sparkles, X, CheckCircle2, 
+  Award, MapPin, Navigation, PhoneCall, MessageSquare, Cake, Gift, ChevronLeft, BellRing
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { api, type FamilyAttendanceRecord, type FamilyMember } from '../../lib/api';
 import type { Family, Sermon, Member } from '../../lib/database.types';
 import { useToast } from '../../components/common/Toast';
+import { findConsecutiveAbsentees, getUpcomingBirthdays, type ConsecutiveAbsentee, type BirthdayItem } from '../../lib/attendanceStatusHelper';
 
 export const ServantDashboardPage: React.FC = () => {
   const toast = useToast();
   const [families, setFamilies] = useState<Family[]>([]);
   const [sermonsCount, setSermonsCount] = useState<number>(0);
   const [students, setStudents] = useState<Member[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<FamilyAttendanceRecord[]>([]);
+  const [allFamilyMembers, setAllFamilyMembers] = useState<FamilyMember[]>([]);
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
@@ -26,16 +32,28 @@ export const ServantDashboardPage: React.FC = () => {
 
   const fetchServantDashboardData = async () => {
     try {
-      const [f, s, m, settings] = await Promise.all([
+      const [f, s, m, att, settings] = await Promise.all([
         api.getFamilies(),
         api.getSermons(),
         api.getSundaySchoolStudents(),
+        api.getAllFamilyAttendanceRecords().catch(() => []),
         api.getSiteSettings(),
       ]);
       setFamilies(f);
       setSermonsCount(s.length);
       setStudents(m);
+      setAttendanceRecords(att);
       setSiteSettings(settings);
+
+      // Fetch family members for attendance and birthdays
+      try {
+        const memPromises = f.slice(0, 15).map(fam => api.getFamilyMembers(fam.id));
+        const memResults = await Promise.all(memPromises);
+        const flattened = memResults.flat();
+        setAllFamilyMembers(flattened);
+      } catch (err) {
+        console.warn('Family members fetch notice:', err);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -97,6 +115,25 @@ export const ServantDashboardPage: React.FC = () => {
   const visitPercentage = families.length > 0 ? Math.round((visitedCount / families.length) * 100) : 0;
   const urgentVisitations = families.filter(f => !f.last_visit_date).slice(0, 2);
 
+  const familyNamesMap = families.reduce((acc, f) => {
+    acc[f.id] = f.head_name;
+    return acc;
+  }, {} as Record<string, string>);
+
+  const consecutiveAbsentees = findConsecutiveAbsentees(
+    allFamilyMembers.length > 0 ? allFamilyMembers : students.map(s => ({ id: s.id, full_name: s.full_name, phone: s.phone })),
+    attendanceRecords,
+    familyNamesMap,
+    2
+  );
+
+  const upcomingBirthdays = getUpcomingBirthdays(
+    allFamilyMembers.length > 0 
+      ? allFamilyMembers.map(m => ({ id: m.id, full_name: m.full_name, birth_date: m.birth_date, phone: m.phone, family_name: familyNamesMap[m.family_id] }))
+      : students.map(s => ({ id: s.id, full_name: s.full_name, birth_date: null, phone: s.phone })),
+    []
+  );
+
   return (
     <DashboardLayout role="servant">
       <div className="space-y-8 font-cairo">
@@ -114,26 +151,167 @@ export const ServantDashboardPage: React.FC = () => {
           </span>
         </div>
 
-        {/* Quick Highlights Banners for Points & Visitation Map */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* ⚠️ Consecutive Absentees Alert Banner */}
+        {consecutiveAbsentees.length > 0 && (
+          <div className="p-5 bg-gradient-to-r from-rose-50 to-orange-50 border-2 border-rose-400 rounded-3xl text-rose-950 space-y-3 shadow-md animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-bold shrink-0 shadow-md animate-pulse">
+                  <PhoneCall className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-tajawal text-base sm:text-lg font-extrabold text-rose-950 flex items-center gap-2">
+                    <span>🔴 تنبيه افتقاد عاجل: يوجد {consecutiveAbsentees.length} مخدومين غائبين لأسبوعين متتاليين!</span>
+                  </h4>
+                  <p className="text-xs text-rose-800 font-semibold mt-0.5">
+                    «خِرَافِي تَسْمَعُ صَوْتِي وَأَنَا أَعْرِفُهَا فَتَتْبَعُنِي» — يُرجى الاطمئنان عليهم تليفونياً أو عبر الزيارة المنزلية.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/servant/visitations"
+                className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-2xl text-xs font-bold transition-all shadow-xs shrink-0 hidden sm:inline-flex items-center gap-1"
+              >
+                <span>سجل الافتقاد</span>
+                <ChevronLeft className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+              {consecutiveAbsentees.map(ca => {
+                const phoneClean = (ca.parent_phone || ca.phone || '').replace(/\D/g, '');
+                const waUrl = phoneClean 
+                  ? `https://wa.me/2${phoneClean}?text=${encodeURIComponent(`سلام ونعمة يا ${ca.member_name} 🌟، كنيسة السيدة العذراء مريم بمحرم بك بتفتقدك وبنصليلك ومستنيينك تفرحنا بوجودك في الخدمة الجمعة القادمة ✝️`)}`
+                  : null;
+
+                return (
+                  <div key={ca.member_id} className="p-3.5 bg-white border border-rose-200 rounded-2xl flex items-center justify-between shadow-xs">
+                    <div>
+                      <span className="font-extrabold text-xs text-slate-900 block">{ca.member_name}</span>
+                      <span className="text-[10px] text-rose-800 font-bold bg-rose-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                        غائب {ca.consecutive_count} أسابيع متتالية ({ca.family_name})
+                      </span>
+                    </div>
+                    {waUrl && (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 shrink-0"
+                        title="إرسال رسالة افتقاد واتساب"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span className="text-[11px]">افتقاد</span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 🎂 Joyful Birthday Celebrations Widget */}
+        {upcomingBirthdays.length > 0 && (
+          <div className="p-5 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-300 rounded-3xl text-purple-950 space-y-3 shadow-md animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-bold shrink-0 shadow-md">
+                  <Cake className="w-6 h-6 animate-bounce" />
+                </div>
+                <div>
+                  <h4 className="font-tajawal text-base sm:text-lg font-extrabold text-purple-950 flex items-center gap-2">
+                    <span>🎂 احتفالات أعياد الميلاد هذا الأسبوع ({upcomingBirthdays.length}) 🎉</span>
+                  </h4>
+                  <p className="text-xs text-purple-800 font-semibold mt-0.5">
+                    فرصة طيبة لإرسال معايدة وتهنئة رقيقة من الكنيسة وإدخال الفرحة على قلوبهم!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+              {upcomingBirthdays.map(b => {
+                const phoneClean = (b.phone || '').replace(/\D/g, '');
+                const waUrl = phoneClean 
+                  ? `https://wa.me/2${phoneClean}?text=${encodeURIComponent(`كل سنة وأنت طيب يا ${b.name} 🎉🎂 بمناسبة عيد ميلادك المبارك! كنيسة السيدة العذراء مريم بمحرم بك تتمنى لك سنة جديدة مليانة نعمة وفرح وسلام مع المسيح ✝️✨`)}`
+                  : null;
+
+                return (
+                  <div key={b.id} className="p-3.5 bg-white border border-purple-200 rounded-2xl flex items-center justify-between shadow-xs">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-xs text-slate-900">{b.name}</span>
+                        {b.is_today && (
+                          <span className="px-2 py-0.5 bg-rose-500 text-white rounded-md text-[9px] font-extrabold animate-pulse">
+                            اليوم 🎂
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-purple-800 font-bold block mt-0.5">
+                        {b.age ? `يكمل ${b.age} سنة` : 'عيد ميلاد مبارك'} {b.family_name ? `• ${b.family_name}` : ''}
+                      </span>
+                    </div>
+                    {waUrl && (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 shrink-0"
+                        title="إرسال تهنئة عبر الواتساب"
+                      >
+                        <Gift className="w-4 h-4 text-emerald-200" />
+                        <span className="text-[11px]">تهنئة</span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 3 Quick Highlight Banners (Lesson Bank + Points + Visitation Map) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link
+            to="/servant/lesson-bank"
+            className="bg-gradient-to-r from-[#00174a] to-[#002366] text-white p-5 rounded-3xl border border-[#d4af37]/40 shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-between group"
+          >
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1 bg-[#fed65b]/20 text-[#fed65b] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                <BookOpen className="w-3 h-3" />
+                <span>مناهج وتحضير</span>
+              </div>
+              <h3 className="font-tajawal text-base font-extrabold text-white group-hover:text-[#fed65b] transition-colors">
+                بنك تحضير الدروس 📖
+              </h3>
+              <p className="text-[11px] text-slate-300">
+                دروس جاهزة، عروض PPT، مسابقات وأنشطة PDF.
+              </p>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-bold shadow-md shrink-0 mr-2">
+              <BookOpen className="w-5 h-5" />
+            </div>
+          </Link>
+
           <Link
             to="/servant/points"
             className="bg-gradient-to-r from-[#002366] to-[#00174a] text-white p-5 rounded-3xl border border-[#d4af37]/40 shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-between group"
           >
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 bg-[#fed65b]/20 text-[#fed65b] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+              <div className="inline-flex items-center gap-1 bg-[#fed65b]/20 text-[#fed65b] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
                 <Sparkles className="w-3 h-3" />
-                <span>خدمة تفاعلية جديدة</span>
+                <span>تحفيز وجوائز</span>
               </div>
-              <h3 className="font-tajawal text-lg font-extrabold text-white group-hover:text-[#fed65b] transition-colors">
-                نظام نقاط وبطاقات مدارس الأحد 🌟
+              <h3 className="font-tajawal text-base font-extrabold text-white group-hover:text-[#fed65b] transition-colors">
+                نقاط مدارس الأحد 🌟
               </h3>
-              <p className="text-xs text-slate-300">
-                تسجيل الحضور بالباركود، منح النقاط، ولوحة الشرف ومتجر الجوائز.
+              <p className="text-[11px] text-slate-300">
+                تسجيل الحضور بالباركود، ومنح النقاط.
               </p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-bold shadow-md shrink-0 mr-3">
-              <Award className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-bold shadow-md shrink-0 mr-2">
+              <Award className="w-5 h-5" />
             </div>
           </Link>
 
@@ -142,19 +320,19 @@ export const ServantDashboardPage: React.FC = () => {
             className="bg-gradient-to-r from-[#00174a] to-[#002366] text-white p-5 rounded-3xl border border-[#d4af37]/40 shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-between group"
           >
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+              <div className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
                 <Navigation className="w-3 h-3" />
-                <span>خريطة ذكية تفاعلية</span>
+                <span>خريطة ذكية</span>
               </div>
-              <h3 className="font-tajawal text-lg font-extrabold text-white group-hover:text-[#fed65b] transition-colors">
-                خريطة افتقاد الأسر للمنطقة 🗺️
+              <h3 className="font-tajawal text-base font-extrabold text-white group-hover:text-[#fed65b] transition-colors">
+                خريطة الافتقاد 🗺️
               </h3>
-              <p className="text-xs text-slate-300">
-                توزيع جغرافي للأسر، دبابيس ملونة لحالة الافتقاد، واتصال سريع.
+              <p className="text-[11px] text-slate-300">
+                توزيع جغرافي للأسر ودبابيس ملونة.
               </p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shrink-0 mr-3">
-              <MapPin className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shrink-0 mr-2">
+              <MapPin className="w-5 h-5" />
             </div>
           </Link>
         </div>

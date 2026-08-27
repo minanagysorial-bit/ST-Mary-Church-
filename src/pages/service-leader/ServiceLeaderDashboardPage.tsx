@@ -18,13 +18,20 @@ import {
   Clock,
   Calendar,
   Send,
-  Check
+  Check,
+  Cake,
+  PhoneCall,
+  MessageSquare,
+  BookOpen,
+  Gift
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { api, type Family, type Profile, type ChurchServiceCategory, type ChurchService, type FamilyAttendanceRecord } from '../../lib/api';
+import { api, type Family, type Profile, type ChurchServiceCategory, type ChurchService, type FamilyAttendanceRecord, type FamilyMember } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
-  checkFamilyAttendanceStatus, 
+  checkFamilyAttendanceStatus,
+  findConsecutiveAbsentees,
+  getUpcomingBirthdays,
   type ServiceScheduleConfig,
   type AttendanceStatusResult,
   DEFAULT_SERVICE_SCHEDULES 
@@ -48,6 +55,7 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
   const toast = useToast();
   const [families, setFamilies] = useState<Family[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [familyServantsMap, setFamilyServantsMap] = useState<Record<string, string[]>>({});
   const [attendanceRecords, setAttendanceRecords] = useState<FamilyAttendanceRecord[]>([]);
   const [serviceConfigs, setServiceConfigs] = useState<Record<string, ServiceScheduleConfig>>({});
@@ -92,6 +100,16 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
       setFamilyServantsMap(relMap);
       setAttendanceRecords(fetchedAttendance);
       setServiceConfigs(configs);
+
+      // Load members for Sunday School families
+      const ssFams = fetchedFamilies.filter(f => f.family_type === 'sunday_school');
+      try {
+        const memPromises = ssFams.slice(0, 25).map(fam => api.getFamilyMembers(fam.id));
+        const memResults = await Promise.all(memPromises);
+        setFamilyMembers(memResults.flat());
+      } catch (e) {
+        console.warn('Could not load family members:', e);
+      }
     } catch (err) {
       console.error('Error fetching service leader data:', err);
     } finally {
@@ -109,6 +127,11 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
   // Filtered families
   const sundaySchoolFamilies = families.filter(f => f.family_type === 'sunday_school');
   
+  const familyNamesMap = families.reduce((acc, f) => {
+    acc[f.id] = f.head_name;
+    return acc;
+  }, {} as Record<string, string>);
+
   // Calculate attendance status for every family
   const familyAttendanceStatusMap: Record<string, AttendanceStatusResult> = {};
   sundaySchoolFamilies.forEach(fam => {
@@ -133,6 +156,18 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
   const overdueFamilies = sundaySchoolFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'OVERDUE');
   const completedFamilies = sundaySchoolFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'COMPLETED');
   const pendingFamilies = sundaySchoolFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'PENDING');
+
+  const consecutiveAbsentees = findConsecutiveAbsentees(
+    familyMembers,
+    attendanceRecords,
+    familyNamesMap,
+    2
+  );
+
+  const upcomingBirthdays = getUpcomingBirthdays(
+    familyMembers.map(m => ({ id: m.id, full_name: m.full_name, birth_date: m.birth_date, phone: m.phone, family_name: familyNamesMap[m.family_id] })),
+    allServants.map(s => ({ id: s.id, full_name: s.full_name, phone: s.phone, role: s.role }))
+  );
 
   const handleSendReminder = (familyId: string, familyName: string) => {
     setRemindedFamilies(prev => [...prev, familyId]);
@@ -160,6 +195,13 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-3">
             <Link
+              to="/servant/lesson-bank"
+              className="bg-white/10 hover:bg-white/20 text-[#fed65b] border border-[#fed65b]/40 font-bold text-xs px-4 py-3 rounded-2xl transition-all shadow-md flex items-center gap-2"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>بنك الدروس 📖</span>
+            </Link>
+            <Link
               to="/service-leader/families"
               className="bg-[#fed65b] hover:bg-[#ffe088] text-[#00174a] font-extrabold text-xs px-5 py-3 rounded-2xl transition-all shadow-lg flex items-center gap-2 active:scale-95"
             >
@@ -168,6 +210,124 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
             </Link>
           </div>
         </div>
+
+        {/* ⚠️ Consecutive Absentees Sector Alert */}
+        {consecutiveAbsentees.length > 0 && (
+          <div className="p-5 bg-gradient-to-r from-rose-50 to-orange-50 border-2 border-rose-400 rounded-3xl text-rose-950 space-y-3 shadow-md animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-bold shrink-0 shadow-md animate-pulse">
+                  <PhoneCall className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-tajawal text-base sm:text-lg font-extrabold text-rose-950 flex items-center gap-2">
+                    <span>🔴 رصد الغياب المتكرر بالقطاع: يوجد {consecutiveAbsentees.length} مخدومين غائبين لأسبوعين متتاليين!</span>
+                  </h4>
+                  <p className="text-xs text-rose-800 font-semibold mt-0.5">
+                    الرجاء توجيه الخدام المسؤولين عن هذه الأسر لتفقد المخدومين والاطمئنان على أحوالهم.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+              {consecutiveAbsentees.map(ca => {
+                const phoneClean = (ca.parent_phone || ca.phone || '').replace(/\D/g, '');
+                const waUrl = phoneClean 
+                  ? `https://wa.me/2${phoneClean}?text=${encodeURIComponent(`سلام ونعمة يا ${ca.member_name} 🌟، أسرة التربية الكنسية بكنيسة السيدة العذراء مريم بمحرم بك تفتقدك وتصليلك؛ مستنيينك في قداس واجتماع الأسبوع القادم✝️`)}`
+                  : null;
+
+                return (
+                  <div key={ca.member_id} className="p-3 bg-white border border-rose-200 rounded-2xl flex items-center justify-between shadow-xs">
+                    <div>
+                      <span className="font-extrabold text-xs text-slate-900 block">{ca.member_name}</span>
+                      <span className="text-[10px] text-rose-800 font-bold bg-rose-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                        غائب {ca.consecutive_count} أسابيع متتالية • {ca.family_name}
+                      </span>
+                    </div>
+                    {waUrl && (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 shrink-0"
+                        title="إرسال رسالة افتقاد واتساب"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span className="text-[10px]">افتقاد</span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 🎂 Joyful Sector Birthdays Widget */}
+        {upcomingBirthdays.length > 0 && (
+          <div className="p-5 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-300 rounded-3xl text-purple-950 space-y-3 shadow-md animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-bold shrink-0 shadow-md">
+                  <Cake className="w-6 h-6 animate-bounce" />
+                </div>
+                <div>
+                  <h4 className="font-tajawal text-base sm:text-lg font-extrabold text-purple-950 flex items-center gap-2">
+                    <span>🎂 احتفالات أعياد ميلاد القطاع هذا الأسبوع ({upcomingBirthdays.length}) 🎉</span>
+                  </h4>
+                  <p className="text-xs text-purple-800 font-semibold mt-0.5">
+                    أعياد ميلاد الخدام والمخدومين خلال الأسبوع الحالي لتقديم التهاني والمحبة.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+              {upcomingBirthdays.map(b => {
+                const phoneClean = (b.phone || '').replace(/\D/g, '');
+                const waUrl = phoneClean 
+                  ? `https://wa.me/2${phoneClean}?text=${encodeURIComponent(`كل سنة وأنت طيب يا ${b.name} 🎉🎂 بمناسبة عيد ميلادك المبارك! أسرة التربية الكنسية بكنيسة السيدة العذراء مريم بمحرم بك تتمنى لك عاماً مباركاً ملئ بالنعمة والبركة والنجاح ✝️✨`)}`
+                  : null;
+
+                return (
+                  <div key={b.id} className="p-3 bg-white border border-purple-200 rounded-2xl flex items-center justify-between shadow-xs">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-xs text-slate-900">{b.name}</span>
+                        {b.is_today && (
+                          <span className="px-2 py-0.5 bg-rose-500 text-white rounded-md text-[9px] font-extrabold animate-pulse">
+                            اليوم 🎂
+                          </span>
+                        )}
+                        {b.type === 'servant' && (
+                          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-900 rounded text-[9px] font-bold">
+                            خادم
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-purple-800 font-bold block mt-0.5">
+                        {b.age ? `يكمل ${b.age} سنة` : 'عيد ميلاد مبارك'} {b.family_name ? `• ${b.family_name}` : ''}
+                      </span>
+                    </div>
+                    {waUrl && (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 shrink-0"
+                        title="إرسال تهنئة عبر الواتساب"
+                      >
+                        <Gift className="w-4 h-4 text-emerald-200" />
+                        <span className="text-[10px]">تهنئة</span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* 🔴 RED OVERDUE ATTENDANCE ALERT BANNER (If any family missed deadline) */}
         {overdueFamilies.length > 0 && (

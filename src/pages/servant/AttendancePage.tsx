@@ -16,12 +16,21 @@ import {
   AlertTriangle,
   Layers,
   FileText,
-  Clock
+  Clock,
+  Wifi,
+  WifiOff,
+  RefreshCw,
+  MessageSquare,
+  PhoneCall,
+  Sparkles
 } from 'lucide-react';
-import { checkFamilyAttendanceStatus, type ServiceScheduleConfig, type AttendanceStatusResult } from '../../lib/attendanceStatusHelper';
+import { checkFamilyAttendanceStatus, findConsecutiveAbsentees, type ServiceScheduleConfig, type AttendanceStatusResult } from '../../lib/attendanceStatusHelper';
+import { getOfflineQueue, saveOfflineBatch, syncOfflineAttendanceQueue } from '../../lib/offlineSync';
+import { useToast } from '../../components/common/Toast';
 
 export const AttendancePage: React.FC = () => {
   const { profile } = useAuth();
+  const toast = useToast();
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamilyId, setSelectedFamilyId] = useState<string>('');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -36,12 +45,61 @@ export const AttendancePage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
   
+  // Offline Engine states
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [offlinePendingCount, setOfflinePendingCount] = useState<number>(getOfflineQueue().length);
+  const [syncingOffline, setSyncingOffline] = useState<boolean>(false);
+  
   const [reportStartDate, setReportStartDate] = useState<string>(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
   const [reportEndDate, setReportEndDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+
+  // Monitor network connectivity & auto-sync
+  useEffect(() => {
+    const handleOnline = async () => {
+      setIsOnline(true);
+      toast.success('تمت استعادة الاتصال بالإنترنت! 🌐');
+      await triggerOfflineSync();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.error('أنت الآن غير متصل بالإنترنت. تم تفعيل وضع الحفظ أوفلاين 📴');
+    };
+
+    const handleQueueChange = () => {
+      setOfflinePendingCount(getOfflineQueue().length);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('offline_attendance_queue_changed', handleQueueChange);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('offline_attendance_queue_changed', handleQueueChange);
+    };
+  }, []);
+
+  const triggerOfflineSync = async () => {
+    if (!navigator.onLine) return;
+    setSyncingOffline(true);
+    try {
+      const res = await syncOfflineAttendanceQueue();
+      if (res.successCount > 0) {
+        toast.success(`تم رفع ومزامنة ${res.successCount} كشف حضور وغياب محفوظ أوفلاين بنجاح! ☁️✅`);
+      }
+    } catch (err) {
+      console.warn('Offline sync error:', err);
+    } finally {
+      setSyncingOffline(false);
+      setOfflinePendingCount(getOfflineQueue().length);
+    }
+  };
 
   useEffect(() => {
     fetchInitialData();
@@ -158,26 +216,55 @@ export const AttendancePage: React.FC = () => {
     setSuccessMsg('');
     setErrorMsg('');
 
-    try {
-      const promises = members.map(m => {
-        const isPresent = !!attendanceState[m.id];
-        return api.upsertFamilyAttendanceRecord({
-          family_id: selectedFamilyId,
-          member_id: m.id,
-          date: date,
-          present: isPresent,
-          recorded_by: profile?.id || null
-        });
-      });
+    const recordsToSave = members.map(m => {
+      const isPresent = !!attendanceState[m.id];
+      return {
+        family_id: selectedFamilyId,
+        member_id: m.id,
+        date: date,
+        present: isPresent,
+        recorded_by: profile?.id || null
+      };
+    });
 
+    // If Offline: Save to Local Queue
+    if (!navigator.onLine) {
+      saveOfflineBatch({
+        family_id: selectedFamilyId,
+        family_name: selectedFamily?.head_name,
+        date: date,
+        records: recordsToSave
+      });
+      setSuccessMsg('📴 تم حفظ الغياب أوفلاين على جهازك بنجاح! سيتم المزامنة ورفع البيانات تلقائياً أول ما يعود الإنترنت.');
+      toast.success('تم الحفظ أوفلاين بنجاح 📴💾');
+      setSaving(false);
+      return;
+    }
+
+    try {
+      const promises = recordsToSave.map(r => api.upsertFamilyAttendanceRecord(r));
       await Promise.all(promises);
       setSuccessMsg('تم حفظ تفقد الحضور والغياب بنجاح');
+      toast.success('تم حفظ الحضور والغياب بنجاح ✅');
       
+      // Auto-trigger sync if any pending offline batches
+      if (offlinePendingCount > 0) {
+        triggerOfflineSync();
+      }
+
       // Reload stats after save
       const allRecords = await api.getFamilyAttendanceStats(selectedFamilyId);
       setAllAttendanceRecords(allRecords);
     } catch (err: any) {
-      setErrorMsg(err.message || 'حدث خطأ أثناء حفظ الحضور');
+      // Fallback save offline on network failure
+      saveOfflineBatch({
+        family_id: selectedFamilyId,
+        family_name: selectedFamily?.head_name,
+        date: date,
+        records: recordsToSave
+      });
+      setSuccessMsg('📴 تعذر الاتصال بالسيرفر، تم حفظ الكشف أوفلاين وسيعاد رفعه تلقائياً عند عودة النت.');
+      toast.success('تم حفظ الكشف أوفلاين على جهازك 📴');
     } finally {
       setSaving(false);
     }
@@ -241,9 +328,109 @@ export const AttendancePage: React.FC = () => {
   const recordedDates = allAttendanceRecords.map(r => r.date);
   const familyStatus = selectedFamily ? checkFamilyAttendanceStatus(selectedFamily.id, selectedFamily.head_name, matchedCategory, config, recordedDates) : null;
 
+  // Detect consecutive absentees in this family
+  const consecutiveAbsentees = findConsecutiveAbsentees(
+    members,
+    allAttendanceRecords,
+    { [selectedFamilyId]: selectedFamily?.head_name || '' },
+    2
+  );
+
   return (
     <DashboardLayout role={profile?.role as any || 'servant'}>
       <div className="space-y-8 font-cairo">
+
+        {/* Offline / Connectivity Notification Bar */}
+        <div className={`p-3.5 rounded-2xl flex items-center justify-between gap-4 text-xs font-bold transition-all shadow-xs ${
+          isOnline
+            ? (offlinePendingCount > 0 ? 'bg-amber-50 border border-amber-200 text-amber-900' : 'bg-emerald-50 border border-emerald-200 text-emerald-900')
+            : 'bg-rose-50 border border-rose-300 text-rose-900 animate-pulse'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            {isOnline ? (
+              offlinePendingCount > 0 ? (
+                <>
+                  <RefreshCw className={`w-4 h-4 text-amber-600 ${syncingOffline ? 'animate-spin' : ''}`} />
+                  <span>متصل بالإنترنت | يوجد ({offlinePendingCount}) كشوفات محفوظة أوفلاين بانتظار المزامنة</span>
+                </>
+              ) : (
+                <>
+                  <Wifi className="w-4 h-4 text-emerald-600" />
+                  <span>متصل بالإنترنت | النظام جاهز للحفظ المباشر والأوفلاين</span>
+                </>
+              )
+            ) : (
+              <>
+                <WifiOff className="w-4 h-4 text-rose-600" />
+                <span>📴 غير متصل بالإنترنت — وضع الحفظ أوفلاين مفعّل. يمكنك تسجيل الحضور وسيرفع تلقائياً فور عودة النت.</span>
+              </>
+            )}
+          </div>
+
+          {isOnline && offlinePendingCount > 0 && (
+            <button
+              onClick={triggerOfflineSync}
+              disabled={syncingOffline}
+              className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 rounded-xl text-[11px] font-extrabold flex items-center gap-1 shrink-0"
+            >
+              <RefreshCw className={`w-3 h-3 ${syncingOffline ? 'animate-spin' : ''}`} />
+              <span>مزامنة الآن</span>
+            </button>
+          )}
+        </div>
+
+        {/* ⚠️ Consecutive Absentees Alert Bar */}
+        {consecutiveAbsentees.length > 0 && (
+          <div className="p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400/60 rounded-3xl text-amber-950 space-y-3 shadow-md animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
+                  <PhoneCall className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-tajawal text-sm sm:text-base font-extrabold text-amber-950 flex items-center gap-1.5">
+                    <span>⚠️ تنبيه افتقاد عاجل: يوجد {consecutiveAbsentees.length} مخدومين غائبين لأسبوعين متتاليين!</span>
+                  </h4>
+                  <p className="text-xs text-amber-800 font-semibold mt-0.5">
+                    الرجاء الافتقاد والتواصل المباشر مع أولياء الأمور للاطمئنان عليهم وتشجيعهم.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+              {consecutiveAbsentees.map(ca => {
+                const phoneClean = (ca.parent_phone || ca.phone || '').replace(/\D/g, '');
+                const waUrl = phoneClean 
+                  ? `https://wa.me/2${phoneClean}?text=${encodeURIComponent(`سلام ونعمة يا ${ca.member_name}، كنيسة العذراء مريم بمحرم بك بتفتقدك وتصليلك؛ مستنيينك تشرفنا في قداس واجتماع الأسبوع القادم✝️`)}`
+                  : null;
+
+                return (
+                  <div key={ca.member_id} className="p-3 bg-white border border-amber-200 rounded-2xl flex items-center justify-between shadow-xs">
+                    <div>
+                      <span className="font-extrabold text-xs text-slate-900 block">{ca.member_name}</span>
+                      <span className="text-[10px] text-rose-700 font-bold bg-rose-50 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                        غائب {ca.consecutive_count} أسابيع متتالية
+                      </span>
+                    </div>
+                    {waUrl && (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1"
+                        title="إرسال رسالة افتقاد واتساب"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span className="text-[10px]">افتقاد</span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Status Alert Banner (Red if Overdue / Green if Completed) */}
         {familyStatus?.status === 'OVERDUE' && (
