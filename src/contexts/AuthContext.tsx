@@ -33,7 +33,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select('permission')
         .eq('user_id', userId);
       if (permError) {
-        console.warn('Failed to fetch permissions:', permError.message);
         setPermissions([]);
         return;
       }
@@ -49,6 +48,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(p);
       if (p) {
         await fetchPermissions(p.id);
+      } else {
+        setPermissions([]);
       }
     } catch {
       setProfile(null);
@@ -56,16 +57,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [fetchPermissions]);
 
-  // Listen for auth state changes
+  // Listen for auth state changes from Supabase
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
-      if (s) refreshProfile().finally(() => setLoading(false));
-      else setLoading(false);
+      if (s) {
+        refreshProfile().finally(() => setLoading(false));
+      } else {
+        setProfile(null);
+        setPermissions([]);
+        setLoading(false);
+      }
     });
 
-    // Subscribe to changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, s) => {
         setSession(s);
@@ -85,38 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     try {
       await authSignIn(email, password);
+      await refreshProfile();
     } catch (err: any) {
-      const msg = err.message?.toLowerCase() || '';
-      if (email === 'admin@stmary.church' && (msg.includes('schema') || msg.includes('500') || msg.includes('database error'))) {
-        console.warn('Supabase DB schema error detected. Activating super admin session fallback.');
-        const mockAdminProfile: Profile = {
-          id: '00000000-0000-0000-0000-000000000001',
-          email: 'admin@stmary.church',
-          full_name: 'مدير النظام (Super Admin)',
-          role: 'super_admin',
-          phone: null,
-          avatar_url: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setProfile(mockAdminProfile);
-        setPermissions([]);
-        setSession({
-          access_token: 'fallback-access-token',
-          token_type: 'bearer',
-          expires_in: 3600,
-          refresh_token: 'fallback-refresh-token',
-          user: {
-            id: '00000000-0000-0000-0000-000000000001',
-            email: 'admin@stmary.church',
-            app_metadata: {},
-            user_metadata: { full_name: 'مدير النظام (Super Admin)', role: 'super_admin' },
-            aud: 'authenticated',
-            created_at: new Date().toISOString(),
-          },
-        } as any);
-        return;
-      }
       setError(err.message || 'خطأ في تسجيل الدخول');
       throw err;
     }
@@ -141,15 +115,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = (key: string): boolean => {
     if (!profile) return false;
-    // Super Admin and Admin always have full access
+    // Super Admin and Admin have full access
     if (profile.role === 'super_admin' || profile.role === 'admin') return true;
     
-    // Check dynamic user permissions from DB (if loaded)
+    // Check user dynamic permissions
     if (permissions.length > 0) {
       return permissions.includes(key);
     }
     
-    // Fallback: If no custom permissions exist in DB, default to role-based sets
+    // Default role permissions
     if (profile.role === 'priest') {
       return [
         'manage_liturgies',
