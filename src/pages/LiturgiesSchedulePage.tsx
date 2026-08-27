@@ -45,7 +45,6 @@ interface ChurchServiceDisplayItem {
   targetStage: string;
   iconBg: string;
   iconText: string;
-  location: string;
 }
 
 export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
@@ -59,8 +58,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '٩:٠٠ ص - ١١:٣٠ ص',
     targetStage: 'شباب المرحلة الثانوية (أولى - ثانية - ثالثة ثانوي)',
     iconBg: 'bg-blue-100',
-    iconText: 'text-blue-900',
-    location: 'قاعة السيدة العذراء - الدور الأول'
+    iconText: 'text-blue-900'
   },
   {
     id: 's_2',
@@ -72,8 +70,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '١٠:٣٠ ص - ١:٠٠ م',
     targetStage: 'بنات المرحلة الابتدائية (من الصف الأول للسادس)',
     iconBg: 'bg-rose-100',
-    iconText: 'text-rose-900',
-    location: 'قاعة القديسة مريم - مبنى الخدمات'
+    iconText: 'text-rose-900'
   },
   {
     id: 's_3',
@@ -85,8 +82,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '١١:٠٠ ص - ١:٣٠ م',
     targetStage: 'بنات المرحلة الإعدادية (أولى - ثانية - ثالثة إعدادي)',
     iconBg: 'bg-purple-100',
-    iconText: 'text-purple-900',
-    location: 'قاعة الشهيد مارجرجس'
+    iconText: 'text-purple-900'
   },
   {
     id: 's_4',
@@ -98,8 +94,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '٢:٣٠ ظهراً - ٥:٠٠ م',
     targetStage: 'بنين المرحلة الابتدائية (من الصف الأول للسادس)',
     iconBg: 'bg-amber-100',
-    iconText: 'text-amber-900',
-    location: 'قاعة كوكب البرية الأنبا مقاريوس'
+    iconText: 'text-amber-900'
   },
   {
     id: 's_5',
@@ -111,8 +106,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '٤:٣٠ م - ٧:٠٠ م',
     targetStage: 'فتيان المرحلة الإعدادية (أولى - ثانية - ثالثة إعدادي)',
     iconBg: 'bg-cyan-100',
-    iconText: 'text-cyan-900',
-    location: 'قاعة القديس يوسف النجار'
+    iconText: 'text-cyan-900'
   },
   {
     id: 's_6',
@@ -124,8 +118,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '٦:٠٠ م - ٨:٣٠ م',
     targetStage: 'شابات المرحلة الثانوية (أولى - ثانية - ثالثة ثانوي)',
     iconBg: 'bg-pink-100',
-    iconText: 'text-pink-900',
-    location: 'قاعة السيدة العذراء - الدور الأول'
+    iconText: 'text-pink-900'
   },
   {
     id: 's_7',
@@ -137,8 +130,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '٧:٠٠ م - ٩:٣٠ م',
     targetStage: 'الشابات والطالبات الجامعيات والخريجات الجدد',
     iconBg: 'bg-emerald-100',
-    iconText: 'text-emerald-900',
-    location: 'قاعة رئيس الملائكة ميخائيل'
+    iconText: 'text-emerald-900'
   },
   {
     id: 's_8',
@@ -150,8 +142,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '٧:٠٠ م - ٩:٣٠ م',
     targetStage: 'الشباب والطلبة الجامعيين',
     iconBg: 'bg-indigo-100',
-    iconText: 'text-indigo-900',
-    location: 'قاعة القديس أثناسيوس الرسولي'
+    iconText: 'text-indigo-900'
   },
   {
     id: 's_9',
@@ -163,8 +154,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '٧:٠٠ م - ٩:٣٠ م',
     targetStage: 'المقبلين على الزواج والمتزوجين حديثاً والأسر الشابة',
     iconBg: 'bg-rose-100',
-    iconText: 'text-rose-900',
-    location: 'قاعة السيدة العذراء مريم الكبرى'
+    iconText: 'text-rose-900'
   },
   {
     id: 's_10',
@@ -176,8 +166,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     formattedTime: '٧:٠٠ م - ٩:٣٠ م',
     targetStage: 'الخريجين والمهنيين وسوق العمل',
     iconBg: 'bg-teal-100',
-    iconText: 'text-teal-900',
-    location: 'قاعة الشهيد مارمينا العجائبي'
+    iconText: 'text-teal-900'
   }
 ];
 
@@ -666,11 +655,10 @@ export const LiturgiesSchedulePage: React.FC = () => {
 
                   </div>
 
-                  {/* Location & Church Altar */}
+                  {/* Church & Regular Schedule Badge */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-bold">
-                    <span className="flex items-center gap-1 text-slate-600">
-                      <MapPin className="w-3.5 h-3.5 text-[#d4af37]" />
-                      <span>{service.location}</span>
+                    <span className="text-[#002366] font-tajawal font-bold">
+                      كنيسة السيدة العذراء مريم بمحرم بك
                     </span>
                     <span className="text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold">
                       خدمة أسبوعية منتظمة ✦
