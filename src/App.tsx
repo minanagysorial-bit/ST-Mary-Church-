@@ -23,6 +23,7 @@ import { AboutPage } from './pages/AboutPage';
 import { HistoryPage } from './pages/about/HistoryPage';
 import { PriestsPage } from './pages/about/PriestsPage';
 import { MemoryPage } from './pages/about/MemoryPage';
+import { CommunityMemoriesPage } from './pages/about/CommunityMemoriesPage';
 import { LiveStreamPage } from './pages/LiveStreamPage';
 import { ContactUsPage } from './pages/ContactUsPage';
 import { LiturgiesSchedulePage } from './pages/LiturgiesSchedulePage';
@@ -37,6 +38,7 @@ const ContentManagementPage = lazy(() => import('./pages/admin/ContentManagement
 const PermissionsPage = lazy(() => import('./pages/super-admin/PermissionsPage').then(m => ({ default: m.PermissionsPage })));
 const VersesManagementPage = lazy(() => import('./pages/admin/VersesManagementPage').then(m => ({ default: m.VersesManagementPage })));
 const AlbumsManagementPage = lazy(() => import('./pages/admin/AlbumsManagementPage').then(m => ({ default: m.AlbumsManagementPage })));
+const MemoriesModerationPage = lazy(() => import('./pages/admin/MemoriesModerationPage').then(m => ({ default: m.MemoriesModerationPage })));
 const PriestsManagementPage = lazy(() => import('./pages/admin/PriestsManagementPage').then(m => ({ default: m.PriestsManagementPage })));
 const SiteBuilderPage = lazy(() => import('./pages/super-admin/SiteBuilderPage').then(m => ({ default: m.SiteBuilderPage })));
 const ServicesAssignmentPage = lazy(() => import('./pages/super-admin/ServicesAssignmentPage').then(m => ({ default: m.ServicesAssignmentPage })));
@@ -196,6 +198,8 @@ const AppLayout: React.FC = () => {
             <Route path="/about/history" element={<HistoryPage />} />
             <Route path="/about/priests" element={<PriestsPage />} />
             <Route path="/about/memory" element={<MemoryPage />} />
+            <Route path="/about/memories" element={<CommunityMemoriesPage />} />
+            <Route path="/memories" element={<CommunityMemoriesPage />} />
             <Route path="/sermons" element={<SermonsPage onSelectSermonForModal={(s) => setModalSermon(s)} />} />
             <Route path="/sermons/:id" element={<SermonDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -222,6 +226,7 @@ const AppLayout: React.FC = () => {
             <Route path="/admin/services" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_PERMISSIONS}><ServicesAssignmentPage /></ProtectedRoute>} />
             <Route path="/admin/verses" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_VERSES}><VersesManagementPage /></ProtectedRoute>} />
             <Route path="/admin/albums" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><AlbumsManagementPage /></ProtectedRoute>} />
+            <Route path="/admin/memories" element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'priest']}><MemoriesModerationPage /></ProtectedRoute>} />
             <Route path="/admin/priests" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><PriestsManagementPage /></ProtectedRoute>} />
             <Route path="/admin/site-builder" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_CONTENT}><SiteBuilderPage /></ProtectedRoute>} />
             <Route path="/admin/communications" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><CommunicationsPage /></ProtectedRoute>} />

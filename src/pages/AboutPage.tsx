@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { BookOpen, Users, Calendar, ArrowLeft, Cross, Sparkles } from 'lucide-react';
+import { BookOpen, Users, Calendar, ArrowLeft, Cross, Sparkles, MessageCircle, Heart } from 'lucide-react';
 import { api } from '../lib/api';
 
 export const AboutPage: React.FC = () => {
@@ -25,7 +25,14 @@ export const AboutPage: React.FC = () => {
       description: 'محطات تاريخية وأحداث خالدة لا تُنسى؛ من وضع حجر الأساس إلى الزيارات البابوية المباركة للآباء البطاركة الأجلاء.',
       image: '/history_6.jpg',
       link: '/about/memory',
-      badge: 'محطات خالدة'
+      badge: 'أرشيف الصور'
+    },
+    {
+      title: 'جدار الذكريات «حكايات من محرم بك»',
+      description: 'المتحف والمنصة التذكارية المفتوحة لشعب الكنيسة لمشاركة صور أكاليل زمان، المعجزات، وذكريات مع الآباء المتنيحين.',
+      image: '/history_19.jpg',
+      link: '/about/memories',
+      badge: 'ذاكرة الشعب 📜'
     }
   ]);
 
@@ -42,7 +49,7 @@ export const AboutPage: React.FC = () => {
               description: item.desc,
               image: item.image,
               link: item.link,
-              badge: idx === 0 ? 'القرن الماضي' : idx === 1 ? 'الرعاية الروحية' : 'محطات خالدة'
+              badge: idx === 0 ? 'القرن الماضي' : idx === 1 ? 'الرعاية الروحية' : idx === 2 ? 'أرشيف الصور' : 'ذاكرة الشعب 📜'
             })));
           }
         }
@@ -56,13 +63,15 @@ export const AboutPage: React.FC = () => {
   const getIcon = (idx: number) => {
     if (idx === 0) return <BookOpen className="w-8 h-8 text-amber-700" />;
     if (idx === 1) return <Users className="w-8 h-8 text-blue-700" />;
-    return <Calendar className="w-8 h-8 text-emerald-700" />;
+    if (idx === 2) return <Calendar className="w-8 h-8 text-emerald-700" />;
+    return <Heart className="w-8 h-8 text-rose-700" />;
   };
 
   const getBgGradient = (idx: number) => {
     if (idx === 0) return 'from-amber-50/40 to-amber-100/20 border-amber-200/60 text-slate-800';
     if (idx === 1) return 'from-blue-50/40 to-blue-100/20 border-blue-200/60 text-slate-800';
-    return 'from-emerald-50/40 to-emerald-100/20 border-emerald-200/60 text-slate-800';
+    if (idx === 2) return 'from-emerald-50/40 to-emerald-100/20 border-emerald-200/60 text-slate-800';
+    return 'from-rose-50/40 to-rose-100/20 border-rose-200/60 text-slate-800';
   };
 
   return (

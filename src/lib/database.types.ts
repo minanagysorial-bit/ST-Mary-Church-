@@ -53,6 +53,30 @@ export interface MemberVisitation {
   priest_name?: string;
 }
 
+export type CommunityMemoryCategory = 
+  | 'أكاليل ومناسبات'
+  | 'معجزات وبركات'
+  | 'ذكريات مع الآباء'
+  | 'أنشطة وخدام زمان'
+  | 'تاريخ وتراث';
+
+export interface CommunityMemory {
+  id: string;
+  author_name: string;
+  title: string;
+  story_content: string;
+  event_year: string; // e.g. "1978" or "السبعينات"
+  category: CommunityMemoryCategory;
+  image_urls: string[]; // max 3 images (supports Google Drive links & direct urls)
+  contact_phone?: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  likes_count: number;
+  reviewed_by?: string | null;
+  reviewer_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ----- Row types (what you get FROM the database) -----
 
 export interface Profile {

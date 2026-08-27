@@ -58,11 +58,13 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           { label: 'إدارة العظات', path: '/admin/content?tab=sermons', icon: 'settings_voice', permission: PERMISSIONS.MANAGE_CONTENT },
           { label: 'باني الصفحات', path: '/admin/site-builder', icon: 'design_services', permission: PERMISSIONS.MANAGE_CONTENT },
           { label: 'ألبومات الذاكرة', path: '/admin/albums', icon: 'images', permission: PERMISSIONS.MANAGE_CONTENT },
+          { label: 'مراجعة جدار الذكريات 📜', path: '/admin/memories', icon: 'collections_bookmark', permission: PERMISSIONS.MANAGE_CONTENT },
         ];
 
       case 'admin':
         return [
           { label: 'نظرة عامة', path: '/admin', icon: 'dashboard' },
+          { label: 'مراجعة جدار الذكريات 📜', path: '/admin/memories', icon: 'collections_bookmark' },
           { label: 'جدول القداسات', path: '/priest/liturgies', icon: 'calendar_month', permission: PERMISSIONS.MANAGE_LITURGIES },
           { label: 'إدارة الآيات اليومية', path: '/admin/verses', icon: 'menu_book', permission: PERMISSIONS.MANAGE_VERSES },
           { label: 'الإشعارات الفورية', path: '/admin/notifications', icon: 'notifications_active', permission: PERMISSIONS.MANAGE_NOTIFICATIONS },

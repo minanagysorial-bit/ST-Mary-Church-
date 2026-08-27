@@ -15,7 +15,8 @@ import type {
   MembershipRequestInsert, ChurchMemberInsert, MemberVisitationInsert,
   MemoryAlbum, MemoryAlbumInsert,
   CustomPage, CustomPageInsert, PageSection, PageSectionInsert,
-  Priest, PriestInsert, ContactMessage, ContactMessageInsert
+  Priest, PriestInsert, ContactMessage, ContactMessageInsert,
+  CommunityMemory, CommunityMemoryCategory
 } from './database.types';
 
 // Re-export types for backward compatibility
@@ -29,7 +30,7 @@ export type {
   MembershipRequest, ChurchMember, MemberVisitation, MemoryAlbum, MemoryAlbumInsert,
   CustomPage, CustomPageInsert, PageSection, PageSectionInsert,
   Priest, PriestInsert, ContactMessage, ContactMessageInsert,
-  PrayerRequest
+  PrayerRequest, CommunityMemory, CommunityMemoryCategory
 };
 
 // ===================================================================
@@ -1554,6 +1555,182 @@ export const api = {
       .delete()
       .eq('id', id);
     if (error) throw error;
+  },
+
+  // ==========================================
+  // COMMUNITY MEMORIES (حكايات من محرم بك)
+  // ==========================================
+  async getCommunityMemories(statusFilter?: 'approved' | 'pending' | 'all'): Promise<CommunityMemory[]> {
+    try {
+      let query = supabase.from('church_community_memories').select('*').order('created_at', { ascending: false });
+      if (statusFilter && statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        return data as CommunityMemory[];
+      }
+    } catch (e) {
+      console.warn('DB table query failed, trying settings fallback', e);
+    }
+
+    // Fallback in site_settings
+    try {
+      const settings = await this.getSiteSettings();
+      const raw = settings['church_community_memories_data'];
+      if (raw) {
+        const parsed: CommunityMemory[] = JSON.parse(raw);
+        if (statusFilter && statusFilter !== 'all') {
+          return parsed.filter(m => m.status === statusFilter);
+        }
+        return parsed;
+      }
+    } catch (e) {
+      console.error('Settings fallback failed:', e);
+    }
+
+    // Default Initial Seed Memories
+    const initialSeed: CommunityMemory[] = [
+      {
+        id: 'mem_1',
+        author_name: 'عائلة الشماس حنا يوسف',
+        title: 'صورة إكليل والديّ بكنيسة العذراء بالسبعينات',
+        story_content: 'صورة نادرة من صلاة الإكليل المبارك لوالديّ بكنيسة السيدة العذراء بمحرم بك، وكانت الخدمة برئاسة الآباء الكهنة الأبرار المتنيحين. الكنيسة دائماً هي بيت العائلة الكبير وبركة لكل أجيالنا وشبابنا.',
+        event_year: '١٩٧٥م',
+        category: 'أكاليل ومناسبات',
+        image_urls: ['/history_19.jpg'],
+        status: 'approved',
+        likes_count: 28,
+        created_at: new Date(1975, 5, 12).toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'mem_2',
+        author_name: 'تاسوني مريم وخدام أسرة إعدادي',
+        title: 'ذكريات يوم تدشين المعمودية وأيام مدارس الأحد الأولى',
+        story_content: 'من أجمل الذكريات الراسخة في قلوبنا، أيام إقامة أول معرض لمدارس الأحد وحضور الأطفال والخدام من كل شوارع محرم بك، كانت الكنيسة عامرة بالحب والترانيم والتسبيح من الصباح للمساء وربنا يديم خدمتها المباركة.',
+        event_year: '١٩٨٢م',
+        category: 'أنشطة وخدام زمان',
+        image_urls: ['/history_6.jpg'],
+        status: 'approved',
+        likes_count: 21,
+        created_at: new Date(1982, 3, 20).toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ];
+
+    return statusFilter && statusFilter !== 'all' 
+      ? initialSeed.filter(m => m.status === statusFilter) 
+      : initialSeed;
+  },
+
+  async submitCommunityMemory(payload: {
+    author_name: string;
+    title: string;
+    story_content: string;
+    event_year: string;
+    category: CommunityMemoryCategory;
+    image_urls: string[];
+    contact_phone?: string;
+  }): Promise<CommunityMemory> {
+    const newMemory: CommunityMemory = {
+      id: 'mem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+      author_name: payload.author_name.trim(),
+      title: payload.title.trim(),
+      story_content: payload.story_content.trim(),
+      event_year: payload.event_year.trim() || 'الماضي الجميل',
+      category: payload.category,
+      image_urls: payload.image_urls.slice(0, 3).map(convertDriveUrl),
+      contact_phone: payload.contact_phone || null,
+      status: 'pending',
+      likes_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Try DB Insert
+    try {
+      const { data, error } = await supabase.from('church_community_memories').insert(newMemory).select().single();
+      if (!error && data) return data as CommunityMemory;
+    } catch (e) {
+      console.warn('DB insert failed, writing to site_settings fallback', e);
+    }
+
+    // Settings fallback
+    const all = await this.getCommunityMemories('all');
+    all.unshift(newMemory);
+    await this.updateSiteSettings({ church_community_memories_data: JSON.stringify(all) });
+    return newMemory;
+  },
+
+  async updateCommunityMemoryStatus(id: string, status: 'approved' | 'rejected', notes?: string, reviewerName?: string): Promise<boolean> {
+    try {
+      await supabase.from('church_community_memories').update({
+        status,
+        reviewer_notes: notes || null,
+        reviewed_by: reviewerName || 'مشرف الكنيسة',
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+    } catch (e) {
+      console.warn('DB status update failed, trying fallback', e);
+    }
+
+    const all = await this.getCommunityMemories('all');
+    const idx = all.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      all[idx].status = status;
+      if (notes) all[idx].reviewer_notes = notes;
+      all[idx].updated_at = new Date().toISOString();
+      await this.updateSiteSettings({ church_community_memories_data: JSON.stringify(all) });
+    }
+    return true;
+  },
+
+  async updateCommunityMemory(id: string, payload: Partial<CommunityMemory>): Promise<boolean> {
+    try {
+      await supabase.from('church_community_memories').update({
+        ...payload,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+    } catch (e) {
+      console.warn('DB update failed, fallback', e);
+    }
+
+    const all = await this.getCommunityMemories('all');
+    const idx = all.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      all[idx] = { ...all[idx], ...payload, updated_at: new Date().toISOString() };
+      await this.updateSiteSettings({ church_community_memories_data: JSON.stringify(all) });
+    }
+    return true;
+  },
+
+  async deleteCommunityMemory(id: string): Promise<boolean> {
+    try {
+      await supabase.from('church_community_memories').delete().eq('id', id);
+    } catch (e) {
+      console.warn('DB delete failed, fallback', e);
+    }
+
+    const all = await this.getCommunityMemories('all');
+    const filtered = all.filter(m => m.id !== id);
+    await this.updateSiteSettings({ church_community_memories_data: JSON.stringify(filtered) });
+    return true;
+  },
+
+  async likeCommunityMemory(id: string): Promise<number> {
+    const all = await this.getCommunityMemories('all');
+    const idx = all.findIndex(m => m.id === id);
+    let newLikes = 1;
+    if (idx !== -1) {
+      all[idx].likes_count = (all[idx].likes_count || 0) + 1;
+      newLikes = all[idx].likes_count;
+      await this.updateSiteSettings({ church_community_memories_data: JSON.stringify(all) });
+    }
+    try {
+      await (supabase.rpc as any)('increment_memory_likes', { memory_id: id });
+    } catch (e) {}
+    return newLikes;
   }
 };
 
