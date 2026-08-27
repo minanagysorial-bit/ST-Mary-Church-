@@ -84,7 +84,9 @@ export const HistoryPage: React.FC = () => {
     { id: 17, src: '/history_17.jpg', alt: 'صورة 17: الزيارة الرعوية للبابا كيرلس السادس', description: 'المتنيح البابا القديس كيرلس السادس خلال زيارته الأولى للكنيسة في 27 يوليو 1959.', objectPosition: 'top' },
     { id: 18, src: '/history_18.jpg', alt: 'صورة 18: الزيارة الرعوية الأولى للبابا شنودة الثالث', description: 'المتنيح البابا العظيم الأنبا شنودة الثالث يبارك الكنيسة وشعبها في 23 أبريل 1972.', objectPosition: 'top' },
     { id: 19, src: '/history_19.jpg', alt: 'صورة 19: الاستقبال الشعبي للبابا شنودة الثالث', description: 'حفاوة استقبال شعب كنيسة العذراء بمحرم بك لقداسته خلال زيارته الأولى.', objectPosition: 'top' },
-    { id: 20, src: '/history_20.jpg', alt: 'صورة 20: الزيارة الرعوية الثانية للبابا شنودة الثالث', description: 'لقطة أرشيفية لزيارة قداسته الثانية للكنيسة في يونيو 1976.', objectPosition: 'top' }
+    { id: 20, src: '/history_20.jpg', alt: 'صورة 20: الزيارة الرعوية الثانية للبابا شنودة الثالث', description: 'لقطة أرشيفية لزيارة قداسته الثانية للكنيسة في يونيو 1976.', objectPosition: 'top' },
+    { id: 21, src: '/pope_tawadros_visit_2024_1.jpg', alt: 'صورة 21: قداسة البابا تواضروس الثاني مع مجمع كهنة الكنيسة (7 أغسطس 2024)', description: 'قداسة البابا المعظم الأنبا تواضروس الثاني يتوسط الآباء كهنة كنيسة السيدة العذراء بمحرم بك خلال الزيارة البابوية التاريخية يوم الأربعاء 7 أغسطس 2024 م.', objectPosition: 'top' },
+    { id: 22, src: '/pope_tawadros_visit_2024_2.jpg', alt: 'صورة 22: اجتماع الأربعاء وعظة قداسة البابا داخل صحن الكنيسة', description: 'حضور شعبي حاشد داخل صحن الكنيسة تحت القبة الرئيسية خلال إلقاء قداسة البابا تواضروس الثاني لعظة الأربعاء الأسبوعية في 7 أغسطس 2024 م.', objectPosition: 'center' }
   ];
 
   // Helper to render image or placeholder card
@@ -275,6 +277,25 @@ export const HistoryPage: React.FC = () => {
                 <span className="bg-[#d4af37] text-[#00174a] text-[10px] font-bold px-2 py-0.5 rounded">يونيو ١٩٧٦</span>
                 <p className="font-bold text-sm text-[#002366] mt-1.5">الزيارة الرعوية الثانية للبابا شنودة الثالث للكنيسة</p>
                 {renderImageBlock([20])}
+              </div>
+
+              {/* 🕊️ Historic Visit of Pope Tawadros II (7/8/2024) */}
+              <div className="bg-gradient-to-br from-amber-500/10 via-[#002366]/5 to-[#00174a]/10 p-5 sm:p-6 rounded-3xl border-2 border-[#d4af37]/60 shadow-md space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="bg-[#002366] text-[#fed65b] text-xs font-extrabold px-3.5 py-1 rounded-full shadow-xs">
+                    ٧ أغسطس ٢٠٢٤ م (١ مسرى ١٧٤٠ ش)
+                  </span>
+                  <span className="text-xs bg-[#fed65b] text-[#00174a] font-extrabold px-3 py-1 rounded-full shadow-2xs">
+                    زيارة بابوية تاريخية 🕊️✨
+                  </span>
+                </div>
+                <h4 className="font-tajawal text-base sm:text-xl font-extrabold text-[#002366] pt-1">
+                  الزيارة الرعوية التاريخية لقداسة البابا تواضروس الثاني
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-semibold">
+                  تشرّفت كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية بالزيارة الرعوية التاريخية الميمونة لأبينا البطريرك قداسة البابا المعظم الأنبا تواضروس الثاني (بابا الإسكندرية وبطريرك الكرازة المرقسية الـ ١١٨)، حيث ألقى قداسته اجتماع الأربعاء الأسبوعي وعظته المباركة وسط حضور شعبي حاشد وفرحة غامرة لشعب الكنيسة وإسكندرية، وبارك مجمع كهنة الكنيسة والشمامسة والخدام.
+                </p>
+                {renderImageBlock([21, 22])}
               </div>
             </div>
           </div>
