@@ -1,14 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { api, type MemoryAlbum, extractGoogleDriveFolderImages, convertDriveUrl, parseImageTransform } from '../../lib/api';
 import { 
   Images, Plus, Trash2, Edit2, X, CheckCircle2, AlertCircle, Eye, 
-  Save, Calendar, Link as LinkIcon, ArrowLeft, RefreshCw, FolderOpen, Sliders
+  Save, Calendar, Link as LinkIcon, ArrowLeft, RefreshCw, FolderOpen, Sliders,
+  Search, ArrowDownWideNarrow, ArrowUpNarrowWide, Clock
 } from 'lucide-react';
+
+function extractChronologicalTimestamp(dateStr?: string | null, fallbackCreatedAt?: string): number {
+  if (!dateStr && !fallbackCreatedAt) return 0;
+  const normalized = (dateStr || '').replace(/[٠-٩]/g, (d) => "0123456789"["٠١٢٣٤٥٦٧٨٩".indexOf(d)]);
+  const yearMatch = normalized.match(/\b(18\d{2}|19\d{2}|20\d{2})\b/);
+  const parsedDate = Date.parse(normalized);
+  if (!isNaN(parsedDate) && parsedDate > 0) return parsedDate;
+  if (yearMatch) return new Date(parseInt(yearMatch[1], 10), 0, 1).getTime();
+  if (fallbackCreatedAt) {
+    const fallback = Date.parse(fallbackCreatedAt);
+    if (!isNaN(fallback)) return fallback;
+  }
+  return 0;
+}
 
 export const AlbumsManagementPage: React.FC = () => {
   const [albums, setAlbums] = useState<MemoryAlbum[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -640,6 +657,47 @@ export const AlbumsManagementPage: React.FC = () => {
         ) : (
           /* Albums List Grid view */
           <>
+            {/* 🔍 Search Bar & Sort Order Controls Bar */}
+            <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs mb-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ابحث في الألبومات بالاسم أو السنة أو المناسبة..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl pr-11 pl-10 py-2.5 text-xs font-bold text-slate-800 outline-none focus:border-[#002366] focus:bg-white transition-all shadow-inner"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200 transition-colors"
+                    title="مسح البحث"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                className="w-full sm:w-auto px-4 py-2.5 bg-[#002366] hover:bg-[#00174a] text-[#fed65b] rounded-2xl text-xs font-extrabold font-tajawal transition-all flex items-center justify-center gap-2 shadow-xs shrink-0 active:scale-95"
+                title="تغيير اتجاه الترتيب الزمني"
+              >
+                {sortOrder === 'desc' ? (
+                  <>
+                    <ArrowDownWideNarrow className="w-4 h-4" />
+                    <span>الترتيب: الأحدث أولاً ⬇️</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowUpNarrowWide className="w-4 h-4" />
+                    <span>الترتيب: الأقدم أولاً ⬆️</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             {loading ? (
               <div className="py-20 text-center text-slate-450 font-bold space-y-3">
                 <RefreshCw className="w-8 h-8 text-[#002366] animate-spin mx-auto" />
@@ -652,7 +710,18 @@ export const AlbumsManagementPage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {albums.map(album => {
+                {albums
+                  .filter(album => {
+                    if (!searchQuery.trim()) return true;
+                    const q = searchQuery.trim().toLowerCase();
+                    return album.title.toLowerCase().includes(q) || (album.event_date && album.event_date.toLowerCase().includes(q));
+                  })
+                  .sort((a, b) => {
+                    const timeA = extractChronologicalTimestamp(a.event_date, a.created_at);
+                    const timeB = extractChronologicalTimestamp(b.event_date, b.created_at);
+                    return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+                  })
+                  .map(album => {
                   const { convertedUrl, styles } = parseImageTransform(album.cover_image_url);
                   return (
                     <div 
