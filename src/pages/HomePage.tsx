@@ -28,6 +28,7 @@ import { api, Verse, Announcement } from '../lib/api';
 import { DailyReadingsCard } from '../components/common/DailyReadingsCard';
 import { requestNotificationPermission, getNotificationPermission } from '../lib/pushNotifications';
 import { getDailyAutoVerse } from '../lib/comfortVerses';
+import { MobileAppHome } from '../components/home/MobileAppHome';
 
 interface HomePageProps {
   onOpenPrayerModal: () => void;
@@ -191,15 +192,27 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
   const defaultVerseRef = "إنجيل يوحنا 3: 16";
 
   return (
-    <div className="space-y-12 sm:space-y-16 pb-16 font-cairo text-right" dir="rtl">
+    <div className="font-cairo text-right" dir="rtl">
       <Helmet>
         <title>كنيسة السيدة العذراء مريم محرم بك - اسكندرية - الموقع الرسمي</title>
         <meta name="description" content="الموقع الرسمي لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية. مواعيد القداسات، عظات الآباء الكهنة، البث المباشر، السنكسار والقراءات اليومية، وتاريخ الكنيسة." />
         <link rel="canonical" href="https://www.tibarthenos.com/" />
       </Helmet>
 
-      {/* Hero Section */}
-      <section className="relative min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center bg-[#00113a] overflow-hidden text-white border-b-4 border-[#d4af37]">
+      {/* 📱 Dedicated Mobile Native Application UI (Screen < 768px) */}
+      <MobileAppHome 
+        verse={verse}
+        loadingVerse={loadingVerse}
+        announcements={activeAnnouncements}
+        onOpenPrayerModal={onOpenPrayerModal}
+        onInstallApp={handleInstallApp}
+        onEnableNotifications={handleEnableNotifications}
+      />
+
+      {/* 💻 Desktop Panoramic Layout (Screen >= 768px) */}
+      <div className="hidden md:block space-y-12 sm:space-y-16 pb-16">
+        {/* Hero Section */}
+        <section className="relative min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center bg-[#00113a] overflow-hidden text-white border-b-4 border-[#d4af37]">
         {/* Background Image with opacity */}
         <div 
           className="absolute inset-0 bg-cover z-0" 
@@ -521,6 +534,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         </div>
       </section>
 
+      </div>
     </div>
   );
 };
