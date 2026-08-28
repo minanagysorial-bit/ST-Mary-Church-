@@ -64,7 +64,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'شباب ثانوي',
     day: 'الجمعة',
     startTime24: '09:00',
-    formattedTime: '٩:٠٠ ص',
+    formattedTime: '9:00 AM',
     targetStage: 'شباب المرحلة الثانوية (بنين)',
     periodicity: 'أسبوعي',
     iconType: 'youth_boys',
@@ -78,7 +78,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'ابتدائي بنات',
     day: 'الجمعة',
     startTime24: '11:00',
-    formattedTime: '١١:٠٠ ص',
+    formattedTime: '11:00 AM',
     targetStage: 'فتيات المرحلة الابتدائية (من الصف الأول للسادس)',
     periodicity: 'أسبوعي',
     iconType: 'kids_girls',
@@ -92,7 +92,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'فتيات إعدادي',
     day: 'الجمعة',
     startTime24: '12:00',
-    formattedTime: '١٢:٠٠ ظهراً - ٢:٠٠ م',
+    formattedTime: '12:00 PM',
     targetStage: 'فتيات المرحلة الإعدادية (أولى - ثانية - ثالثة إعدادي)',
     periodicity: 'أسبوعي',
     iconType: 'prep_girls',
@@ -106,7 +106,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'ابتدائي بنين',
     day: 'الجمعة',
     startTime24: '14:30',
-    formattedTime: '٢:٣٠ م',
+    formattedTime: '2:30 PM',
     targetStage: 'بنين المرحلة الابتدائية (من الصف الأول للسادس)',
     periodicity: 'أسبوعي',
     iconType: 'kids_boys',
@@ -120,7 +120,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'فتيان إعدادي',
     day: 'الجمعة',
     startTime24: '16:30',
-    formattedTime: '٤:٣٠ م',
+    formattedTime: '4:30 PM',
     targetStage: 'فتيان المرحلة الإعدادية (أولى - ثانية - ثالثة إعدادي)',
     periodicity: 'أسبوعي',
     iconType: 'prep_boys',
@@ -134,7 +134,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'اجتماع عام',
     day: 'الجمعة',
     startTime24: '19:00',
-    formattedTime: '٧:٠٠ م',
+    formattedTime: '7:00 PM',
     targetStage: 'رجال وأرباب الأسر بالكنيسة',
     periodicity: 'أسبوعي',
     iconType: 'men',
@@ -148,7 +148,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'رعاية الأسرة',
     day: 'الجمعة',
     startTime24: '19:00',
-    formattedTime: '٧:٠٠ م',
+    formattedTime: '7:00 PM',
     targetStage: 'المتزوجون حديثاً والمقبلون على الزواج',
     periodicity: 'الجمعة الأولى من كل شهر',
     iconType: 'family',
@@ -164,7 +164,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'خدمة ورعاية',
     day: 'السبت',
     startTime24: '07:00',
-    formattedTime: '٧:٠٠ ص (بالقداس الإلهي)',
+    formattedTime: '7:00 AM (بالقداس)',
     targetStage: 'أمهاتنا وأخواتنا الأرامل',
     periodicity: 'السبت الأول من كل شهر',
     iconType: 'care',
@@ -178,7 +178,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'خدمة ورعاية',
     day: 'السبت',
     startTime24: '07:00',
-    formattedTime: '٧:٠٠ ص (بالقداس الإلهي)',
+    formattedTime: '7:00 AM (بالقداس)',
     targetStage: 'المرضى وأسرهم وبركة الصلاة من أجل شفائهم',
     periodicity: 'السبت الثاني من كل شهر',
     iconType: 'care',
@@ -194,7 +194,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'ذوي القدرات والهمم',
     day: 'الأحد',
     startTime24: '17:00',
-    formattedTime: '٥:٠٠ م',
+    formattedTime: '5:00 PM',
     targetStage: 'بنات وفتيات ذوي القدرات والهمم المباركة',
     periodicity: 'أسبوعي',
     iconType: 'special_needs',
@@ -208,7 +208,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'خريجين ومهنيين',
     day: 'الأحد',
     startTime24: '19:00',
-    formattedTime: '٧:٠٠ م',
+    formattedTime: '7:00 PM',
     targetStage: 'الخريجين والخريجات والشباب المهنيين وسوق العمل',
     periodicity: 'أسبوعي',
     iconType: 'graduates',
@@ -222,7 +222,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'رعاية وافتقاد',
     day: 'الأحد',
     startTime24: '20:00',
-    formattedTime: '٨:٠٠ م',
+    formattedTime: '8:00 PM',
     targetStage: 'اجتماع عام للرعاية والافتقاد الروحي لجميع الأعمار',
     periodicity: 'أسبوعي',
     iconType: 'general',
@@ -238,7 +238,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'ذوي القدرات والهمم',
     day: 'الإثنين',
     startTime24: '17:00',
-    formattedTime: '٥:٠٠ م',
+    formattedTime: '5:00 PM',
     targetStage: 'بنين وفتيان ذوي القدرات والهمم المباركة',
     periodicity: 'أسبوعي',
     iconType: 'special_needs',
@@ -252,7 +252,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'إعداد وتدريب',
     day: 'الإثنين',
     startTime24: '18:00',
-    formattedTime: '٦:٠٠ م',
+    formattedTime: '6:00 PM',
     targetStage: 'الخدام والدارسون بكورسات إعداد الخدام',
     periodicity: 'أسبوعي',
     iconType: 'servants',
@@ -266,7 +266,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'دراسة كتاب',
     day: 'الإثنين',
     startTime24: '19:00',
-    formattedTime: '٧:٠٠ م',
+    formattedTime: '7:00 PM',
     targetStage: 'دراسة وتأمل في أسفار الكتاب المقدس لعموم الشعب',
     periodicity: 'أسبوعي',
     iconType: 'bible',
@@ -282,7 +282,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'إعداد وتدريب',
     day: 'الثلاثاء',
     startTime24: '18:00',
-    formattedTime: '٦:٠٠ م',
+    formattedTime: '6:00 PM',
     targetStage: 'الخدام والدارسون بكورسات إعداد الخدام',
     periodicity: 'أسبوعي',
     iconType: 'servants',
@@ -296,7 +296,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'شباب جامعة',
     day: 'الثلاثاء',
     startTime24: '19:00',
-    formattedTime: '٧:٠٠ م',
+    formattedTime: '7:00 PM',
     targetStage: 'الشباب والطلبة الجامعيين',
     periodicity: 'أسبوعي',
     iconType: 'youth_boys',
@@ -312,7 +312,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'اجتماع عام',
     day: 'الأربعاء',
     startTime24: '17:00',
-    formattedTime: '٥:٠٠ م',
+    formattedTime: '5:00 PM',
     targetStage: 'أمهات وسيدات الكنيسة',
     periodicity: 'أسبوعي',
     iconType: 'women',
@@ -326,7 +326,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'رعاية الأسرة',
     day: 'الأربعاء',
     startTime24: '19:00',
-    formattedTime: '٧:٠٠ م - ٩:٠٠ م',
+    formattedTime: '7:00 PM - 9:00 PM',
     targetStage: 'المتزوجون والأسر الشابة والمقبلون على الزواج',
     periodicity: 'أسبوعي',
     iconType: 'family',
@@ -342,7 +342,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'شابات ثانوي',
     day: 'الخميس',
     startTime24: '17:00',
-    formattedTime: '٥:٠٠ م',
+    formattedTime: '5:00 PM',
     targetStage: 'شابات المرحلة الثانوية (بنات)',
     periodicity: 'أسبوعي',
     iconType: 'youth_girls',
@@ -356,7 +356,7 @@ export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
     category: 'شابات جامعة',
     day: 'الخميس',
     startTime24: '19:30',
-    formattedTime: '٧:٣٠ م',
+    formattedTime: '7:30 PM',
     targetStage: 'الشابات والطالبات الجامعيات والخريجات',
     periodicity: 'أسبوعي',
     iconType: 'youth_girls',
@@ -627,7 +627,7 @@ export const LiturgiesSchedulePage: React.FC = () => {
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>📅 مواعيد اجتماعات وخدمات الكنيسة الأسبوعية (١٠ خدمات)</span>
+            <span>📅 مواعيد اجتماعات وخدمات الكنيسة</span>
           </button>
         </div>
 
@@ -980,9 +980,9 @@ export const LiturgiesSchedulePage: React.FC = () => {
                             
                             {/* Col 1: Time */}
                             <div className="md:col-span-4 flex items-center justify-between md:justify-start gap-2">
-                              <div className="inline-flex items-center gap-2 bg-[#002366]/5 border border-[#002366]/15 text-[#002366] px-3.5 py-1.5 rounded-xl font-tajawal text-xs sm:text-sm font-extrabold shadow-2xs">
+                              <div className="inline-flex items-center gap-2 bg-[#002366]/5 border border-[#002366]/20 text-[#002366] px-3.5 py-1.5 rounded-xl text-sm sm:text-base font-black shadow-2xs">
                                 <Clock className="w-4 h-4 text-[#d4af37] shrink-0" />
-                                <span>{service.formattedTime}</span>
+                                <span dir="ltr" className="font-sans font-bold tracking-tight">{service.formattedTime}</span>
                               </div>
                               <span className="md:hidden text-[10px] font-bold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-600">
                                 {service.periodicity}
@@ -1045,9 +1045,9 @@ export const LiturgiesSchedulePage: React.FC = () => {
                                   </div>
                                 </div>
 
-                                <div className="bg-[#002366] text-[#fed65b] px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shrink-0 shadow-2xs">
+                                <div className="bg-[#002366] text-[#fed65b] px-3 py-1.5 rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 shrink-0 shadow-2xs">
                                   <Clock className="w-3.5 h-3.5" />
-                                  <span>{service.formattedTime}</span>
+                                  <span dir="ltr" className="font-sans font-bold tracking-tight">{service.formattedTime}</span>
                                 </div>
                               </div>
 
