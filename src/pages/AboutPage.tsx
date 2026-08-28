@@ -4,6 +4,31 @@ import { Helmet } from 'react-helmet-async';
 import { BookOpen, Users, Calendar, ArrowLeft, Cross, Sparkles, MessageCircle, Heart } from 'lucide-react';
 import { api } from '../lib/api';
 
+const AnimatedCounter: React.FC<{ target: number; duration?: number }> = ({ target, duration = 1200 }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const stepTime = 25;
+    const steps = duration / stepTime;
+    const increment = target / steps;
+
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, stepTime);
+
+    return () => clearInterval(timer);
+  }, [target, duration]);
+
+  return <span dir="ltr">{count.toLocaleString('en-US')}</span>;
+};
+
 export const AboutPage: React.FC = () => {
   const [cards, setCards] = useState<any[]>([
     {
@@ -97,6 +122,35 @@ export const AboutPage: React.FC = () => {
         </div>
       </section>
 
+      {/* 📊 Interactive Animated Stats Counters Bar */}
+      <div className="max-w-5xl mx-auto px-4 -mt-10 relative z-30">
+        <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-xl border border-[#d4af37]/30 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x sm:divide-x-reverse divide-slate-100 animate-tab-transition">
+          <div className="space-y-1.5 py-2 sm:py-0">
+            <div className="font-tajawal text-3xl sm:text-4xl font-black text-[#002366] flex items-center justify-center gap-1">
+              <span className="text-[#d4af37]">+</span>
+              <AnimatedCounter target={80} />
+            </div>
+            <p className="text-xs font-bold text-slate-500">عاماً من التأسيس والبركة الكنسية</p>
+          </div>
+
+          <div className="space-y-1.5 py-2 sm:py-0">
+            <div className="font-tajawal text-3xl sm:text-4xl font-black text-[#002366] flex items-center justify-center gap-1">
+              <span className="text-[#d4af37]">+</span>
+              <AnimatedCounter target={20} />
+            </div>
+            <p className="text-xs font-bold text-slate-500">خدمة واجتماع رعوي أسبوعي</p>
+          </div>
+
+          <div className="space-y-1.5 py-2 sm:py-0">
+            <div className="font-tajawal text-3xl sm:text-4xl font-black text-[#002366] flex items-center justify-center gap-1">
+              <span className="text-[#d4af37]">+</span>
+              <AnimatedCounter target={1500} />
+            </div>
+            <p className="text-xs font-bold text-slate-500">أسرة مسيحية مشمولة بالرعاية</p>
+          </div>
+        </div>
+      </div>
+
       {/* Main Grid Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -104,7 +158,7 @@ export const AboutPage: React.FC = () => {
             <Link 
               key={idx} 
               to={card.link}
-              className={`group flex flex-col justify-between h-[360px] rounded-3xl p-8 transition-all duration-300 shadow-lg hover:shadow-2xl hover:-translate-y-2 border ${
+              className={`group flex flex-col justify-between h-[360px] rounded-3xl p-8 transition-all duration-300 shadow-lg hover:shadow-2xl hover:-translate-y-2 border interactive-card ${
                 getBgGradient(idx)
               }`}
             >

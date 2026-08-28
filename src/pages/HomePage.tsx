@@ -212,9 +212,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         {/* Background Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#00113a]/80 via-[#00113a]/40 to-[#00113a]/75 z-10" />
 
+        {/* Ambient Breathing Glow Balls */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#d4af37]/20 rounded-full blur-3xl pointer-events-none animate-ambient-pulse z-10" />
+        <div className="absolute bottom-10 right-10 w-72 h-72 bg-[#fed65b]/15 rounded-full blur-2xl pointer-events-none animate-ambient-pulse z-10" />
+
         <div className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6 py-16">
-          <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 border border-[#fed65b]/40 text-[#fed65b] text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-inner animate-fade-in">
-            <Sparkles className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 border border-[#fed65b]/40 text-[#fed65b] text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-inner animate-fade-in shimmer-container shimmer-effect">
+            <Sparkles className="w-4 h-4 text-[#fed65b]" />
             <span>البوابة الرقمية الموحدة لخدمات الكنيسة</span>
           </div>
 
@@ -234,7 +238,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
           <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto w-full">
             <Link
               to="/sermons"
-              className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] text-[#00174a] font-bold text-xs sm:text-sm px-6 sm:px-7 py-3.5 rounded-2xl transition-all shadow-xl hover:shadow-2xl hover:scale-105 flex items-center justify-center gap-2 text-center"
+              className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] text-[#00174a] font-bold text-xs sm:text-sm px-6 sm:px-7 py-3.5 rounded-2xl transition-all shadow-xl hover:shadow-2xl btn-bounce flex items-center justify-center gap-2 text-center"
             >
               <BookOpen className="w-5 h-5 shrink-0" />
               <span>مكتبة العظات والكلمات الروحية</span>
@@ -242,7 +246,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
 
             <button
               onClick={onOpenPrayerModal}
-              className="bg-white/10 hover:bg-white/20 text-white border border-[#fed65b]/50 font-bold text-xs sm:text-sm px-6 sm:px-7 py-3.5 rounded-2xl transition-all backdrop-blur-md flex items-center justify-center gap-2 text-center"
+              className="bg-white/10 hover:bg-white/20 text-white border border-[#fed65b]/50 font-bold text-xs sm:text-sm px-6 sm:px-7 py-3.5 rounded-2xl transition-all backdrop-blur-md btn-bounce flex items-center justify-center gap-2 text-center"
             >
               <HeartHandshake className="w-5 h-5 text-[#fed65b] shrink-0" />
               <span>اطلب صلاة على المذبح</span>
@@ -256,7 +260,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Verse of the day card */}
-          <div className="lg:col-span-2 bg-gradient-to-br from-[#002366] to-[#00174a] text-white p-5 sm:p-8 rounded-3xl border border-[#d4af37]/40 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+          <div className="lg:col-span-2 bg-gradient-to-br from-[#002366] to-[#00174a] text-white p-5 sm:p-8 rounded-3xl border border-[#d4af37]/40 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[220px] interactive-card">
             <div className="absolute -left-10 -bottom-10 opacity-10 pointer-events-none">
               <Cross className="w-64 h-64 text-[#fed65b]" />
             </div>

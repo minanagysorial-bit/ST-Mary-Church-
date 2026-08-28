@@ -103,9 +103,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
           
           {/* Logo & Brand */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-0.5 shadow-md group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-0.5 shadow-md group-hover:scale-105 transition-transform shimmer-container shimmer-effect">
               <div className="w-full h-full rounded-full bg-[#00174a] flex items-center justify-center border border-[#d4af37]/50">
-                <Cross className="w-6 h-6 text-[#fed65b]" />
+                <Cross className="w-6 h-6 text-[#fed65b] drop-shadow-[0_0_6px_rgba(254,214,91,0.6)]" />
               </div>
             </div>
             <div className="text-right">
@@ -120,7 +120,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
           <nav className="hidden md:flex items-center gap-1 lg:gap-2">
             <Link
               to="/"
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
+              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all btn-bounce ${
                 isActive('/')
                   ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
                   : 'text-slate-200 hover:text-white hover:bg-white/10'
@@ -130,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
             </Link>
             <Link
               to="/about"
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
+              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all btn-bounce ${
                 location.pathname.startsWith('/about')
                   ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
                   : 'text-slate-200 hover:text-white hover:bg-white/10'
@@ -140,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
             </Link>
             <Link
               to="/liturgies-schedule"
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
+              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all btn-bounce ${
                 isActive('/liturgies-schedule')
                   ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
                   : 'text-slate-200 hover:text-white hover:bg-white/10'
@@ -150,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
             </Link>
             <Link
               to="/sermons"
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
+              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all btn-bounce ${
                 isActive('/sermons')
                   ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
                   : 'text-slate-200 hover:text-white hover:bg-white/10'
@@ -160,7 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
             </Link>
             <Link
               to="/membership/register"
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all ${
+              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all btn-bounce ${
                 isActive('/membership/register')
                   ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
                   : 'text-slate-200 hover:text-white hover:bg-white/10'
@@ -170,18 +170,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
             </Link>
             <Link
               to="/live-stream"
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all relative flex items-center gap-1.5 ${
-                isActive('/live-stream') || isActive('/live')
+              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-bold transition-all relative flex items-center gap-1.5 btn-bounce ${
+                isLiveActive
+                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/60 shadow-[0_0_12px_rgba(244,63,94,0.3)] animate-live-ripple'
+                  : isActive('/live-stream') || isActive('/live')
                   ? 'bg-[#d4af37]/20 text-[#fed65b] border border-[#d4af37]/40 shadow-inner'
                   : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
               <span>بث مباشر</span>
-              {isLiveActive && (
+              {isLiveActive ? (
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-80"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)]"></span>
                 </span>
+              ) : (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 opacity-70"></span>
               )}
             </Link>
             <Link

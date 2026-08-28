@@ -102,7 +102,7 @@ export const HistoryPage: React.FC = () => {
             <div 
               key={img.id}
               onClick={() => handleOpenImage(img)}
-              className="group relative cursor-pointer bg-white rounded-2xl overflow-hidden border border-slate-200/60 hover:border-[#d4af37]/40 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+              className="group relative cursor-pointer bg-white rounded-2xl overflow-hidden border border-slate-200/60 hover:border-[#d4af37]/40 shadow-sm hover:shadow-xl interactive-card flex flex-col justify-between"
             >
               {img.isPlaceholder ? (
                 <div className="w-full h-48 bg-[#00113a]/5 flex flex-col items-center justify-center text-slate-450 gap-2 border-b border-slate-100 group-hover:bg-[#002366]/10 transition-colors">
@@ -114,11 +114,11 @@ export const HistoryPage: React.FC = () => {
                   <img 
                     src={convertedUrl || img.src} 
                     alt={img.alt} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                     style={{ objectPosition: computedPosition, transform: styles.transform }}
                   />
-                  <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <ZoomIn className="w-8 h-8 text-white drop-shadow-md" />
+                  <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                    <ZoomIn className="w-8 h-8 text-white drop-shadow-md transform scale-90 group-hover:scale-100 transition-transform duration-300" />
                   </div>
                 </div>
               )}

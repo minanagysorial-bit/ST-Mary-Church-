@@ -134,10 +134,22 @@ export const LiveStreamPage: React.FC = () => {
             
             {/* Live Indicator Topbar */}
             <div className="bg-rose-600 text-white px-6 py-3 flex items-center justify-between text-xs sm:text-sm font-bold">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-white rounded-full animate-ping shrink-0" />
-                <span className="w-2.5 h-2.5 bg-white rounded-full absolute shrink-0" />
-                <span className="font-tajawal pr-1 text-white select-none">بث مباشر الآن من الكنيسة</span>
+              <div className="flex items-center gap-3">
+                {/* 🎵 Audio Wave Equalizer Animation */}
+                <div className="flex items-center gap-1 bg-black/20 px-2 py-1 rounded-lg border border-white/20" title="الصوت والبث يعملان مباشرة">
+                  <div className="flex items-end gap-0.5 h-5 px-0.5">
+                    <span className="w-1 bg-[#fed65b] rounded-full wave-bar-1" />
+                    <span className="w-1 bg-[#fed65b] rounded-full wave-bar-2" />
+                    <span className="w-1 bg-[#fed65b] rounded-full wave-bar-3" />
+                    <span className="w-1 bg-[#fed65b] rounded-full wave-bar-4" />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-white rounded-full animate-ping shrink-0" />
+                  <span className="w-2.5 h-2.5 bg-white rounded-full shrink-0 shadow-[0_0_8px_white]" />
+                  <span className="font-tajawal pr-1 text-white select-none">بث مباشر الآن من الكنيسة</span>
+                </div>
               </div>
               <button
                 onClick={() => fetchStreamSettings(true)}

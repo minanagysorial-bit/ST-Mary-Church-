@@ -633,7 +633,7 @@ export const LiturgiesSchedulePage: React.FC = () => {
 
         {/* ⛪ TAB 1: LITURGIES SCHEDULE */}
         {activeTab === 'liturgies' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-tab-transition">
             {/* Weekly Navigation Selector Bar */}
             <div className="bg-white border border-slate-200 p-4 rounded-3xl shadow-sm space-y-3">
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -824,7 +824,7 @@ export const LiturgiesSchedulePage: React.FC = () => {
 
         {/* 📅 TAB 2: FIXED CHURCH SERVICES & MEETINGS SCHEDULE */}
         {activeTab === 'services' && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className="space-y-6 animate-tab-transition">
             
             {/* Top Toolbar: Search + Days Filter + View Toggle */}
             <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
