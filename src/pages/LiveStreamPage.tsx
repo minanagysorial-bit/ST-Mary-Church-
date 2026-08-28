@@ -18,15 +18,15 @@ export const LiveStreamPage: React.FC = () => {
     description: string;
   } | null>(null);
 
-  // Helper to extract YouTube video ID and ensure rel=0
+  // Helper to extract YouTube video ID and ensure rel=0 & autoplay
   const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return '';
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     const videoId = (match && match[2].length === 11) ? match[2] : null;
     return videoId
-      ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`
-      : `https://www.youtube.com/embed/live_stream?channel=${OFFICIAL_CHURCH_CHANNEL_ID}&autoplay=1&rel=0`;
+      ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&enablejsapi=1`
+      : `https://www.youtube.com/embed/live_stream?channel=${OFFICIAL_CHURCH_CHANNEL_ID}&autoplay=1&rel=0&playsinline=1&enablejsapi=1`;
   };
 
   const fetchStreamSettings = async (showRefresh = false) => {
@@ -45,7 +45,7 @@ export const LiveStreamPage: React.FC = () => {
           if (liveData.isLive && liveData.videoId) {
             setAutoStreamData({
               isActive: true,
-              embedUrl: `https://www.youtube.com/embed/${liveData.videoId}?autoplay=1&rel=0`,
+              embedUrl: `https://www.youtube.com/embed/${liveData.videoId}?autoplay=1&rel=0&playsinline=1&enablejsapi=1`,
               title: liveData.title || 'البث المباشر - كنيسة السيدة العذراء مريم بمحرم بك',
               description: 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية المنقولة مباشرة من كنيسة العذراء بمحرم بك.'
             });
@@ -86,7 +86,7 @@ export const LiveStreamPage: React.FC = () => {
   } else if (forceLive) {
     // User triggered direct channel live player
     isStreamActive = true;
-    embedUrl = `https://www.youtube.com/embed/live_stream?channel=${OFFICIAL_CHURCH_CHANNEL_ID}&autoplay=1&rel=0`;
+    embedUrl = `https://www.youtube.com/embed/live_stream?channel=${OFFICIAL_CHURCH_CHANNEL_ID}&autoplay=1&rel=0&playsinline=1&enablejsapi=1`;
     title = 'البث المباشر المباشر - قناة كنيسة العذراء مريم بمحرم بك';
     description = 'مشغل البث المباشر المباشر للقناة الرسمية لكنيسة السيدة العذراء مريم بمحرم بك.';
   } else if (settings.live_stream_active === 'true' && settings.live_stream_youtube_url) {
