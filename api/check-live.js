@@ -23,48 +23,54 @@ export default async function handler(req, res) {
   let title = 'البث المباشر - كنيسة السيدة العذراء مريم بمحرم بك';
 
   try {
-    const liveUrl = `https://www.youtube.com/channel/${OFFICIAL_CHURCH_CHANNEL_ID}/live`;
-    const liveRes = await fetch(liveUrl, {
+    // 1. Query Church Channel's Streams Tab directly
+    const streamsUrl = `https://www.youtube.com/channel/${OFFICIAL_CHURCH_CHANNEL_ID}/streams`;
+    const streamsRes = await fetch(streamsUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         'Accept-Language': 'ar,en-US;q=0.9,en;q=0.8',
         'Cookie': 'CONSENT=YES+cb.20210720-07-p0.en+FX+410; SOCS=CAESEwgDEgk2MTQ1NzU4MTQaAmVuIAEaBgiA_LyaBg'
-      },
-      redirect: 'follow'
+      }
     });
 
-    if (liveRes.ok) {
-      const html = await liveRes.text();
+    if (streamsRes.ok) {
+      const html = await streamsRes.text();
+      const vids = [...html.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)].map(m => m[1]);
+      const uniqueVids = [...new Set(vids)];
 
-      // Ensure the content strictly belongs to our official church channel
-      const belongsToOurChurch = html.includes(OFFICIAL_CHURCH_CHANNEL_ID) || 
-                                 html.includes('tibarthenos') || 
-                                 html.includes('محرم بك') ||
-                                 html.includes('العذراء');
+      if (uniqueVids.length > 0) {
+        // Inspect the latest stream on the channel (first video)
+        const latestVid = uniqueVids[0];
+        const wRes = await fetch(`https://www.youtube.com/watch?v=${latestVid}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Cookie': 'CONSENT=YES+cb.20210720-07-p0.en+FX+410; SOCS=CAESEwgDEgk2MTQ1NzU4MTQaAmVuIAEaBgiA_LyaBg'
+          }
+        });
 
-      if (belongsToOurChurch) {
-        const isOffline = html.includes('"status":"LIVE_STREAM_OFFLINE"') || 
-                          html.includes('LIVE_STREAM_OFFLINE') ||
-                          html.includes('"playabilityStatus":{"status":"LIVE_STREAM_OFFLINE"');
+        if (wRes.ok) {
+          const wHtml = await wRes.text();
+          const channelMatch = (wHtml.match(/"channelId":"([^"]+)"/) || [])[1];
+          const isOurChannel = channelMatch === OFFICIAL_CHURCH_CHANNEL_ID || wHtml.includes('tibarthenos');
 
-        const liveDetected = (
-          html.includes('"isLive":true') ||
-          html.includes('"isLiveBroadcast":true') || 
-          html.includes('"status":"LIVE"') ||
-          html.includes('BADGE_STYLE_TYPE_LIVE_NOW') ||
-          html.includes('"label":"LIVE"')
-        ) && !isOffline;
+          if (isOurChannel) {
+            const isOffline = wHtml.includes('"status":"LIVE_STREAM_OFFLINE"') || wHtml.includes('LIVE_STREAM_OFFLINE');
+            const liveDetected = (
+              wHtml.includes('"isLive":true') || 
+              wHtml.includes('"isLiveBroadcast":true') ||
+              wHtml.includes('watching now') ||
+              wHtml.includes('يشاهد الآن')
+            ) && !isOffline;
 
-        const canonicalMatch = html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})">/);
-        const detectedId = canonicalMatch ? canonicalMatch[1] : (html.match(/"videoId":"([a-zA-Z0-9_-]{11})"/) || [])[1];
+            const titleMatch = wHtml.match(/<meta property="og:title" content="([^"]+)">/) || wHtml.match(/<meta name="title" content="([^"]+)">/);
+            const detectedTitle = titleMatch ? titleMatch[1].replace(' - YouTube', '').trim() : title;
 
-        const titleMatch = html.match(/<meta property="og:title" content="([^"]+)">/) || html.match(/<meta name="title" content="([^"]+)">/);
-        const detectedTitle = titleMatch ? titleMatch[1].replace(' - YouTube', '').trim() : title;
-
-        if (detectedId && liveDetected) {
-          isLive = true;
-          videoId = detectedId;
-          title = detectedTitle;
+            if (liveDetected) {
+              isLive = true;
+              videoId = latestVid;
+              title = detectedTitle;
+            }
+          }
         }
       }
     }
