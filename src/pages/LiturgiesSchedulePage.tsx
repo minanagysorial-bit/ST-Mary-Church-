@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { api, Liturgy, ChurchServiceCategory } from '../lib/api';
+import { api, Liturgy } from '../lib/api';
 import {
   Calendar,
   Clock,
@@ -20,10 +20,17 @@ import {
   Smile,
   ShieldCheck,
   CheckCircle2,
-  Phone
+  Phone,
+  Search,
+  BookOpen,
+  HeartHandshake,
+  LayoutList,
+  Grid,
+  Sparkle,
+  BookmarkCheck
 } from 'lucide-react';
 import { getCopticDate } from '../lib/copticReadings';
-import { DEFAULT_SERVICE_SCHEDULES, type DayOfWeekArabic } from '../lib/attendanceStatusHelper';
+import { type DayOfWeekArabic } from '../lib/attendanceStatusHelper';
 
 export const PRIEST_NAMES_LIST = [
   'ابونا مرقس ميلاد',
@@ -34,139 +41,328 @@ export const PRIEST_NAMES_LIST = [
   'ابونا موسى وجيه'
 ];
 
-interface ChurchServiceDisplayItem {
+export interface ChurchServiceDisplayItem {
   id: string;
   name: string;
-  category: ChurchServiceCategory;
+  category: string;
   day: DayOfWeekArabic;
-  startTime: string;
-  endTime: string;
+  startTime24: string; // for strict chronological sorting (e.g. "07:00", "09:00", "11:00", "12:00", "14:30", "16:30", "17:00", "18:00", "19:00", "19:30", "20:00")
   formattedTime: string;
   targetStage: string;
+  periodicity: string;
+  iconType: 'youth_boys' | 'youth_girls' | 'kids_boys' | 'kids_girls' | 'prep_boys' | 'prep_girls' | 'family' | 'men' | 'women' | 'graduates' | 'bible' | 'servants' | 'special_needs' | 'general' | 'care';
   iconBg: string;
   iconText: string;
+  badgeBg: string;
 }
 
 export const FIXED_CHURCH_SERVICES: ChurchServiceDisplayItem[] = [
+  // ===================== الجمعة =====================
   {
-    id: 's_1',
+    id: 'fri_1',
     name: 'خدمة ثانوي بنين',
     category: 'شباب ثانوي',
     day: 'الجمعة',
-    startTime: '09:00',
-    endTime: '11:30',
-    formattedTime: '٩:٠٠ ص - ١١:٣٠ ص',
-    targetStage: 'شباب المرحلة الثانوية (أولى - ثانية - ثالثة ثانوي)',
+    startTime24: '09:00',
+    formattedTime: '٩:٠٠ ص',
+    targetStage: 'شباب المرحلة الثانوية (بنين)',
+    periodicity: 'أسبوعي',
+    iconType: 'youth_boys',
     iconBg: 'bg-blue-100',
-    iconText: 'text-blue-900'
+    iconText: 'text-blue-900',
+    badgeBg: 'bg-blue-50 text-blue-900 border-blue-200'
   },
   {
-    id: 's_2',
+    id: 'fri_2',
     name: 'خدمة ابتدائي بنات',
     category: 'ابتدائي بنات',
     day: 'الجمعة',
-    startTime: '10:30',
-    endTime: '13:00',
-    formattedTime: '١٠:٣٠ ص - ١:٠٠ م',
-    targetStage: 'بنات المرحلة الابتدائية (من الصف الأول للسادس)',
+    startTime24: '11:00',
+    formattedTime: '١١:٠٠ ص',
+    targetStage: 'فتيات المرحلة الابتدائية (من الصف الأول للسادس)',
+    periodicity: 'أسبوعي',
+    iconType: 'kids_girls',
     iconBg: 'bg-rose-100',
-    iconText: 'text-rose-900'
+    iconText: 'text-rose-900',
+    badgeBg: 'bg-rose-50 text-rose-900 border-rose-200'
   },
   {
-    id: 's_3',
-    name: 'خدمة فتيات إعدادي',
+    id: 'fri_3',
+    name: 'خدمة إعدادي بنات',
     category: 'فتيات إعدادي',
     day: 'الجمعة',
-    startTime: '11:00',
-    endTime: '13:30',
-    formattedTime: '١١:٠٠ ص - ١:٣٠ م',
-    targetStage: 'بنات المرحلة الإعدادية (أولى - ثانية - ثالثة إعدادي)',
+    startTime24: '12:00',
+    formattedTime: '١٢:٠٠ ظهراً - ٢:٠٠ م',
+    targetStage: 'فتيات المرحلة الإعدادية (أولى - ثانية - ثالثة إعدادي)',
+    periodicity: 'أسبوعي',
+    iconType: 'prep_girls',
     iconBg: 'bg-purple-100',
-    iconText: 'text-purple-900'
+    iconText: 'text-purple-900',
+    badgeBg: 'bg-purple-50 text-purple-900 border-purple-200'
   },
   {
-    id: 's_4',
+    id: 'fri_4',
     name: 'خدمة ابتدائي بنين',
     category: 'ابتدائي بنين',
     day: 'الجمعة',
-    startTime: '14:30',
-    endTime: '17:00',
-    formattedTime: '٢:٣٠ ظهراً - ٥:٠٠ م',
+    startTime24: '14:30',
+    formattedTime: '٢:٣٠ م',
     targetStage: 'بنين المرحلة الابتدائية (من الصف الأول للسادس)',
+    periodicity: 'أسبوعي',
+    iconType: 'kids_boys',
     iconBg: 'bg-amber-100',
-    iconText: 'text-amber-900'
+    iconText: 'text-amber-900',
+    badgeBg: 'bg-amber-50 text-amber-900 border-amber-200'
   },
   {
-    id: 's_5',
-    name: 'خدمة فتيان إعدادي',
+    id: 'fri_5',
+    name: 'خدمة إعدادي بنين',
     category: 'فتيان إعدادي',
     day: 'الجمعة',
-    startTime: '16:30',
-    endTime: '19:00',
-    formattedTime: '٤:٣٠ م - ٧:٠٠ م',
+    startTime24: '16:30',
+    formattedTime: '٤:٣٠ م',
     targetStage: 'فتيان المرحلة الإعدادية (أولى - ثانية - ثالثة إعدادي)',
+    periodicity: 'أسبوعي',
+    iconType: 'prep_boys',
     iconBg: 'bg-cyan-100',
-    iconText: 'text-cyan-900'
+    iconText: 'text-cyan-900',
+    badgeBg: 'bg-cyan-50 text-cyan-900 border-cyan-200'
   },
   {
-    id: 's_6',
+    id: 'fri_6',
+    name: 'إجتماع الرجال',
+    category: 'اجتماع عام',
+    day: 'الجمعة',
+    startTime24: '19:00',
+    formattedTime: '٧:٠٠ م',
+    targetStage: 'رجال وأرباب الأسر بالكنيسة',
+    periodicity: 'أسبوعي',
+    iconType: 'men',
+    iconBg: 'bg-indigo-100',
+    iconText: 'text-indigo-900',
+    badgeBg: 'bg-indigo-50 text-indigo-900 border-indigo-200'
+  },
+  {
+    id: 'fri_7',
+    name: 'اجتماع لمسة حب (حديثي الزواج)',
+    category: 'رعاية الأسرة',
+    day: 'الجمعة',
+    startTime24: '19:00',
+    formattedTime: '٧:٠٠ م',
+    targetStage: 'المتزوجون حديثاً والمقبلون على الزواج',
+    periodicity: 'الجمعة الأولى من كل شهر',
+    iconType: 'family',
+    iconBg: 'bg-pink-100',
+    iconText: 'text-pink-900',
+    badgeBg: 'bg-pink-50 text-pink-900 border-pink-200'
+  },
+
+  // ===================== السبت =====================
+  {
+    id: 'sat_1',
+    name: 'خدمة الأرامل',
+    category: 'خدمة ورعاية',
+    day: 'السبت',
+    startTime24: '07:00',
+    formattedTime: '٧:٠٠ ص (بالقداس الإلهي)',
+    targetStage: 'أمهاتنا وأخواتنا الأرامل',
+    periodicity: 'السبت الأول من كل شهر',
+    iconType: 'care',
+    iconBg: 'bg-emerald-100',
+    iconText: 'text-emerald-900',
+    badgeBg: 'bg-emerald-50 text-emerald-900 border-emerald-200'
+  },
+  {
+    id: 'sat_2',
+    name: 'خدمة المرضى',
+    category: 'خدمة ورعاية',
+    day: 'السبت',
+    startTime24: '07:00',
+    formattedTime: '٧:٠٠ ص (بالقداس الإلهي)',
+    targetStage: 'المرضى وأسرهم وبركة الصلاة من أجل شفائهم',
+    periodicity: 'السبت الثاني من كل شهر',
+    iconType: 'care',
+    iconBg: 'bg-teal-100',
+    iconText: 'text-teal-900',
+    badgeBg: 'bg-teal-50 text-teal-900 border-teal-200'
+  },
+
+  // ===================== الأحد =====================
+  {
+    id: 'sun_1',
+    name: 'خدمة ذوي الهمم (بنات)',
+    category: 'ذوي القدرات والهمم',
+    day: 'الأحد',
+    startTime24: '17:00',
+    formattedTime: '٥:٠٠ م',
+    targetStage: 'بنات وفتيات ذوي القدرات والهمم المباركة',
+    periodicity: 'أسبوعي',
+    iconType: 'special_needs',
+    iconBg: 'bg-violet-100',
+    iconText: 'text-violet-900',
+    badgeBg: 'bg-violet-50 text-violet-900 border-violet-200'
+  },
+  {
+    id: 'sun_2',
+    name: 'اجتماع الخريجين',
+    category: 'خريجين ومهنيين',
+    day: 'الأحد',
+    startTime24: '19:00',
+    formattedTime: '٧:٠٠ م',
+    targetStage: 'الخريجين والخريجات والشباب المهنيين وسوق العمل',
+    periodicity: 'أسبوعي',
+    iconType: 'graduates',
+    iconBg: 'bg-sky-100',
+    iconText: 'text-sky-900',
+    badgeBg: 'bg-sky-50 text-sky-900 border-sky-200'
+  },
+  {
+    id: 'sun_3',
+    name: 'خدمة يسوع بيحبك',
+    category: 'رعاية وافتقاد',
+    day: 'الأحد',
+    startTime24: '20:00',
+    formattedTime: '٨:٠٠ م',
+    targetStage: 'اجتماع عام للرعاية والافتقاد الروحي لجميع الأعمار',
+    periodicity: 'أسبوعي',
+    iconType: 'general',
+    iconBg: 'bg-rose-100',
+    iconText: 'text-rose-900',
+    badgeBg: 'bg-rose-50 text-rose-900 border-rose-200'
+  },
+
+  // ===================== الإثنين =====================
+  {
+    id: 'mon_1',
+    name: 'خدمة ذوي الهمم (بنين)',
+    category: 'ذوي القدرات والهمم',
+    day: 'الإثنين',
+    startTime24: '17:00',
+    formattedTime: '٥:٠٠ م',
+    targetStage: 'بنين وفتيان ذوي القدرات والهمم المباركة',
+    periodicity: 'أسبوعي',
+    iconType: 'special_needs',
+    iconBg: 'bg-cyan-100',
+    iconText: 'text-cyan-900',
+    badgeBg: 'bg-cyan-50 text-cyan-900 border-cyan-200'
+  },
+  {
+    id: 'mon_2',
+    name: 'إعداد خدام',
+    category: 'إعداد وتدريب',
+    day: 'الإثنين',
+    startTime24: '18:00',
+    formattedTime: '٦:٠٠ م',
+    targetStage: 'الخدام والدارسون بكورسات إعداد الخدام',
+    periodicity: 'أسبوعي',
+    iconType: 'servants',
+    iconBg: 'bg-amber-100',
+    iconText: 'text-amber-900',
+    badgeBg: 'bg-amber-50 text-amber-900 border-amber-200'
+  },
+  {
+    id: 'mon_3',
+    name: 'درس الكتاب المقدس',
+    category: 'دراسة كتاب',
+    day: 'الإثنين',
+    startTime24: '19:00',
+    formattedTime: '٧:٠٠ م',
+    targetStage: 'دراسة وتأمل في أسفار الكتاب المقدس لعموم الشعب',
+    periodicity: 'أسبوعي',
+    iconType: 'bible',
+    iconBg: 'bg-blue-100',
+    iconText: 'text-blue-900',
+    badgeBg: 'bg-blue-50 text-blue-900 border-blue-200'
+  },
+
+  // ===================== الثلاثاء =====================
+  {
+    id: 'tue_1',
+    name: 'إعداد خدام',
+    category: 'إعداد وتدريب',
+    day: 'الثلاثاء',
+    startTime24: '18:00',
+    formattedTime: '٦:٠٠ م',
+    targetStage: 'الخدام والدارسون بكورسات إعداد الخدام',
+    periodicity: 'أسبوعي',
+    iconType: 'servants',
+    iconBg: 'bg-amber-100',
+    iconText: 'text-amber-900',
+    badgeBg: 'bg-amber-50 text-amber-900 border-amber-200'
+  },
+  {
+    id: 'tue_2',
+    name: 'خدمة شباب جامعة',
+    category: 'شباب جامعة',
+    day: 'الثلاثاء',
+    startTime24: '19:00',
+    formattedTime: '٧:٠٠ م',
+    targetStage: 'الشباب والطلبة الجامعيين',
+    periodicity: 'أسبوعي',
+    iconType: 'youth_boys',
+    iconBg: 'bg-indigo-100',
+    iconText: 'text-indigo-900',
+    badgeBg: 'bg-indigo-50 text-indigo-900 border-indigo-200'
+  },
+
+  // ===================== الأربعاء =====================
+  {
+    id: 'wed_1',
+    name: 'اجتماع السيدات',
+    category: 'اجتماع عام',
+    day: 'الأربعاء',
+    startTime24: '17:00',
+    formattedTime: '٥:٠٠ م',
+    targetStage: 'أمهات وسيدات الكنيسة',
+    periodicity: 'أسبوعي',
+    iconType: 'women',
+    iconBg: 'bg-pink-100',
+    iconText: 'text-pink-900',
+    badgeBg: 'bg-pink-50 text-pink-900 border-pink-200'
+  },
+  {
+    id: 'wed_2',
+    name: 'خدمة عرس قانا الجليل',
+    category: 'رعاية الأسرة',
+    day: 'الأربعاء',
+    startTime24: '19:00',
+    formattedTime: '٧:٠٠ م - ٩:٠٠ م',
+    targetStage: 'المتزوجون والأسر الشابة والمقبلون على الزواج',
+    periodicity: 'أسبوعي',
+    iconType: 'family',
+    iconBg: 'bg-rose-100',
+    iconText: 'text-rose-900',
+    badgeBg: 'bg-rose-50 text-rose-900 border-rose-200'
+  },
+
+  // ===================== الخميس =====================
+  {
+    id: 'thu_1',
     name: 'خدمة ثانوي بنات',
     category: 'شابات ثانوي',
     day: 'الخميس',
-    startTime: '18:00',
-    endTime: '20:30',
-    formattedTime: '٦:٠٠ م - ٨:٣٠ م',
-    targetStage: 'شابات المرحلة الثانوية (أولى - ثانية - ثالثة ثانوي)',
+    startTime24: '17:00',
+    formattedTime: '٥:٠٠ م',
+    targetStage: 'شابات المرحلة الثانوية (بنات)',
+    periodicity: 'أسبوعي',
+    iconType: 'youth_girls',
     iconBg: 'bg-pink-100',
-    iconText: 'text-pink-900'
+    iconText: 'text-pink-900',
+    badgeBg: 'bg-pink-50 text-pink-900 border-pink-200'
   },
   {
-    id: 's_7',
+    id: 'thu_2',
     name: 'خدمة شابات جامعة',
-    category: 'خدمة شابات جامعة',
+    category: 'شابات جامعة',
     day: 'الخميس',
-    startTime: '19:00',
-    endTime: '21:30',
-    formattedTime: '٧:٠٠ م - ٩:٣٠ م',
-    targetStage: 'الشابات والطالبات الجامعيات والخريجات الجدد',
+    startTime24: '19:30',
+    formattedTime: '٧:٣٠ م',
+    targetStage: 'الشابات والطالبات الجامعيات والخريجات',
+    periodicity: 'أسبوعي',
+    iconType: 'youth_girls',
     iconBg: 'bg-emerald-100',
-    iconText: 'text-emerald-900'
-  },
-  {
-    id: 's_8',
-    name: 'خدمة شباب جامعة',
-    category: 'خدمة شباب جامعة',
-    day: 'الثلاثاء',
-    startTime: '19:00',
-    endTime: '21:30',
-    formattedTime: '٧:٠٠ م - ٩:٣٠ م',
-    targetStage: 'الشباب والطلبة الجامعيين',
-    iconBg: 'bg-indigo-100',
-    iconText: 'text-indigo-900'
-  },
-  {
-    id: 's_9',
-    name: 'خدمة عرس قانا الجليل',
-    category: 'عرس قانا الجليل',
-    day: 'الأربعاء',
-    startTime: '19:00',
-    endTime: '21:30',
-    formattedTime: '٧:٠٠ م - ٩:٣٠ م',
-    targetStage: 'المقبلين على الزواج والمتزوجين حديثاً والأسر الشابة',
-    iconBg: 'bg-rose-100',
-    iconText: 'text-rose-900'
-  },
-  {
-    id: 's_10',
-    name: 'خدمة خريجين',
-    category: 'خريجين',
-    day: 'الأحد',
-    startTime: '19:00',
-    endTime: '21:30',
-    formattedTime: '٧:٠٠ م - ٩:٣٠ م',
-    targetStage: 'الخريجين والمهنيين وسوق العمل',
-    iconBg: 'bg-teal-100',
-    iconText: 'text-teal-900'
+    iconText: 'text-emerald-900',
+    badgeBg: 'bg-emerald-50 text-emerald-900 border-emerald-200'
   }
 ];
 
@@ -176,8 +372,11 @@ export const LiturgiesSchedulePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedServiceDay, setSelectedServiceDay] = useState<string>('الكل');
+  const [serviceSearchQuery, setServiceSearchQuery] = useState<string>('');
+  const [serviceViewMode, setServiceViewMode] = useState<'table' | 'cards'>('table');
 
-  const DAYS_OF_WEEK = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const DAYS_OF_WEEK: DayOfWeekArabic[] = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const SERVICES_DAYS_ORDER: DayOfWeekArabic[] = ['الجمعة', 'السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
 
   const now = useMemo(() => new Date(), []);
   const currentYear = now.getFullYear();
@@ -249,8 +448,8 @@ export const LiturgiesSchedulePage: React.FC = () => {
 
   // Default active week is the week that contains today
   const initialWeekIndex = useMemo(() => {
-    const found = currentMonthWeeks.findIndex(w => w.containsToday);
-    return found !== -1 ? found : 0;
+    const foundIdx = currentMonthWeeks.findIndex(w => w.containsToday);
+    return foundIdx !== -1 ? foundIdx : 0;
   }, [currentMonthWeeks]);
 
   const [activeWeekIndex, setActiveWeekIndex] = useState<number>(initialWeekIndex);
@@ -319,12 +518,55 @@ export const LiturgiesSchedulePage: React.FC = () => {
     return groups;
   }, [liturgies]);
 
-  const currentWeek = currentMonthWeeks[activeWeekIndex] || currentMonthWeeks[0];
+  // Group services by day in exact chronological order from morning to night
+  const groupedServicesByDay = useMemo(() => {
+    const query = serviceSearchQuery.trim().toLowerCase();
+    const filtered = FIXED_CHURCH_SERVICES.filter(s => {
+      const matchesDay = selectedServiceDay === 'الكل' || s.day === selectedServiceDay;
+      const matchesQuery = !query || 
+        s.name.toLowerCase().includes(query) || 
+        s.category.toLowerCase().includes(query) ||
+        s.targetStage.toLowerCase().includes(query) ||
+        s.periodicity.toLowerCase().includes(query) ||
+        s.day.includes(query);
+      return matchesDay && matchesQuery;
+    });
 
-  const filteredChurchServices = useMemo(() => {
-    if (selectedServiceDay === 'الكل') return FIXED_CHURCH_SERVICES;
-    return FIXED_CHURCH_SERVICES.filter(s => s.day === selectedServiceDay);
-  }, [selectedServiceDay]);
+    const groups: { day: DayOfWeekArabic; services: ChurchServiceDisplayItem[] }[] = [];
+    const daysToInclude = selectedServiceDay === 'الكل' ? SERVICES_DAYS_ORDER : [selectedServiceDay];
+
+    daysToInclude.forEach(d => {
+      const dayServices = filtered
+        .filter(s => s.day === d)
+        .sort((a, b) => a.startTime24.localeCompare(b.startTime24));
+      
+      if (dayServices.length > 0) {
+        groups.push({
+          day: d as DayOfWeekArabic,
+          services: dayServices
+        });
+      }
+    });
+
+    return groups;
+  }, [selectedServiceDay, serviceSearchQuery]);
+
+  const getServiceIcon = (iconType: string) => {
+    switch (iconType) {
+      case 'bible': return <BookOpen className="w-5 h-5" />;
+      case 'family': return <HeartHandshake className="w-5 h-5" />;
+      case 'servants': return <GraduationCap className="w-5 h-5" />;
+      case 'special_needs': return <Smile className="w-5 h-5" />;
+      case 'care': return <ShieldCheck className="w-5 h-5" />;
+      case 'kids_boys':
+      case 'kids_girls': return <Baby className="w-5 h-5" />;
+      case 'graduates': return <GraduationCap className="w-5 h-5" />;
+      case 'general': return <Heart className="w-5 h-5" />;
+      default: return <Users className="w-5 h-5" />;
+    }
+  };
+
+  const currentWeek = currentMonthWeeks[activeWeekIndex] || currentMonthWeeks[0];
 
   return (
     <div className="min-h-screen bg-[#fcfbf9] py-10 px-4 sm:px-6 lg:px-8 font-cairo text-right" dir="rtl">
@@ -584,98 +826,275 @@ export const LiturgiesSchedulePage: React.FC = () => {
         {activeTab === 'services' && (
           <div className="space-y-6 animate-fadeIn">
             
-            {/* Days Filter Pills */}
-            <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs space-y-2">
-              <span className="text-xs font-bold text-slate-500 block mb-1">تصفية حسب يوم الخدمة:</span>
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                {['الكل', 'الجمعة', 'الخميس', 'الثلاثاء', 'الأربعاء', 'الأحد'].map(day => (
+            {/* Top Toolbar: Search + Days Filter + View Toggle */}
+            <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              
+              {/* Search Bar & View Mode Switcher */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={serviceSearchQuery}
+                    onChange={(e) => setServiceSearchQuery(e.target.value)}
+                    placeholder="ابحث عن خدمة، اجتماع، مرحلة، أو يوم (مثال: ثانوي، إعداد خدام، ذوي الهمم)..."
+                    className="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#002366] focus:bg-white transition-all"
+                  />
+                  {serviceSearchQuery && (
+                    <button
+                      onClick={() => setServiceSearchQuery('')}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 bg-slate-200/60 hover:bg-slate-200 w-5 h-5 rounded-full flex items-center justify-center transition-all"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* View Switcher: Table vs Cards */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200/70 shrink-0 self-center">
                   <button
-                    key={day}
-                    onClick={() => setSelectedServiceDay(day)}
-                    className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 ${
-                      selectedServiceDay === day
-                        ? 'bg-[#002366] text-[#fed65b] shadow-md shadow-[#002366]/20'
-                        : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
+                    onClick={() => setServiceViewMode('table')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      serviceViewMode === 'table'
+                        ? 'bg-[#002366] text-[#fed65b] shadow-sm shadow-[#002366]/20'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    {day}
+                    <LayoutList className="w-3.5 h-3.5" />
+                    <span>جدول منظم</span>
                   </button>
-                ))}
+                  <button
+                    onClick={() => setServiceViewMode('cards')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      serviceViewMode === 'cards'
+                        ? 'bg-[#002366] text-[#fed65b] shadow-sm shadow-[#002366]/20'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Grid className="w-3.5 h-3.5" />
+                    <span>كروت</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Days Filter Pills */}
+              <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                <span className="text-[11px] font-extrabold text-slate-400 block">تصفية حسب اليوم:</span>
+                <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 no-scrollbar">
+                  {['الكل', ...SERVICES_DAYS_ORDER].map(day => {
+                    const count = day === 'الكل'
+                      ? FIXED_CHURCH_SERVICES.length
+                      : FIXED_CHURCH_SERVICES.filter(s => s.day === day).length;
+                    const isSelected = selectedServiceDay === day;
+
+                    return (
+                      <button
+                        key={day}
+                        onClick={() => setSelectedServiceDay(day)}
+                        className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                          isSelected
+                            ? 'bg-[#002366] text-[#fed65b] shadow-md shadow-[#002366]/20 ring-2 ring-[#002366]/30'
+                            : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{day}</span>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          isSelected ? 'bg-[#fed65b] text-[#00174a]' : 'bg-slate-200/70 text-slate-600'
+                        }`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
 
-            {/* Services Grid (All 10 Fixed Services) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredChurchServices.map((service, idx) => (
-                <div
-                  key={service.id}
-                  className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 hover:border-[#002366] shadow-sm hover:shadow-md transition-all space-y-4 flex flex-col justify-between"
+            {/* Content: When no services match filter/search */}
+            {groupedServicesByDay.length === 0 ? (
+              <div className="bg-white rounded-3xl p-10 text-center space-y-3 border border-slate-200 shadow-sm">
+                <div className="w-14 h-14 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+                  <Search className="w-7 h-7" />
+                </div>
+                <h3 className="font-tajawal text-lg font-bold text-slate-800">لا توجد خدمات مطابقة لخيارات البحث</h3>
+                <p className="text-xs text-slate-500 font-semibold max-w-sm mx-auto">
+                  جرب البحث بكلمات أخرى أو اختر "الكل" لعرض جميع مواعيد خدمات واجتماعات الكنيسة.
+                </p>
+                <button
+                  onClick={() => { setSelectedServiceDay('الكل'); setServiceSearchQuery(''); }}
+                  className="bg-[#002366] text-[#fed65b] text-xs font-bold px-4 py-2 rounded-xl shadow-xs hover:bg-[#00174a] transition-all"
                 >
-                  <div className="space-y-3">
+                  إعادة ضبط الفلاتر
+                </button>
+              </div>
+            ) : (
+              /* Grouped Days List (Chronological from morning to night) */
+              <div className="space-y-6">
+                {groupedServicesByDay.map(group => (
+                  <div
+                    key={group.day}
+                    className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all overflow-hidden"
+                  >
                     
-                    {/* Header: Title + Day & Time Badge */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-2xl ${service.iconBg} ${service.iconText} flex items-center justify-center font-bold text-base shadow-xs shrink-0`}>
-                          <Users className="w-6 h-6" />
+                    {/* Day Header Banner */}
+                    <div className="bg-gradient-to-r from-[#00174a] via-[#002366] to-[#001f5c] text-white px-5 sm:px-6 py-3.5 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-[#fed65b]/20 border border-[#fed65b]/40 text-[#fed65b] flex items-center justify-center font-bold">
+                          <Calendar className="w-4 h-4" />
                         </div>
                         <div>
-                          <h3 className="font-tajawal text-base font-extrabold text-[#002366]">
-                            {service.name}
-                          </h3>
-                          <span className="text-[11px] text-slate-500 font-bold">
-                            {service.category}
-                          </span>
+                          <h2 className="font-tajawal text-base sm:text-lg font-extrabold text-[#fed65b]">
+                            يوم {group.day}
+                          </h2>
                         </div>
                       </div>
-
-                      <div className="bg-[#002366] text-[#fed65b] px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-xs shrink-0">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{service.day}</span>
-                      </div>
+                      
+                      <span className="bg-white/10 text-slate-100 text-xs font-extrabold px-3 py-1 rounded-full border border-white/15">
+                        {group.services.length} {group.services.length === 1 ? 'خدمة' : group.services.length === 2 ? 'خدمتان' : 'خدمات واجتماعات'}
+                      </span>
                     </div>
 
-                    {/* Time & Target Info */}
-                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 text-xs">
-                      <div className="flex items-center justify-between font-bold">
-                        <span className="text-slate-500 flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-[#d4af37]" />
-                          <span>الميعاد الأسبوعي:</span>
-                        </span>
-                        <span className="text-[#002366] font-tajawal text-xs font-extrabold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                          {service.formattedTime}
-                        </span>
-                      </div>
+                    {/* TABLE VIEW: Clean, Readable, Comfortable Grid Table */}
+                    {serviceViewMode === 'table' ? (
+                      <div className="divide-y divide-slate-100">
+                        
+                        {/* Table Header (Hidden on small mobile for responsive flow) */}
+                        <div className="hidden md:grid grid-cols-12 gap-3 px-6 py-3 bg-slate-50 text-[11px] font-extrabold text-slate-500 border-b border-slate-200">
+                          <div className="col-span-3 flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-[#d4af37]" />
+                            <span>الميعاد والتوقيت</span>
+                          </div>
+                          <div className="col-span-4">الخدمة / الاجتماع</div>
+                          <div className="col-span-3">الفئة والمخدومين</div>
+                          <div className="col-span-2 text-left">دورية الخدمة</div>
+                        </div>
 
-                      <div className="pt-1 text-slate-700 font-semibold leading-relaxed border-t border-slate-200/60">
-                        <span className="text-slate-400 text-[11px] block mb-0.5">الفئة المستهدفة:</span>
-                        <span>{service.targetStage}</span>
+                        {/* Chronological Table Rows */}
+                        {group.services.map((service, idx) => (
+                          <div
+                            key={service.id}
+                            className={`p-4 sm:px-6 sm:py-4 transition-colors hover:bg-slate-50/80 flex flex-col md:grid md:grid-cols-12 gap-3 md:items-center ${
+                              idx % 2 === 1 ? 'bg-slate-50/40' : 'bg-white'
+                            }`}
+                          >
+                            
+                            {/* Col 1: Time */}
+                            <div className="md:col-span-3 flex items-center justify-between md:justify-start gap-2">
+                              <div className="inline-flex items-center gap-1.5 bg-[#002366]/5 border border-[#002366]/15 text-[#002366] px-3 py-1.5 rounded-xl font-tajawal text-xs sm:text-sm font-extrabold shadow-2xs">
+                                <Clock className="w-3.5 h-3.5 text-[#d4af37] shrink-0" />
+                                <span>{service.formattedTime}</span>
+                              </div>
+                              <span className="md:hidden text-[10px] font-bold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-600">
+                                {service.periodicity}
+                              </span>
+                            </div>
+
+                            {/* Col 2: Service Title + Icon + Category Badge */}
+                            <div className="md:col-span-4 flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-xl ${service.iconBg} ${service.iconText} flex items-center justify-center shrink-0 font-bold shadow-2xs`}>
+                                {getServiceIcon(service.iconType)}
+                              </div>
+                              <div className="space-y-0.5">
+                                <h3 className="font-tajawal text-sm sm:text-base font-extrabold text-[#00174a] leading-tight">
+                                  {service.name}
+                                </h3>
+                                <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold border ${service.badgeBg}`}>
+                                  {service.category}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Col 3: Target Stage / Audience */}
+                            <div className="md:col-span-3 text-xs text-slate-600 font-semibold leading-relaxed">
+                              <span className="md:hidden text-slate-400 text-[10px] block font-bold">الفئة المستهدفة:</span>
+                              {service.targetStage}
+                            </div>
+
+                            {/* Col 4: Periodicity (Desktop) */}
+                            <div className="hidden md:flex md:col-span-2 justify-end">
+                              <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full border ${
+                                service.periodicity === 'أسبوعي'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                  : 'bg-amber-50 text-amber-800 border-amber-200'
+                              }`}>
+                                {service.periodicity === 'أسبوعي' ? '✦ خدمة أسبوعية' : service.periodicity}
+                              </span>
+                            </div>
+
+                          </div>
+                        ))}
+
                       </div>
-                    </div>
+                    ) : (
+                      /* CARDS VIEW: Responsive visual grid for the day */
+                      <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5 bg-slate-50/50">
+                        {group.services.map(service => (
+                          <div
+                            key={service.id}
+                            className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-2xs hover:border-[#002366] transition-all space-y-3 flex flex-col justify-between"
+                          >
+                            <div className="space-y-2.5">
+                              
+                              {/* Header: Title + Time */}
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2.5">
+                                  <div className={`w-10 h-10 rounded-xl ${service.iconBg} ${service.iconText} flex items-center justify-center shrink-0 font-bold shadow-2xs`}>
+                                    {getServiceIcon(service.iconType)}
+                                  </div>
+                                  <div>
+                                    <h3 className="font-tajawal text-sm sm:text-base font-extrabold text-[#00174a]">
+                                      {service.name}
+                                    </h3>
+                                    <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold border mt-0.5 ${service.badgeBg}`}>
+                                      {service.category}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="bg-[#002366] text-[#fed65b] px-2.5 py-1 rounded-lg text-xs font-extrabold flex items-center gap-1 shrink-0 shadow-2xs">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{service.formattedTime}</span>
+                                </div>
+                              </div>
+
+                              {/* Target Stage */}
+                              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-700 font-semibold leading-relaxed">
+                                <span className="text-slate-400 text-[10px] block font-bold mb-0.5">الفئة والمخدومين:</span>
+                                {service.targetStage}
+                              </div>
+
+                            </div>
+
+                            {/* Footer periodicity */}
+                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold">
+                              <span className="text-slate-500 font-tajawal">كنيسة السيدة العذراء بمحرم بك</span>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                                service.periodicity === 'أسبوعي'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                  : 'bg-amber-50 text-amber-800 border-amber-200'
+                              }`}>
+                                {service.periodicity === 'أسبوعي' ? '✦ أسبوعي' : service.periodicity}
+                              </span>
+                            </div>
+
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                   </div>
-
-                  {/* Church & Regular Schedule Badge */}
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-bold">
-                    <span className="text-[#002366] font-tajawal font-bold">
-                      كنيسة السيدة العذراء مريم بمحرم بك
-                    </span>
-                    <span className="text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold">
-                      خدمة أسبوعية منتظمة ✦
-                    </span>
-                  </div>
-
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Note & Footer guidance */}
-            <div className="bg-amber-50/70 border border-amber-200/80 p-5 rounded-3xl text-center space-y-2">
+            <div className="bg-gradient-to-r from-amber-50 to-amber-100/60 border border-amber-200/80 p-5 rounded-3xl text-center space-y-2 shadow-xs">
               <p className="font-tajawal text-sm font-extrabold text-[#00174a]">
                 ✝️ جميع اجتماعات وخدمات الكنيسة ترحب بجميع المخدومين والمخدومات
               </p>
-              <p className="text-xs text-slate-600 font-semibold">
-                لأي استفسار أو الاشتراك في إحدى الخدمات، يُرجى التواصل مع الآباء الكهنة أو أمناء الخدمة بكنيسة السيدة العذراء مريم بمحرم بك.
+              <p className="text-xs text-slate-600 font-semibold max-w-xl mx-auto leading-relaxed">
+                لأي استفسار أو رغبة في الاشتراك أو الانضمام لإحدى الخدمات، يُسعدنا تواصلكم مع الآباء الكهنة أو أمناء الخدمة بكنيسة السيدة العذراء مريم بمحرم بك.
               </p>
             </div>
 
