@@ -109,13 +109,94 @@ export const api = {
   },
 
   getSermonById: async (id: string): Promise<Sermon | null> => {
-    const { data, error } = await supabase
-      .from('sermons')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error && error.code !== 'PGRST116') throw error;
-    return data as Sermon | null;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    
+    // 1. If valid UUID, check Supabase DB
+    if (isUuid) {
+      try {
+        const { data, error } = await supabase
+          .from('sermons')
+          .select('*')
+          .eq('id', id)
+          .single();
+        if (!error && data) return data as Sermon;
+      } catch (err) {
+        // Fall through to sync search
+      }
+    } else {
+      try {
+        const { data, error } = await supabase
+          .from('sermons')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (!error && data) return data as Sermon;
+      } catch (err) {
+        // Fall through to sync search
+      }
+    }
+
+    // 2. Search in /api/sync-sermons (the official channel catalog)
+    try {
+      const res = await fetch('/api/sync-sermons');
+      if (res.ok) {
+        const syncData = await res.json();
+        if (syncData.sermons && Array.isArray(syncData.sermons)) {
+          const cleanId = id.replace(/^yt_/, '');
+          const found = syncData.sermons.find((s: any) =>
+            s.id === id ||
+            s.id === `yt_${cleanId}` ||
+            s.id === cleanId ||
+            s.videoId === cleanId ||
+            s.videoId === id ||
+            (s.youtube_url && s.youtube_url.includes(cleanId))
+          );
+          if (found) {
+            return {
+              id: found.id || id,
+              title: found.title,
+              speaker: found.speaker || 'كنيسة السيدة العذراء بمحرم بك',
+              topic: found.topic || 'عظات وكلمات روحية',
+              sermon_date: found.sermon_date || new Date().toISOString().split('T')[0],
+              duration_minutes: found.duration_minutes || 45,
+              youtube_url: found.youtube_url || `https://www.youtube.com/watch?v=${cleanId}`,
+              audio_url: found.audio_url || null,
+              description: found.description || 'عظة وكلمة روحية مباركة من كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية.',
+              play_count: found.play_count || 0,
+              featured: false,
+              created_by: null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Sync API search in getSermonById failed:', err);
+    }
+
+    // 3. Fallback: If id is a valid YouTube video ID (11 chars) or starts with yt_
+    const rawVideoId = id.replace(/^yt_/, '');
+    if (rawVideoId && (rawVideoId.length === 11 || /^[a-zA-Z0-9_-]{11}$/.test(rawVideoId))) {
+      return {
+        id: id,
+        title: 'عظة وكلمة روحية مباركة',
+        speaker: 'كنيسة السيدة العذراء مريم بمحرم بك',
+        topic: 'عظات وكلمات روحية',
+        sermon_date: new Date().toISOString().split('T')[0],
+        duration_minutes: 45,
+        youtube_url: `https://www.youtube.com/watch?v=${rawVideoId}`,
+        audio_url: null,
+        description: 'تسجيل مبارك من كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية.',
+        play_count: 0,
+        featured: false,
+        created_by: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+    }
+
+    return null;
   },
 
   incrementPlayCount: async (id: string): Promise<void> => {

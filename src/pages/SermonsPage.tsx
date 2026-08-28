@@ -168,13 +168,14 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
     return match && match[2].length === 11 ? match[2] : null;
   };
 
-  const renderSermonImage = (youtubeUrl: string | null, sermonId: string) => {
-    const videoId = extractVideoId(youtubeUrl);
+  const renderSermonImage = (sermon: Sermon) => {
+    const videoId = extractVideoId(sermon.youtube_url);
     
     if (videoId) {
       return (
         <Link
-          to={`/sermons/${sermonId}`}
+          to={`/sermons/${sermon.id}`}
+          state={{ sermon }}
           className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-200/50 block group cursor-pointer shadow-sm"
         >
           <img
@@ -198,7 +199,8 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
 
     return (
       <Link
-        to={`/sermons/${sermonId}`}
+        to={`/sermons/${sermon.id}`}
+        state={{ sermon }}
         className="relative aspect-video w-full rounded-2xl overflow-hidden bg-gradient-to-br from-[#002366] to-[#000814] flex flex-col items-center justify-center border border-slate-200/50 text-white/60 group hover:text-white transition-colors cursor-pointer shadow-sm"
       >
         <Volume2 className="w-10 h-10 text-[#fed65b] mb-1.5" />
@@ -377,7 +379,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                     className="bg-white rounded-3xl p-5 border border-slate-200 shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4 group"
                   >
                     <div className="space-y-3">
-                      {renderSermonImage(sermon.youtube_url, sermon.id)}
+                      {renderSermonImage(sermon)}
 
                       <div className="flex items-center justify-between">
                         <span className="bg-[#002366]/10 text-[#002366] text-xs font-bold px-2.5 py-1 rounded-full border border-[#002366]/20">
@@ -389,7 +391,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                         </span>
                       </div>
 
-                      <Link to={`/sermons/${sermon.id}`} className="block">
+                      <Link to={`/sermons/${sermon.id}`} state={{ sermon }} className="block">
                         <h4 className="font-tajawal text-base font-bold text-[#00174a] group-hover:text-[#002366] transition-colors leading-snug line-clamp-2">
                           {sermon.title}
                         </h4>
@@ -413,6 +415,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
 
                       <Link
                         to={`/sermons/${sermon.id}`}
+                        state={{ sermon }}
                         className="w-10 h-10 rounded-xl bg-[#002366] hover:bg-[#00113a] text-[#fed65b] flex items-center justify-center transition-all shadow-md active:scale-95 group-hover:bg-[#fed65b] group-hover:text-[#00174a]"
                         title="تشغيل الفيديو"
                       >
@@ -457,7 +460,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                   </span>
                 </div>
 
-                <Link to={`/sermons/${featuredSermon.id}`} className="block group">
+                <Link to={`/sermons/${featuredSermon.id}`} state={{ sermon: featuredSermon }} className="block group">
                   <h2 className="font-tajawal text-2xl sm:text-3xl font-extrabold text-[#fed65b] leading-snug group-hover:underline">
                     {featuredSermon.title}
                   </h2>
@@ -485,6 +488,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                 <div className="pt-3 flex items-center gap-3">
                   <Link
                     to={`/sermons/${featuredSermon.id}`}
+                    state={{ sermon: featuredSermon }}
                     className="bg-[#fed65b] hover:bg-[#ffe088] text-[#00174a] font-extrabold text-xs px-6 py-3 rounded-xl transition-all shadow-md flex items-center gap-2 active:scale-95"
                   >
                     <Play className="w-4 h-4 fill-current" />
@@ -497,7 +501,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                 {(() => {
                   const videoId = extractVideoId(featuredSermon.youtube_url);
                   return videoId ? (
-                    <Link to={`/sermons/${featuredSermon.id}`} className="w-full h-full relative group cursor-pointer block rounded-xl overflow-hidden">
+                    <Link to={`/sermons/${featuredSermon.id}`} state={{ sermon: featuredSermon }} className="w-full h-full relative group cursor-pointer block rounded-xl overflow-hidden">
                       <img
                         src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
                         alt="Featured Sermon"
@@ -546,7 +550,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                       className="bg-white rounded-3xl p-5 border border-slate-200 shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4 group"
                     >
                       <div className="space-y-3">
-                        {renderSermonImage(sermon.youtube_url, sermon.id)}
+                        {renderSermonImage(sermon)}
 
                         <div className="flex items-center justify-between">
                           <span className="bg-[#002366]/10 text-[#002366] text-xs font-bold px-2.5 py-1 rounded-full border border-[#002366]/20">
@@ -558,7 +562,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                           </span>
                         </div>
 
-                        <Link to={`/sermons/${sermon.id}`} className="block">
+                        <Link to={`/sermons/${sermon.id}`} state={{ sermon }} className="block">
                           <h3 className="font-tajawal text-base font-bold text-[#00174a] group-hover:text-[#002366] transition-colors leading-snug line-clamp-2">
                             {sermon.title}
                           </h3>
@@ -582,6 +586,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
 
                         <Link
                           to={`/sermons/${sermon.id}`}
+                          state={{ sermon }}
                           className="w-10 h-10 rounded-xl bg-[#002366] hover:bg-[#00113a] text-[#fed65b] flex items-center justify-center transition-all shadow-md active:scale-95 group-hover:bg-[#fed65b] group-hover:text-[#00174a]"
                           title="تشغيل العظة"
                         >

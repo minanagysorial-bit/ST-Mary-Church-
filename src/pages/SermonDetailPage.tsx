@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import {
   ChevronLeft,
   Play,
@@ -17,19 +17,46 @@ import { Sermon, api } from '../lib/api';
 
 export const SermonDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [sermon, setSermon] = useState<Sermon | null>(null);
+  const location = useLocation();
+  const stateSermon = (location.state as any)?.sermon as Sermon | undefined;
+
+  const [sermon, setSermon] = useState<Sermon | null>(stateSermon || null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!stateSermon);
 
   useEffect(() => {
     if (id) {
-      setLoading(true);
+      if (!stateSermon) setLoading(true);
       api.getSermonById(id)
-        .then(setSermon)
+        .then((data) => {
+          if (data) {
+            setSermon(data);
+          } else if (!stateSermon) {
+            const cleanId = id.replace(/^yt_/, '');
+            if (cleanId && cleanId.length === 11) {
+              setSermon({
+                id: id,
+                title: 'عظة وكلمة روحية مباركة',
+                speaker: 'كنيسة السيدة العذراء مريم بمحرم بك',
+                topic: 'عظات وكلمات روحية',
+                sermon_date: new Date().toISOString().split('T')[0],
+                duration_minutes: 45,
+                youtube_url: `https://www.youtube.com/watch?v=${cleanId}`,
+                audio_url: null,
+                description: 'تسجيل مبارك من كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية.',
+                play_count: 0,
+                featured: false,
+                created_by: null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            }
+          }
+        })
         .catch(console.error)
         .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, stateSermon]);
 
   const extractVideoId = (url: string | null): string | null => {
     if (!url) return null;
