@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async';
 const OFFICIAL_CHURCH_CHANNEL_ID = 'UCLEhdhZFRuxMXHL3pDpg65g';
 
 export const LiveStreamPage: React.FC = () => {
+  const [forceLive, setForceLive] = useState(false);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -34,9 +35,11 @@ export const LiveStreamPage: React.FC = () => {
       const siteSettings = await api.getSiteSettings().catch(() => ({}));
       setSettings(siteSettings);
 
-      // ALWAYS check live broadcast from the official church channel
+      // ALWAYS check live broadcast from the official church channel with cache buster
       try {
-        const checkRes = await fetch(`/api/check-live?channelId=${OFFICIAL_CHURCH_CHANNEL_ID}`);
+        const checkRes = await fetch(`/api/check-live?channelId=${OFFICIAL_CHURCH_CHANNEL_ID}&_t=${Date.now()}`, {
+          headers: { 'Cache-Control': 'no-cache' }
+        });
         if (checkRes.ok) {
           const liveData = await checkRes.json();
           if (liveData.isLive && liveData.videoId) {
@@ -64,8 +67,8 @@ export const LiveStreamPage: React.FC = () => {
 
   useEffect(() => {
     fetchStreamSettings();
-    // Auto refresh every 45s to detect live stream start or finish
-    const interval = setInterval(() => fetchStreamSettings(), 45000);
+    // Auto refresh every 30s to detect live stream start or finish
+    const interval = setInterval(() => fetchStreamSettings(), 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -80,6 +83,12 @@ export const LiveStreamPage: React.FC = () => {
     embedUrl = autoStreamData.embedUrl;
     title = autoStreamData.title;
     description = autoStreamData.description;
+  } else if (forceLive) {
+    // User triggered direct channel live player
+    isStreamActive = true;
+    embedUrl = `https://www.youtube.com/embed/live_stream?channel=${OFFICIAL_CHURCH_CHANNEL_ID}&autoplay=1&rel=0`;
+    title = 'البث المباشر المباشر - قناة كنيسة العذراء مريم بمحرم بك';
+    description = 'مشغل البث المباشر المباشر للقناة الرسمية لكنيسة السيدة العذراء مريم بمحرم بك.';
   } else if (settings.live_stream_active === 'true' && settings.live_stream_youtube_url) {
     // Priority 2: Manual fallback stream
     isStreamActive = true;
@@ -193,6 +202,14 @@ export const LiveStreamPage: React.FC = () => {
 
             <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center items-center">
               <button
+                onClick={() => setForceLive(true)}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-3 px-6 rounded-xl transition-all flex items-center gap-2 shadow-md shadow-rose-600/30 w-full sm:w-auto justify-center animate-pulse"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>تشغيل البث المباشر للقناة الآن</span>
+              </button>
+
+              <button
                 onClick={() => fetchStreamSettings(true)}
                 disabled={refreshing}
                 className="bg-[#002366] text-[#fed65b] font-bold text-xs py-3 px-6 rounded-xl hover:bg-[#00174a] transition-all flex items-center gap-2 shadow-md w-full sm:w-auto justify-center disabled:opacity-50"
@@ -202,23 +219,15 @@ export const LiveStreamPage: React.FC = () => {
               </button>
 
               <a
-                href={`https://www.youtube.com/channel/${OFFICIAL_CHURCH_CHANNEL_ID}`}
+                href={`https://www.youtube.com/channel/${OFFICIAL_CHURCH_CHANNEL_ID}/live`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs py-3 px-6 rounded-xl transition-all flex items-center gap-2 w-full sm:w-auto justify-center shadow-md shadow-red-600/20"
-              >
-                <Play className="w-4 h-4 fill-current" />
-                <span>قناة الكنيسة على يوتيوب</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-
-              <Link
-                to="/sermons"
                 className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-3 px-6 rounded-xl transition-all flex items-center gap-2 w-full sm:w-auto justify-center border border-slate-200"
               >
-                <BookOpen className="w-4 h-4 text-[#d4af37]" />
-                <span>مكتبة العظات</span>
-              </Link>
+                <Play className="w-4 h-4 fill-current text-red-600" />
+                <span>فتح البث على يوتيوب</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
 
           </div>
