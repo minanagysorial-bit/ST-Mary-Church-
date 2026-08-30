@@ -116,22 +116,42 @@ export async function adminCreateUser(
     }
   });
 
+  let createdUser = data?.user || null;
+
   if (error) {
-    // If user already registered in auth, try to sync profile anyway
     console.warn('Auth signup warning:', error.message);
-    if (!error.message.includes('already registered')) {
+    if (error.message.includes('already registered')) {
+      // User exists in auth.users, sign in with tempClient to obtain user ID and ensure profile sync
+      const { data: signInData } = await tempClient.auth.signInWithPassword({
+        email: cleanEmail,
+        password
+      }).catch(() => ({ data: null }));
+
+      if (signInData?.user) {
+        createdUser = signInData.user;
+      }
+    } else {
       throw error;
     }
   }
 
-  const userId = data?.user?.id;
-  
-  if (userId) {
-    // 1. Upsert to profiles table
+  let finalUserId = createdUser?.id;
+
+  if (!finalUserId) {
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', cleanEmail)
+      .maybeSingle();
+    if (existingProfile) finalUserId = existingProfile.id;
+  }
+
+  if (finalUserId) {
+    // Upsert to profiles table
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
-        id: userId,
+        id: finalUserId,
         email: cleanEmail,
         full_name: cleanName,
         role,
@@ -139,33 +159,16 @@ export async function adminCreateUser(
 
     if (profileError) {
       console.warn('Profile upsert after signup returned error:', profileError);
-      // If the database has an older constraint rejecting 'service_leader', fallback to 'servant'
-      // so the profile row is guaranteed to exist and foreign key violations never happen
       if (profileError.message?.includes('profiles_role_check') || profileError.message?.includes('check constraint')) {
-        console.warn('Attempting fallback profile creation with role servant...');
         await supabase
           .from('profiles')
           .upsert({
-            id: userId,
+            id: finalUserId,
             email: cleanEmail,
             full_name: cleanName,
             role: 'servant',
           }, { onConflict: 'id' });
       }
-    }
-  } else {
-    // Fallback search profile by email
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', cleanEmail)
-      .maybeSingle();
-
-    if (existingProfile) {
-      await supabase
-        .from('profiles')
-        .update({ full_name: cleanName, role })
-        .eq('id', existingProfile.id);
     }
   }
 
@@ -203,5 +206,8 @@ export async function adminCreateUser(
     }
   }
 
-  return data;
+  return {
+    user: createdUser || (finalUserId ? ({ id: finalUserId, email: cleanEmail } as any) : null),
+    session: data?.session || null
+  };
 }
