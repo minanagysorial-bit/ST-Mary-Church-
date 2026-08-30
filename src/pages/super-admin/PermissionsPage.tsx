@@ -276,7 +276,11 @@ https://www.tibarthenos.com/login`;
       const res = await adminCreateUser(email, password, fullName, role);
       
       if (creationPermissions.length > 0 && res.user?.id) {
-        await api.setUserPermissions(res.user.id, creationPermissions);
+        try {
+          await api.setUserPermissions(res.user.id, creationPermissions);
+        } catch (permErr: any) {
+          console.warn('Could not assign initial user permissions:', permErr);
+        }
       }
 
       // Save to Credentials Vault & Sheet

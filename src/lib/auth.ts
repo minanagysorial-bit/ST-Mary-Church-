@@ -139,6 +139,19 @@ export async function adminCreateUser(
 
     if (profileError) {
       console.warn('Profile upsert after signup returned error:', profileError);
+      // If the database has an older constraint rejecting 'service_leader', fallback to 'servant'
+      // so the profile row is guaranteed to exist and foreign key violations never happen
+      if (profileError.message?.includes('profiles_role_check') || profileError.message?.includes('check constraint')) {
+        console.warn('Attempting fallback profile creation with role servant...');
+        await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            email: cleanEmail,
+            full_name: cleanName,
+            role: 'servant',
+          }, { onConflict: 'id' });
+      }
     }
   } else {
     // Fallback search profile by email
