@@ -433,10 +433,20 @@ export const LessonBankPage: React.FC = () => {
         setBooks(DEFAULT_PREP_BOOKS);
       }
 
-      // 3. Hymns PPT
-      if (settings['church_hymns_ppt']) {
-        try { setHymns(JSON.parse(settings['church_hymns_ppt'])); } catch { setHymns(DEFAULT_HYMNS_PPT); }
-      } else {
+      // 3. Hymns PPT: Automatically sync live with Google Drive folder!
+      try {
+        const driveRes = await fetch('/api/drive-hymns');
+        if (driveRes.ok) {
+          const driveData = await driveRes.json();
+          if (driveData.success && Array.isArray(driveData.hymns) && driveData.hymns.length > 0) {
+            setHymns(driveData.hymns);
+          } else {
+            setHymns(DEFAULT_HYMNS_PPT);
+          }
+        } else {
+          setHymns(DEFAULT_HYMNS_PPT);
+        }
+      } catch {
         setHymns(DEFAULT_HYMNS_PPT);
       }
     } catch (err) {
@@ -446,6 +456,29 @@ export const LessonBankPage: React.FC = () => {
       setHymns(DEFAULT_HYMNS_PPT);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 🔄 Live Sync with Google Drive Folder in Real-Time
+  const [isSyncingDrive, setIsSyncingDrive] = useState(false);
+
+  const handleSyncDrive = async () => {
+    setIsSyncingDrive(true);
+    try {
+      const res = await fetch(`/api/drive-hymns?t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.hymns) && data.hymns.length > 0) {
+          setHymns(data.hymns);
+          toast.success(`تمت المزامنة بنجاح! تم العثور على ${data.hymns.length} ترنيمة وصلاة من Google Drive 🔄`);
+          return;
+        }
+      }
+      toast.success('تم تحديث قائمة الترانيم من Google Drive.');
+    } catch {
+      toast.error('تعذر الاتصال بـ Google Drive، تأكد من اتصال الإنترنت.');
+    } finally {
+      setIsSyncingDrive(false);
     }
   };
 
@@ -1015,15 +1048,27 @@ export const LessonBankPage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <a
-                href="https://drive.google.com/drive/folders/1rxTUSTGQEoxAwkk-yj_FQV14-1Q3MSKo?usp=sharing"
-                target="_blank"
-                rel="noreferrer"
-                className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-5 py-2.5 rounded-2xl transition-all shadow-md flex items-center gap-2 shrink-0 hover:scale-105 active:scale-95"
-              >
-                <FolderPlus className="w-4 h-4 text-orange-200" />
-                <span>فتح المجلد الكامل على Drive ↗</span>
-              </a>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  onClick={handleSyncDrive}
+                  disabled={isSyncingDrive}
+                  className="bg-white hover:bg-orange-50 text-orange-950 border border-orange-300 text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shadow-xs flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                  title="البحث عن الملفات الجديدة المضافة في Google Drive"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-orange-600 ${isSyncingDrive ? 'animate-spin' : ''}`} />
+                  <span>{isSyncingDrive ? 'جاري المزامنة...' : 'مزامنة من Drive 🔄'}</span>
+                </button>
+
+                <a
+                  href="https://drive.google.com/drive/folders/1rxTUSTGQEoxAwkk-yj_FQV14-1Q3MSKo?usp=sharing"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-5 py-2.5 rounded-2xl transition-all shadow-md flex items-center gap-2 hover:scale-105 active:scale-95"
+                >
+                  <FolderPlus className="w-4 h-4 text-orange-200" />
+                  <span>فتح المجلد على Drive ↗</span>
+                </a>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
