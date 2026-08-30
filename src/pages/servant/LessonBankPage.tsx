@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { 
   BookOpen, Download, Search, Filter, Plus, FileText, Presentation, Gamepad2, 
@@ -159,42 +160,178 @@ const DEFAULT_PREP_BOOKS: PrepBookResource[] = [
 
 const DEFAULT_HYMNS_PPT: HymnPptResource[] = [
   {
-    id: 'hymn_1',
-    title: 'ترنيمة: يا مريم البكر فقت الشمس والقمر',
-    category: 'ترانيم السيدة العذراء',
-    drive_url: 'https://drive.google.com/file/d/1E6o3N0z9Y8x7w6v5u4t3s2r1/view',
-    lyrics_snippet: 'يا مريم البكر فقت الشمس والقمرا، وكل كواكب الصبح نلت ظفراً...',
-    created_at: '2026-08-21'
-  },
-  {
-    id: 'hymn_2',
-    title: 'ترنيمة: ربي يسوع الغالي علمني حبك',
-    category: 'ترانيم مدارس الأحد',
-    drive_url: 'https://drive.google.com/file/d/1F7p4O1a0Z9y8x7w6v5u4t3s2/view',
-    lyrics_snippet: 'ربي يسوع الغالي علمني حبك، دايمًا يفيض في قلبي وأعيش وأشهد لك...',
-    created_at: '2026-08-22'
-  },
-  {
-    id: 'hymn_3',
-    title: 'ترنيمة: في وقت ضعفي أراك تشفي صميم قلبي',
+    id: 'drive_hymn_1',
+    title: 'ترنيمة احلى ما فى حياتى انت',
     category: 'ترانيم شبابية وتأمل',
-    drive_url: 'https://drive.google.com/file/d/1G8q5P2b1A0z9y8x7w6v5u4t3/view',
-    lyrics_snippet: 'في وقت ضعفي أراك تشفي صميم قلبي من الجراح، تمسك بيدي ترعى دروبي...',
-    created_at: '2026-08-23'
+    drive_url: 'https://drive.google.com/file/d/1YFh1Jgzqinx8RwidSPk9YAGWc17Tcqnt/view?usp=sharing',
+    lyrics_snippet: 'أحلى ما في حياتي إنت.. وأغلى ما في عمري إنت.. إنت كل ما لي يسوع حبيبي.',
+    created_at: '2026-08-30'
   },
   {
-    id: 'hymn_4',
-    title: 'ترنيمة: قام المسيح حقاً قام من بين الأموات',
-    category: 'ترانيم الصليب والقيامة',
-    drive_url: 'https://drive.google.com/file/d/1H9r6Q3c2B1a0z9y8x7w6v5u4/view',
-    lyrics_snippet: 'قام المسيح وغلب الموت بالموت وداس الجحيم، هللويا يسوع فدانا...',
-    created_at: '2026-08-24'
-  }
+    id: 'drive_hymn_2',
+    title: 'ترنيمة اسمحيلى يا اكلسيا',
+    category: 'ترانيم السيدة العذراء والكنيسة',
+    drive_url: 'https://drive.google.com/file/d/1-9HyqTzuajlGJygDldL-S9vANpBVlT77/view?usp=sharing',
+    lyrics_snippet: 'إسمحيلي يا إكليسيا.. أفرح بيكي وأرنم ليكي.. كنيسة آبائي الأطهار.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_3',
+    title: 'ترنيمة أسمع صراخى يا سيدى',
+    category: 'ترانيم شبابية وتأمل',
+    drive_url: 'https://drive.google.com/file/d/1rdP0ILSQrYckqmPPZbIa1E8ru1TY69UK/view?usp=sharing',
+    lyrics_snippet: 'إسمع صراخي يا سيدي.. إلى صلاتي أمل أذنيك.. في ضيقي دعوتك فاستجبت لي.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_4',
+    title: 'ترنيمة الرب قريب',
+    category: 'ترانيم التعزية والرجاء',
+    drive_url: 'https://drive.google.com/file/d/1lBSKi-QegeYbBEpaIvJ3EG6sJz5-laPF/view?usp=sharing',
+    lyrics_snippet: 'الرب قريب لكل الذين يدعونه بالحق.. عيني عليه في كل أوان.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_5',
+    title: 'ترنيمة الهنا عظيم',
+    category: 'ترانيم مدارس الأحد',
+    drive_url: 'https://drive.google.com/file/d/1Q9x-3W2sfp0RSRbo9sCgf9d-2D1WUesM/view?usp=sharing',
+    lyrics_snippet: 'إلهنا عظيم إلهنا أمين.. يقودنا في موكب النصرة كل حين.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_6',
+    title: 'ترنيمة امسك يارب ايدى',
+    category: 'ترانيم شبابية وتأمل',
+    drive_url: 'https://drive.google.com/file/d/1qxoxg3gLLThnifDC4lNt8cYhjqgZJXft/view?usp=sharing',
+    lyrics_snippet: 'إمسك يارب إيدي زي بطرس في وسط الرياح.. مد إيدك ونجيني.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_7',
+    title: 'ترنيمة انت قلت تعالوا',
+    category: 'ترانيم مدارس الأحد',
+    drive_url: 'https://drive.google.com/file/d/1ggwOa-5YNlX2hJgQUaeO9htZ8j-3SNig/view?usp=sharing',
+    lyrics_snippet: 'إنت قلت تعالوا إليّ يا جميع المتعبين وأنا أريحكم.. ها نحن نأتي إليك.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_8',
+    title: 'ترنيمة ايها الفخارى',
+    category: 'ترانيم التوبة والتسليم',
+    drive_url: 'https://drive.google.com/file/d/16E94H82w-WCagEB6zE4ffHZH_vhP_pxa/view?usp=sharing',
+    lyrics_snippet: 'أيها الفخاري الأعظم شكلني بحسب مشيئتك.. عجينة لينة بين يديك الطاهرتين.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_9',
+    title: 'ترنيمة تعالوا تعالوا',
+    category: 'ترانيم مدارس الأحد',
+    drive_url: 'https://drive.google.com/file/d/1dEQp5oPEbtg0VXBgAD71_UYbJyZyd45r/view?usp=sharing',
+    lyrics_snippet: 'تعالوا تعالوا يا أطفال نسجد ليسوع البار.. ونرنم بأعلى صوت.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_10',
+    title: 'ترنيمة دايما بتخبيني',
+    category: 'ترانيم السيدة العذراء والكنيسة',
+    drive_url: 'https://drive.google.com/file/d/1ipaw--XiNYF-EiMdBfI6kmaqmYHeDjCw/view?usp=sharing',
+    lyrics_snippet: 'دايماً بتخبيني في سترك يا أمي يا عذراء.. في حضنك بلاقي الأمان.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_11',
+    title: 'ترنيمة ضاقت الدنيا قصادى',
+    category: 'ترانيم التوبة والتسليم',
+    drive_url: 'https://drive.google.com/file/d/1JPw84BYr0YS1Tai4AvexwhLBM5iZg1d4/view?usp=sharing',
+    lyrics_snippet: 'ضاقت الدنيا قصادي وملقتش غيرك سندي.. جيتلك بدموعي فمسحت أحزاني.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_12',
+    title: 'ترنيمة طهرنى',
+    category: 'ترانيم التوبة والتسليم',
+    drive_url: 'https://drive.google.com/file/d/1jQgFimECbndCV3fSmnBcf5jQEyck1yp-/view?usp=sharing',
+    lyrics_snippet: 'طهرني يا رب فأطهر.. إغسلني فأبيض أكثر من الثلج.. قلباً نقياً اخلق فيّ.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_13',
+    title: 'ترنيمة علمني',
+    category: 'ترانيم شبابية وتأمل',
+    drive_url: 'https://drive.google.com/file/d/1P14KsOphH1AYj--Grq2fOzrg3cYZ07eZ/view?usp=sharing',
+    lyrics_snippet: 'علمني يارب أصلي.. علمني أسمع صوتك وأمشي وراك في كل طريقي.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_14',
+    title: 'ترنيمة فرحان بيك وانا ماشى معاك',
+    category: 'ترانيم مدارس الأحد',
+    drive_url: 'https://drive.google.com/file/d/1fhUhB8G0MRi367geBJPmc3ZmZYNZ5LtE/view?usp=sharing',
+    lyrics_snippet: 'فرحان بيك وأنا ماشي معاك.. إيدك في إيدي وعيني شايفاك.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_15',
+    title: 'ترنيمة كنيستنا دى قصة اجيال',
+    category: 'ترانيم السيدة العذراء والكنيسة',
+    drive_url: 'https://drive.google.com/file/d/1vbwXcF0yNWlx1Y6vIAaRpnEkQli11fAX/view?usp=sharing',
+    lyrics_snippet: 'كنيستنا دي قصة أجيال.. دم الشهداء فيها حكاية وسير الأبرار.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_16',
+    title: 'ترنيمة لا لا تتركنى وحدى',
+    category: 'ترانيم التعزية والرجاء',
+    drive_url: 'https://drive.google.com/file/d/18FXScf51YHBP-eErK8CiM5xFsFnifiun/view?usp=sharing',
+    lyrics_snippet: 'لا لا تتركني وحدي في طريق الغربة.. كن عوني ومرشدي وسندي.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_17',
+    title: 'ترنيمة لم تر عين',
+    category: 'ترانيم التعزية والرجاء',
+    drive_url: 'https://drive.google.com/file/d/1K2lYW8qBBG-IdP7CChsa2fBbhxLKQwJ_/view?usp=sharing',
+    lyrics_snippet: 'لم تر عين ولم تسمع أذن ما أعده الله للذين يحبونه.. أمجاد أبدية.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_18',
+    title: 'ترنيمة من بين القديسين',
+    category: 'ترانيم شبابية وتأمل',
+    drive_url: 'https://drive.google.com/file/d/1rA-E08UX3CYtRGf8erf9pBB4Vwm4euoR/view?usp=sharing',
+    lyrics_snippet: 'من بين القديسين اخترت أصحابي.. شفاعتكم تسندني في كل صلاتي.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_19',
+    title: 'صلاة الساعة التاسعة',
+    category: 'صلوات الأجبية والعروض',
+    drive_url: 'https://drive.google.com/file/d/15oBzU1uJM_jHReUp2CF8x53H4XQ_E2_v/view?usp=sharing',
+    lyrics_snippet: 'عرض بوربوينت كامل لصلاة الساعة التاسعة من الأجبية المقدسة لتلاوتها جماعياً في الخدمة.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_20',
+    title: 'صلاة الغروب',
+    category: 'صلوات الأجبية والعروض',
+    drive_url: 'https://drive.google.com/file/d/1Xrlj1SOio5xDKU1N-FvV3UMbOP0s1cUi/view?usp=sharing',
+    lyrics_snippet: 'عرض بوربوينت كامل لصلاة الغروب من الأجبية المقدسة بمزاميرها وإنجيلها وقطعها.',
+    created_at: '2026-08-30'
+  },
+  {
+    id: 'drive_hymn_21',
+    title: 'صلاة النوم',
+    category: 'صلوات الأجبية والعروض',
+    drive_url: 'https://drive.google.com/file/d/1YzYynXgrOc25qwfLyMkd8bPmtUJ_eRMR/view?usp=sharing',
+    lyrics_snippet: 'عرض بوربوينت كامل لصلاة النوم من الأجبية المقدسة لعرضها في السهرات الروحية والنهضات.',
+    created_at: '2026-08-30'
+  },
 ];
 
 // Helper to sanitize Google Drive links into view/embed URLs
 function formatDriveLinks(rawUrl: string) {
-  if (!rawUrl) return { viewUrl: '#', embedUrl: '#' };
+  if (!rawUrl) return { fileId: '', viewUrl: '#', embedUrl: '#', downloadUrl: '#' };
   let fileId = '';
   
   const idMatch = rawUrl.match(/(?:file\/d\/|id=|folders\/)([a-zA-Z0-9_-]+)/);
@@ -204,14 +341,18 @@ function formatDriveLinks(rawUrl: string) {
 
   if (fileId) {
     return {
+      fileId,
       viewUrl: rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`,
-      embedUrl: `https://drive.google.com/file/d/${fileId}/preview`
+      embedUrl: `https://drive.google.com/file/d/${fileId}/preview`,
+      downloadUrl: `https://drive.google.com/uc?export=download&id=${fileId}`
     };
   }
 
   return {
+    fileId: '',
     viewUrl: rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`,
-    embedUrl: rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`
+    embedUrl: rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`,
+    downloadUrl: rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`
   };
 }
 
@@ -219,8 +360,11 @@ export const LessonBankPage: React.FC = () => {
   const { profile } = useAuth();
   const toast = useToast();
   
+  const [searchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'lessons' | 'books' | 'hymns') || 'lessons';
+
   // Active Tab: 'lessons' | 'books' | 'hymns'
-  const [activeTab, setActiveTab] = useState<'lessons' | 'books' | 'hymns'>('lessons');
+  const [activeTab, setActiveTab] = useState<'lessons' | 'books' | 'hymns'>(initialTab);
 
   // Main States
   const [lessons, setLessons] = useState<LessonResource[]>([]);
@@ -724,7 +868,7 @@ export const LessonBankPage: React.FC = () => {
             {/* Category Filter for Hymns */}
             {activeTab === 'hymns' && (
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                {['الكل', 'ترانيم مدارس الأحد', 'ترانيم السيدة العذراء', 'ترانيم الصليب والقيامة', 'ترانيم شبابية وتأمل'].map(cat => (
+                {['الكل', 'ترانيم مدارس الأحد', 'ترانيم السيدة العذراء والكنيسة', 'ترانيم شبابية وتأمل', 'ترانيم التوبة والتسليم', 'ترانيم التعزية والرجاء', 'صلوات الأجبية والعروض'].map(cat => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
@@ -855,7 +999,34 @@ export const LessonBankPage: React.FC = () => {
 
         {/* TAB 3: HYMNS POWERPOINT FROM GOOGLE DRIVE */}
         {activeTab === 'hymns' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            {/* Google Drive Main Folder Banner */}
+            <div className="p-5 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-100/80 border-2 border-orange-300/80 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-center gap-3 text-right">
+                <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-bold shrink-0 shadow-md">
+                  <Presentation className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-tajawal text-base font-extrabold text-orange-950">
+                    مجلد ترانيم الباوربوينت على Google Drive ({filteredHymns.length} ترنيمة وصلاة)
+                  </h4>
+                  <p className="text-xs text-orange-800 font-semibold mt-0.5">
+                    عروض تقديمية PPTX جاهزة للشاشات والبروجكتور في مدارس الأحد وصلوات الأجبية والنهضات.
+                  </p>
+                </div>
+              </div>
+              <a
+                href="https://drive.google.com/drive/folders/1rxTUSTGQEoxAwkk-yj_FQV14-1Q3MSKo?usp=sharing"
+                target="_blank"
+                rel="noreferrer"
+                className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-5 py-2.5 rounded-2xl transition-all shadow-md flex items-center gap-2 shrink-0 hover:scale-105 active:scale-95"
+              >
+                <FolderPlus className="w-4 h-4 text-orange-200" />
+                <span>فتح المجلد الكامل على Drive ↗</span>
+              </a>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredHymns.map(hymn => {
               const drive = formatDriveLinks(hymn.drive_url);
               return (
@@ -893,15 +1064,26 @@ export const LessonBankPage: React.FC = () => {
                       href={drive.viewUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 w-full justify-center"
+                      className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 flex-1 justify-center active:scale-95"
                     >
-                      <Presentation className="w-4 h-4 text-orange-200" />
-                      <span>عرض وتنزيل الباوربوينت (Drive)</span>
+                      <Presentation className="w-3.5 h-3.5 text-orange-200" />
+                      <span>عرض في Drive</span>
+                    </a>
+                    <a
+                      href={drive.downloadUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition-all border border-slate-200 flex items-center gap-1.5 justify-center active:scale-95"
+                      title="تحميل ملف الباوربوينت المباشر للكمبيوتر"
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-500" />
+                      <span>تحميل PPTX</span>
                     </a>
                   </div>
                 </div>
               );
             })}
+          </div>
           </div>
         )}
 

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { 
   Wrench, BookOpen, Download, FileText, CheckSquare, 
-  HelpCircle, ChevronLeft, Volume2, Play, Pause, RefreshCw, PlusCircle, Gamepad, Award, Bell
+  HelpCircle, ChevronLeft, Volume2, Play, Pause, RefreshCw, PlusCircle, Gamepad, Award, Bell, Presentation
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -299,14 +300,23 @@ export const ServantToolsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Dotted Custom Tool Card */}
-          <div 
-            onClick={() => alert('قريباً: ستتمكن من ربط أدواتك الرقمية الخارجية المخصصة باللوحة.')}
-            className="border-2 border-dashed border-[#c5c6d2] rounded-2xl p-8 hover:bg-[#efeded]/30 transition-all flex flex-col items-center justify-center text-center text-on-surface-variant cursor-pointer opacity-70 hover:opacity-100 duration-300 min-h-[260px]"
+          {/* Tool 6: PowerPoint Hymns from Drive */}
+          <Link 
+            to="/servant/lesson-bank?tab=hymns"
+            className="group bg-white border border-[#c5c6d2]/50 hover:border-orange-400 rounded-2xl p-8 hover:-translate-y-2 hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col items-center text-center space-y-4"
           >
-            <PlusCircle className="w-10 h-10 mb-4 text-[#757682]" />
-            <p className="font-headline font-semibold text-xs text-[#002366]">إضافة أداة مخصصة</p>
-          </div>
+            <div className="w-16 h-16 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition-all duration-300 shadow-sm border border-orange-100">
+              <Presentation className="w-7 h-7" />
+            </div>
+            <h3 className="font-headline font-extrabold text-[#002366] text-base group-hover:text-orange-600 transition-colors">ترانيم الباوربوينت</h3>
+            <p className="font-body-md text-on-surface-variant text-xs leading-relaxed max-w-[200px]">
+              مكتبة عروض PPTX لترانيم مدارس الأحد والأجبية والاجتماعات من Google Drive.
+            </p>
+            <div className="w-full pt-4 border-t border-[#eae8e7] text-orange-600 font-bold text-xs flex justify-center items-center gap-2 group-hover:gap-3 transition-all">
+              <span>تصفح الترانيم (٢١ ملف)</span>
+              <ChevronLeft className="w-4 h-4 text-orange-600 scale-x-[-1]" />
+            </div>
+          </Link>
 
         </section>
 
