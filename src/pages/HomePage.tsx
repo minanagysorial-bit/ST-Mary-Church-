@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { api, Verse, Announcement } from '../lib/api';
 import { DailyReadingsCard } from '../components/common/DailyReadingsCard';
+import { FloatingHolyDustRays } from '../components/common/FloatingHolyDustRays';
 import { requestNotificationPermission, getNotificationPermission } from '../lib/pushNotifications';
 import { getDailyAutoVerse } from '../lib/comfortVerses';
 
@@ -215,6 +216,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         {/* Ambient Breathing Glow Balls */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#d4af37]/20 rounded-full blur-3xl pointer-events-none animate-ambient-pulse z-10" />
         <div className="absolute bottom-10 right-10 w-72 h-72 bg-[#fed65b]/15 rounded-full blur-2xl pointer-events-none animate-ambient-pulse z-10" />
+
+        {/* 🕊️ Large Spiritual Animation: Floating Holy Dust, Incense Smoke & Volumetric God Rays */}
+        <FloatingHolyDustRays />
 
         <div className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6 py-16">
           <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 border border-[#fed65b]/40 text-[#fed65b] text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-inner animate-fade-in shimmer-container shimmer-effect">
