@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { api, Verse, Announcement } from '../lib/api';
 import { DailyReadingsCard } from '../components/common/DailyReadingsCard';
+import { FathersQuotesSlider } from '../components/common/FathersQuotesSlider';
 import { requestNotificationPermission, getNotificationPermission } from '../lib/pushNotifications';
 import { getDailyAutoVerse } from '../lib/comfortVerses';
 
@@ -514,16 +515,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         </div>
       </section>
 
-      {/* Spiritual Quote Banner */}
-      <section className="bg-gradient-to-r from-[#00174a] via-[#002366] to-[#00113a] text-white py-12 border-y-2 border-[#d4af37]">
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-4 relative">
-          <Quote className="w-12 h-12 text-[#fed65b]/20 mx-auto" />
-          <p className="font-tajawal text-lg sm:text-2xl font-bold text-[#fed65b] leading-relaxed">
-            "إن الكنيسة ليست مجرد مبنى من الحجارة، بل هي قلوب المؤمنين المجتمعين باسم المسيح والسالكين بالروح والتعاليم الأرثوذكسية."
-          </p>
-          <p className="text-xs text-slate-300 font-semibold">— من تعاليم آباء الكنيسة الأبرار</p>
-        </div>
-      </section>
+      {/* 🕊️ Interactive Church Fathers' Quotes Slider (سلايدر أقوال الآباء القديسين) */}
+      <FathersQuotesSlider />
 
     </div>
   );
