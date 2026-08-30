@@ -423,20 +423,36 @@ export const ReadingsPage: React.FC<ReadingsPageProps> = ({ onOpenPrayerModal })
             </div>
           )}
 
-          {/* 4. MATINS GOSPEL */}
+          {/* 4. MATINS GOSPEL & PSALM */}
           {activeTab === 'matins' && (
-            <div className="space-y-4 bg-slate-50/50 p-6 sm:p-8 rounded-2xl border border-slate-200">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <span className="font-tajawal font-extrabold text-base text-[#002366]">إنجيل باكر العشية والقداس</span>
-                <span className="text-xs font-bold text-[#002366] bg-white px-3 py-1 rounded-full border border-slate-200">
-                  {readings.matins.gospelRef}
-                </span>
-              </div>
-              <p className={`${fontClasses} font-bold text-slate-800 leading-loose pt-2`}>
-                {readings.matins.gospelText}
-              </p>
-              <div className="pt-2 text-left">
-                <span className="text-xs font-bold text-[#d4af37]">«وَالْمَجْدُ للهِ دَائِماً»</span>
+            <div className="space-y-6">
+              {readings.matins.psalmText && (
+                <div className="space-y-3 bg-amber-50/40 p-6 rounded-2xl border border-amber-100">
+                  <div className="flex items-center justify-between border-b border-amber-200/50 pb-2">
+                    <span className="font-tajawal font-extrabold text-sm text-[#002366]">مزمور باكر</span>
+                    <span className="text-xs font-bold text-[#d4af37] bg-white px-3 py-1 rounded-full border border-amber-200">
+                      {readings.matins.psalmRef || 'مزمور باكر'}
+                    </span>
+                  </div>
+                  <p className={`${fontClasses} font-bold text-slate-800 leading-loose pt-2`}>
+                    {readings.matins.psalmText}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4 bg-blue-50/30 p-6 sm:p-8 rounded-2xl border border-blue-100">
+                <div className="flex items-center justify-between border-b border-blue-200/50 pb-3">
+                  <span className="font-tajawal font-extrabold text-base text-[#002366]">إنجيل باكر (العشية وباكر)</span>
+                  <span className="text-xs font-bold text-[#002366] bg-white px-3 py-1 rounded-full border border-blue-200">
+                    {readings.matins.gospelRef}
+                  </span>
+                </div>
+                <p className={`${fontClasses} font-bold text-slate-800 leading-loose pt-2`}>
+                  {readings.matins.gospelText}
+                </p>
+                <div className="pt-2 text-left">
+                  <span className="text-xs font-bold text-[#d4af37]">«وَالْمَجْدُ للهِ دَائِماً»</span>
+                </div>
               </div>
             </div>
           )}

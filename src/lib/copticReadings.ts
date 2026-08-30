@@ -36,6 +36,8 @@ export interface DailyReadingData {
   matins: {
     gospelRef: string;
     gospelText: string;
+    psalmRef?: string;
+    psalmText?: string;
   };
   reflection: {
     title: string;
@@ -449,7 +451,22 @@ export function getDailyReadings(targetDate: Date = new Date(), apiOverrideData?
     };
   }
 
-  // 2. If API override provided from coptic.io (The official Katamaros reference registry)
+  // 2. If apiOverrideData is already in full DailyReadingData format or from /api/daily-readings
+  if (apiOverrideData && apiOverrideData.gospel && apiOverrideData.gospel.text) {
+    return {
+      copticDate: {
+        ...coptic,
+        copticDateString: apiOverrideData.copticDateRaw ? `${apiOverrideData.copticDateRaw.split('/')[0]} ${coptic.copticMonthName} ${coptic.copticYear} ش.` : coptic.copticDateString
+      },
+      synaxarium: apiOverrideData.synaxarium,
+      gospel: apiOverrideData.gospel,
+      epistles: apiOverrideData.epistles,
+      matins: apiOverrideData.matins,
+      reflection: apiOverrideData.reflection
+    };
+  }
+
+  // 3. If API override provided from coptic.io (reference only legacy)
   if (apiOverrideData && apiOverrideData.reference) {
     const ref = apiOverrideData.reference;
     const lPsalmKey = ref.LPsalm || 'Psalms 45:14-15';
@@ -529,23 +546,180 @@ export function getDailyReadings(targetDate: Date = new Date(), apiOverrideData?
 }
 
 /**
- * Async dynamic fetcher for any date (fetches authentic live coptic.io data)
+ * Formats a Katameros API reading passage into clean Arabic reference and Van Dyke scripture text
+ */
+function formatKatamerosReading(reading: any, defaultPrefix = ''): { reference: string; text: string } {
+  if (!reading) return { reference: '', text: '' };
+
+  const passages = reading.passages || [];
+  if (passages.length === 0) {
+    const rawHtml = reading.html || '';
+    const cleanText = rawHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return { reference: reading.title || '', text: cleanText ? `«${cleanText}»` : '' };
+  }
+
+  const refs: string[] = [];
+  const allVerses: string[] = [];
+
+  for (const p of passages) {
+    let book = (p.bookTranslation || '').trim();
+    const refStr = (p.ref || '').trim();
+
+    if (['متى', 'مرقس', 'لوقا', 'يوحنا'].includes(book) && !book.includes('إنجيل') && !book.includes('رسالة')) {
+      if (defaultPrefix.includes('إنجيل')) book = 'إنجيل ' + book;
+      else if (defaultPrefix.includes('رسالة')) book = 'رسالة ' + book;
+    } else if (book === 'مزامير' || book === 'مزمور') {
+      book = 'مزمور';
+    } else if (book === 'أعمال' || book === 'أعمال الرسل') {
+      book = 'سفر أعمال الرسل';
+    } else if (!book.includes('رسالة') && !book.includes('إنجيل') && !book.includes('سفر')) {
+      if (defaultPrefix) book = defaultPrefix + ' ' + book;
+    }
+
+    refs.push(book + (refStr ? ' (' + refStr + ')' : ''));
+
+    for (const v of (p.verses || [])) {
+      if (v.text) allVerses.push(v.text.trim());
+    }
+  }
+
+  let text = allVerses.join(' ').replace(/\s+/g, ' ').trim();
+  if (!text && reading.html) {
+    text = reading.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  return {
+    reference: refs.join(' ؛ '),
+    text: text ? `«${text}»` : ''
+  };
+}
+
+/**
+ * Parses raw Katameros App payload directly in client
+ */
+export function parseKatamerosRawData(data: any, targetDate: Date = new Date()): DailyReadingData {
+  const coptic = getCopticDate(targetDate);
+  const liturgy = data.sections?.find((s: any) => s.title?.includes('قداس'));
+  const matins = data.sections?.find((s: any) => s.title?.includes('باكر'));
+
+  // Subsections
+  const paulineSub = liturgy?.subSections?.find((s: any) => s.title?.includes('البولس'));
+  const catholicSub = liturgy?.subSections?.find((s: any) => s.title?.includes('الكاثوليكون'));
+  const actsSub = liturgy?.subSections?.find((s: any) => s.title?.includes('الابركسيس'));
+  const synaxSub = liturgy?.subSections?.find((s: any) => s.title?.includes('السنكسار'));
+  const gospelSub = liturgy?.subSections?.find((s: any) => s.title?.includes('المزمور والإنجيل'));
+
+  // Readings
+  const pauline = formatKatamerosReading(paulineSub?.readings?.[0], 'رسالة');
+  const catholic = formatKatamerosReading(catholicSub?.readings?.[0], 'رسالة');
+  const acts = formatKatamerosReading(actsSub?.readings?.[0], 'سفر أعمال الرسل');
+
+  const lPsalm = formatKatamerosReading(gospelSub?.readings?.[0], 'مزمور');
+  if (lPsalm.text && !lPsalm.text.includes('هَلِّلُويَا')) {
+    lPsalm.text = lPsalm.text.replace(/»$/, ' هَلِّلُويَا.»');
+  }
+  const lGospel = formatKatamerosReading(gospelSub?.readings?.[1], 'إنجيل');
+
+  const matinsGospelSub = matins?.subSections?.find((s: any) => s.title?.includes('المزمور والإنجيل'));
+  const mPsalm = formatKatamerosReading(matinsGospelSub?.readings?.[0], 'مزمور');
+  if (mPsalm.text && !mPsalm.text.includes('هَلِّلُويَا')) {
+    mPsalm.text = mPsalm.text.replace(/»$/, ' هَلِّلُويَا.»');
+  }
+  const mGospel = formatKatamerosReading(matinsGospelSub?.readings?.[1], 'إنجيل');
+
+  // Synaxarium
+  const synaxReadings = synaxSub?.readings || [];
+  const commemorations = synaxReadings.map((r: any) => (r.title || '').trim()).filter(Boolean);
+  const mainStory = synaxReadings[0]?.html
+    ? synaxReadings[0].html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    : 'بركة صلوات وشفاعة قديسي هذا اليوم فلتكن معنا جميعاً، آمين.';
+  const mainTitle = synaxReadings[0]?.title || 'تذكار قديسي هذا اليوم المبارك';
+
+  return {
+    copticDate: coptic,
+    synaxarium: {
+      title: mainTitle,
+      commemorations: commemorations.length > 0 ? commemorations : [mainTitle],
+      mainStory: mainStory,
+      saintName: mainTitle.replace(/^(تذكار|استشهاد|نياحة)\s+/, '')
+    },
+    gospel: {
+      reference: lGospel.reference || 'إنجيل القداس الإلهي',
+      text: lGospel.text || '',
+      psalmRef: lPsalm.reference || 'مزمور القداس الإلهي',
+      psalmText: lPsalm.text || ''
+    },
+    epistles: {
+      paulineRef: pauline.reference || 'رسالة البولس',
+      paulineText: pauline.text || '',
+      catholicRef: catholic.reference || 'رسالة الكاثوليكون',
+      catholicText: catholic.text || '',
+      actsRef: acts.reference || 'سفر الإبركسيس (أعمال الرسل)',
+      actsText: acts.text || ''
+    },
+    matins: {
+      gospelRef: mGospel.reference || 'إنجيل باكر',
+      gospelText: mGospel.text || '',
+      psalmRef: mPsalm.reference || 'مزمور باكر',
+      psalmText: mPsalm.text || ''
+    },
+    reflection: {
+      title: `بركة كلمة الرب وإنجيل اليوم (${coptic.copticDateString})`,
+      text: 'دعوة إلهية مباركة للتأمل في رسائل وخلاص مخلصنا الصالح، والتمسك بالوصية المحيية وسير الآباء القديسين والشهداء الأبرار.',
+      quote: lGospel.text ? (lGospel.text.slice(0, 160) + '...') : '«كَلِمَتُكَ مِصْبَاحٌ لِرِجْلِي وَنُورٌ لِسَبِيلِي»'
+    }
+  };
+}
+
+const readingsMemoryCache = new Map<string, DailyReadingData>();
+
+/**
+ * Universal, accurate dynamic fetcher for all 365 days of the liturgical year
+ * Layer 1: Vercel serverless /api/daily-readings (cached, fastest)
+ * Layer 2: Direct client fetch to Katameros API (api.katameros.app)
+ * Layer 3: Built-in offline Coptic calendar & text engine
  */
 export async function fetchLiveDailyReadings(targetDate: Date = new Date()): Promise<DailyReadingData> {
   const y = targetDate.getFullYear();
   const m = String(targetDate.getMonth() + 1).padStart(2, '0');
   const d = String(targetDate.getDate()).padStart(2, '0');
   const dateKey = `${y}-${m}-${d}`;
+  const katamerosDate = `${d}-${m}-${y}`;
 
-  try {
-    const res = await fetch(`https://api.coptic.io/api/readings/${dateKey}`);
-    if (res.ok) {
-      const data = await res.json();
-      return getDailyReadings(targetDate, data);
-    }
-  } catch (err) {
-    console.warn('Online Katamaros fetch notice, using authentic dictionary fallback:', err);
+  if (readingsMemoryCache.has(dateKey)) {
+    return readingsMemoryCache.get(dateKey)!;
   }
 
+  // 1. Try our Vercel Serverless Katameros API
+  try {
+    const res = await fetch(`/api/daily-readings?date=${dateKey}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && data.gospel?.text) {
+        const parsed = getDailyReadings(targetDate, data);
+        readingsMemoryCache.set(dateKey, parsed);
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('Local daily-readings API notice:', err);
+  }
+
+  // 2. Direct client fallback to Katameros API
+  try {
+    const directRes = await fetch(`https://api.katameros.app/readings/gregorian/${katamerosDate}?languageId=3`);
+    if (directRes.ok) {
+      const rawData = await directRes.json();
+      if (rawData && rawData.sections) {
+        const parsed = parseKatamerosRawData(rawData, targetDate);
+        readingsMemoryCache.set(dateKey, parsed);
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('Direct Katameros API notice:', err);
+  }
+
+  // 3. Fallback
   return getDailyReadings(targetDate);
 }

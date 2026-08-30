@@ -1,51 +1,58 @@
 // API Serverless Function for Coptic Daily Readings & Synaxarium
-// Connected directly to official Coptic Lectionary API (api.coptic.io) + Van Dyke Arabic Scriptures
+// Connects to the Official Full Coptic Orthodox Katameros & Synaxarium Engine (api.katameros.app)
+// Covers all 365/366 days of the Coptic year with authentic Arabic Van Dyke scriptures
 
-const BIBLE_ARABIC_NAMES = {
-  'Matthew': 'إنجيل متى',
-  'Mark': 'إنجيل مرقس',
-  'Luke': 'إنجيل لوقا',
-  'John': 'إنجيل يوحنا',
-  'Psalms': 'مزمور',
-  'Psalm': 'مزمور',
-  'Hebrews': 'رسالة العبرانيين',
-  'Galatians': 'رسالة غلاطية',
-  'Romans': 'رسالة رومية',
-  '1 Corinthians': 'رسالة كورنثوس الأولى',
-  '2 Corinthians': 'رسالة كورنثوس الثانية',
-  'Ephesians': 'رسالة أفسس',
-  'Philippians': 'رسالة فيلبي',
-  'Colossians': 'رسالة كولوسي',
-  '1 Thessalonians': 'رسالة تسالونيكي الأولى',
-  '2 Thessalonians': 'رسالة تسالونيكي الثانية',
-  '1 Timothy': 'رسالة تيموثاوس الأولى',
-  '2 Timothy': 'رسالة تيموثاوس الثانية',
-  'Titus': 'رسالة تيطس',
-  'Philemon': 'رسالة فليمون',
-  'James': 'رسالة يعقوب',
-  '1 Peter': 'رسالة بطرس الأولى',
-  '2 Peter': 'رسالة بطرس الثانية',
-  '1 John': 'رسالة يوحنا الأولى',
-  '2 John': 'رسالة يوحنا الثانية',
-  '3 John': 'رسالة يوحنا الثالثة',
-  'Jude': 'رسالة يهوذا',
-  'Acts': 'سفر أعمال الرسل'
-};
-
-function formatArabicRef(ref) {
-  if (!ref) return '';
-  let res = ref;
-  for (const [eng, arb] of Object.entries(BIBLE_ARABIC_NAMES)) {
-    res = res.replace(new RegExp('\\b' + eng + '\\b', 'g'), arb);
+function formatReading(reading, defaultPrefix = '') {
+  if (!reading) return { reference: '', text: '' };
+  
+  const passages = reading.passages || [];
+  if (passages.length === 0) {
+    const rawHtml = reading.html || '';
+    const cleanText = rawHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return { reference: reading.title || '', text: cleanText ? `«${cleanText}»` : '' };
   }
-  return res.replace(/:/g, ' : ').replace(/;/g, ' ؛ ');
+
+  const refs = [];
+  const allVerses = [];
+
+  for (const p of passages) {
+    let book = (p.bookTranslation || '').trim();
+    const refStr = (p.ref || '').trim();
+    
+    if (['متى', 'مرقس', 'لوقا', 'يوحنا'].includes(book) && !book.includes('إنجيل') && !book.includes('رسالة')) {
+      if (defaultPrefix.includes('إنجيل')) book = 'إنجيل ' + book;
+      else if (defaultPrefix.includes('رسالة')) book = 'رسالة ' + book;
+    } else if (book === 'مزامير' || book === 'مزمور') {
+      book = 'مزمور';
+    } else if (book === 'أعمال' || book === 'أعمال الرسل') {
+      book = 'سفر أعمال الرسل';
+    } else if (!book.includes('رسالة') && !book.includes('إنجيل') && !book.includes('سفر')) {
+      if (defaultPrefix) book = defaultPrefix + ' ' + book;
+    }
+
+    refs.push(book + (refStr ? ' (' + refStr + ')' : ''));
+
+    for (const v of (p.verses || [])) {
+      if (v.text) allVerses.push(v.text.trim());
+    }
+  }
+
+  let text = allVerses.join(' ').replace(/\s+/g, ' ').trim();
+  if (!text && reading.html) {
+    text = reading.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  return {
+    reference: refs.join(' ؛ '),
+    text: text ? `«${text}»` : ''
+  };
 }
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=7200');
+  res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=86400');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -53,40 +60,101 @@ export default async function handler(req, res) {
   }
 
   const dateParam = req.query.date || new Date().toISOString().split('T')[0];
+  const [year, month, day] = dateParam.split('-');
+  const katamerosDate = `${day}-${month}-${year}`;
 
   try {
-    const copticRes = await fetch(`https://api.coptic.io/api/readings/${dateParam}`);
-    if (!copticRes.ok) {
-      throw new Error(`Coptic API responded with status ${copticRes.status}`);
+    const katamerosUrl = `https://api.katameros.app/readings/gregorian/${katamerosDate}?languageId=3`;
+    const katamerosRes = await fetch(katamerosUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+      }
+    });
+
+    if (!katamerosRes.ok) {
+      throw new Error(`Katameros API responded with status ${katamerosRes.status}`);
     }
 
-    const copticData = await copticRes.json();
-    const ref = copticData.reference || {};
+    const data = await katamerosRes.json();
 
-    const responsePayload = {
+    const liturgy = data.sections?.find(s => s.title?.includes('قداس'));
+    const matins = data.sections?.find(s => s.title?.includes('باكر'));
+
+    // Subsections
+    const paulineSub = liturgy?.subSections?.find(s => s.title?.includes('البولس'));
+    const catholicSub = liturgy?.subSections?.find(s => s.title?.includes('الكاثوليكون'));
+    const actsSub = liturgy?.subSections?.find(s => s.title?.includes('الابركسيس'));
+    const synaxSub = liturgy?.subSections?.find(s => s.title?.includes('السنكسار'));
+    const gospelSub = liturgy?.subSections?.find(s => s.title?.includes('المزمور والإنجيل'));
+
+    // Readings
+    const pauline = formatReading(paulineSub?.readings?.[0], 'رسالة');
+    const catholic = formatReading(catholicSub?.readings?.[0], 'رسالة');
+    const acts = formatReading(actsSub?.readings?.[0], 'سفر أعمال الرسل');
+
+    const lPsalm = formatReading(gospelSub?.readings?.[0], 'مزمور');
+    if (lPsalm.text && !lPsalm.text.includes('هَلِّلُويَا')) {
+      lPsalm.text = lPsalm.text.replace(/»$/, ' هَلِّلُويَا.»');
+    }
+    const lGospel = formatReading(gospelSub?.readings?.[1], 'إنجيل');
+
+    const matinsGospelSub = matins?.subSections?.find(s => s.title?.includes('المزمور والإنجيل'));
+    const mPsalm = formatReading(matinsGospelSub?.readings?.[0], 'مزمور');
+    if (mPsalm.text && !mPsalm.text.includes('هَلِّلُويَا')) {
+      mPsalm.text = mPsalm.text.replace(/»$/, ' هَلِّلُويَا.»');
+    }
+    const mGospel = formatReading(matinsGospelSub?.readings?.[1], 'إنجيل');
+
+    // Synaxarium
+    const synaxReadings = synaxSub?.readings || [];
+    const commemorations = synaxReadings.map(r => (r.title || '').trim()).filter(Boolean);
+    const mainStory = synaxReadings[0]?.html
+      ? synaxReadings[0].html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+      : 'بركة صلوات وشفاعة قديسي هذا اليوم فلتكن معنا جميعاً، آمين.';
+    const mainTitle = synaxReadings[0]?.title || 'تذكار قديسي هذا اليوم المبارك';
+
+    const payload = {
       success: true,
-      source: 'Coptic Orthodox Liturgical Lectionary API (coptic.io)',
+      source: 'Coptic Orthodox Katameros & Synaxarium (Katameros.app)',
       gregorianDate: dateParam,
-      fullDate: copticData.fullDate,
-      stTaklaUrl: `https://st-takla.org/Coptic-Faith-Creed-Dogma/Coptic-Rite-n-Ritual-Taks/Katamaros-Coptic-Daily-Readings.html`,
-      references: {
-        vespersPsalm: formatArabicRef(ref.VPsalm),
-        vespersGospel: formatArabicRef(ref.VGospel),
-        matinsPsalm: formatArabicRef(ref.MPsalm),
-        matinsGospel: formatArabicRef(ref.MGospel),
-        pauline: formatArabicRef(ref.Pauline),
-        catholic: formatArabicRef(ref.Catholic),
-        acts: formatArabicRef(ref.Acts),
-        liturgyPsalm: formatArabicRef(ref.LPsalm),
-        liturgyGospel: formatArabicRef(ref.LGospel)
+      copticDateRaw: data.copticDate,
+      periodInfo: data.periodInfo,
+      synaxarium: {
+        title: mainTitle,
+        commemorations: commemorations.length > 0 ? commemorations : [mainTitle],
+        mainStory: mainStory,
+        saintName: mainTitle.replace(/^(تذكار|استشهاد|نياحة)\s+/, '')
       },
-      rawReference: ref,
-      synaxarium: copticData.Synaxarium || []
+      gospel: {
+        reference: lGospel.reference || 'إنجيل القداس الإلهي',
+        text: lGospel.text || '',
+        psalmRef: lPsalm.reference || 'مزمور القداس الإلهي',
+        psalmText: lPsalm.text || ''
+      },
+      epistles: {
+        paulineRef: pauline.reference || 'رسالة البولس',
+        paulineText: pauline.text || '',
+        catholicRef: catholic.reference || 'رسالة الكاثوليكون',
+        catholicText: catholic.text || '',
+        actsRef: acts.reference || 'سفر الإبركسيس (أعمال الرسل)',
+        actsText: acts.text || ''
+      },
+      matins: {
+        gospelRef: mGospel.reference || 'إنجيل باكر',
+        gospelText: mGospel.text || '',
+        psalmRef: mPsalm.reference || 'مزمور باكر',
+        psalmText: mPsalm.text || ''
+      },
+      reflection: {
+        title: `بركة كلمة الرب وإنجيل اليوم (${data.periodInfo?.season || 'القداس الإلهي'})`,
+        text: 'دعوة إلهية مباركة للتأمل في رسائل وخلاص مخلصنا الصالح، والتمسك بالوصية المحيية وسير الآباء القديسين والشهداء الأبرار.',
+        quote: lGospel.text ? lGospel.text.slice(0, 160) + '...' : '«كَلِمَتُكَ مِصْبَاحٌ لِرِجْلِي وَنُورٌ لِسَبِيلِي»'
+      }
     };
 
-    res.status(200).json(responsePayload);
+    res.status(200).json(payload);
   } catch (err) {
-    console.error('Katamaros API error:', err);
+    console.error('Katameros API processing error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 }
