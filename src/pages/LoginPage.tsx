@@ -95,6 +95,9 @@ export const LoginPage: React.FC = () => {
         case 'membership':
           navigate('/membership', { replace: true });
           break;
+        case 'service_leader':
+          navigate('/service-leader', { replace: true });
+          break;
         case 'servant':
           navigate('/servant', { replace: true });
           break;
