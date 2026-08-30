@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">كنيسة العذراء محرم بك</string>
+    <string name="title_activity_main">كنيسة العذراء محرم بك</string>
+    <string name="package_name">com.tibarthenos.church</string>
+    <string name="custom_url_scheme">com.tibarthenos.church</string>
+</resources>

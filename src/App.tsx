@@ -10,6 +10,9 @@ import { PrayerModal } from './components/common/PrayerModal';
 import { SermonVideoModal } from './components/sermons/SermonVideoModal';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { NotificationPermissionModal } from './components/common/NotificationPermissionModal';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
 import type { Sermon, UserRole } from './lib/api';
 import { PERMISSIONS } from './lib/permissions';
 
@@ -173,6 +176,14 @@ const AppLayout: React.FC = () => {
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
   const [modalSermon, setModalSermon] = useState<Sermon | null>(null);
   const location = useLocation();
+
+  React.useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setBackgroundColor({ color: '#00174a' }).catch(() => {});
+      StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+      SplashScreen.hide().catch(() => {});
+    }
+  }, []);
 
   const isDashboard =
     (location.pathname.startsWith('/admin') ||
