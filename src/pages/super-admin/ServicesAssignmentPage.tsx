@@ -182,9 +182,27 @@ export const ServicesAssignmentPage: React.FC = () => {
     };
 
     try {
-      // Save to Site Settings in Supabase
+      // Save to Site Settings in Supabase with bidirectional synchronization
       const key = `service_assignment_${category}`;
-      await api.updateSiteSettings({ [key]: JSON.stringify(config) });
+      const syncUpdates: Record<string, string> = { [key]: JSON.stringify(config) };
+
+      allServiceLeaders.forEach(leader => {
+        const directKey = `service_leader_assigned_services_${leader.id}`;
+        const currentServices = new Set<ChurchServiceCategory>();
+        APPROVED_CATEGORIES.forEach(c => {
+          if (c.category === category) {
+            if (selectedLeaders.includes(leader.id)) currentServices.add(c.category);
+          } else {
+            const otherConfig = assignments[c.category];
+            if (otherConfig?.leader_ids?.includes(leader.id)) {
+              currentServices.add(c.category);
+            }
+          }
+        });
+        syncUpdates[directKey] = JSON.stringify(Array.from(currentServices));
+      });
+
+      await api.updateSiteSettings(syncUpdates);
       
       // Save local backup
       localStorage.setItem(`church_service_assign_${category}`, JSON.stringify(config));

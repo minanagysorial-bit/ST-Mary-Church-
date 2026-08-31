@@ -37,6 +37,10 @@ import {
   DEFAULT_SERVICE_SCHEDULES 
 } from '../../lib/attendanceStatusHelper';
 import { useToast } from '../../components/common/Toast';
+import { 
+  ALL_CHURCH_SERVICE_CATEGORIES, 
+  getLeaderAssignedServices 
+} from '../../lib/servicesAssignmentHelper';
 
 const DEFAULT_SERVICE_CATEGORIES: ChurchServiceCategory[] = [
   'ابتدائي بنين',
@@ -55,6 +59,7 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
   const toast = useToast();
   const [families, setFamilies] = useState<Family[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [familyServantsMap, setFamilyServantsMap] = useState<Record<string, string[]>>({});
   const [attendanceRecords, setAttendanceRecords] = useState<FamilyAttendanceRecord[]>([]);
@@ -97,6 +102,7 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
 
       setFamilies(fetchedFamilies);
       setProfiles(fetchedProfiles);
+      setSiteSettings(settings);
       setFamilyServantsMap(relMap);
       setAttendanceRecords(fetchedAttendance);
       setServiceConfigs(configs);
@@ -121,12 +127,36 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const allServants = profiles.filter(p => p.role === 'servant' || p.role === 'service_leader');
+  const isGlobalAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
+
+  // Determine allowed categories for the current leader
+  const myAssignedCategories: ChurchServiceCategory[] = isGlobalAdmin
+    ? ALL_CHURCH_SERVICE_CATEGORIES.map(c => c.category)
+    : (profile?.id ? getLeaderAssignedServices(profile.id, siteSettings) : []);
+
+  // Filtered families strictly to assigned services
+  const sundaySchoolFamilies = families
+    .filter(f => f.family_type === 'sunday_school')
+    .filter(f => {
+      if (isGlobalAdmin) return true;
+      if (myAssignedCategories.length === 0) return false;
+      return myAssignedCategories.some(cat => (f.stage && f.stage.includes(cat)) || (f.area && f.area.includes(cat)) || (f.notes && f.notes.includes(cat)));
+    });
+
+  const myAssignedFamilyIds = new Set(sundaySchoolFamilies.map(f => f.id));
+  const myServantIds = new Set<string>();
+  Object.entries(familyServantsMap).forEach(([fId, sIds]) => {
+    if (myAssignedFamilyIds.has(fId)) {
+      sIds.forEach(id => myServantIds.add(id));
+    }
+  });
+
+  const allServants = isGlobalAdmin
+    ? profiles.filter(p => p.role === 'servant' || p.role === 'service_leader')
+    : profiles.filter(p => (p.role === 'servant' || p.role === 'service_leader') && (myServantIds.has(p.id) || p.id === profile?.id));
+
   const allPriests = profiles.filter(p => p.role === 'priest');
 
-  // Filtered families
-  const sundaySchoolFamilies = families.filter(f => f.family_type === 'sunday_school');
-  
   const familyNamesMap = families.reduce((acc, f) => {
     acc[f.id] = f.head_name;
     return acc;
@@ -157,15 +187,18 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
   const completedFamilies = sundaySchoolFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'COMPLETED');
   const pendingFamilies = sundaySchoolFamilies.filter(f => familyAttendanceStatusMap[f.id]?.status === 'PENDING');
 
+  const sundaySchoolFamilyIdSet = new Set(sundaySchoolFamilies.map(f => f.id));
+  const relevantFamilyMembers = familyMembers.filter(m => sundaySchoolFamilyIdSet.has(m.family_id));
+
   const consecutiveAbsentees = findConsecutiveAbsentees(
-    familyMembers,
+    relevantFamilyMembers,
     attendanceRecords,
     familyNamesMap,
     2
   );
 
   const upcomingBirthdays = getUpcomingBirthdays(
-    familyMembers.map(m => ({ id: m.id, full_name: m.full_name, birth_date: m.birth_date, phone: m.phone, family_name: familyNamesMap[m.family_id] })),
+    relevantFamilyMembers.map(m => ({ id: m.id, full_name: m.full_name, birth_date: m.birth_date, phone: m.phone, family_name: familyNamesMap[m.family_id] })),
     allServants.map(s => ({ id: s.id, full_name: s.full_name, phone: s.phone, role: s.role }))
   );
 
@@ -191,6 +224,26 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
             <p className="text-xs sm:text-sm text-slate-300 font-semibold max-w-xl leading-relaxed">
               إدارة خدمات وأسر التربية الكنسية، متابعة الحضور والغياب ورصد المواعيد والتنبيهات الحمراء الفورية.
             </p>
+
+            {/* Assigned Services Tags */}
+            {!isGlobalAdmin && myAssignedCategories.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                <span className="text-xs text-slate-300 font-bold">المراحل المسندة إليك:</span>
+                {myAssignedCategories.map(cat => (
+                  <span key={cat} className="px-3 py-1 rounded-xl bg-[#fed65b] text-[#00174a] text-xs font-extrabold shadow-sm flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{cat}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {!isGlobalAdmin && myAssignedCategories.length === 0 && (
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-300 text-xs font-bold mt-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span>تنبيه: لم يتم تعيين خدمة مسندة لحسابك بعد من قبل مسؤول النظام</span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -491,7 +544,7 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-tajawal text-xl font-bold text-[#00174a]">
-              أقسام وقطاعات الخدمة المعتمدة ومواعيدها
+              {isGlobalAdmin ? 'أقسام وقطاعات الخدمة المعتمدة ومواعيدها' : 'الخدمات والمراحل المسندة إليك ومواعيدها'}
             </h2>
             <Link
               to="/service-leader/families"
@@ -502,8 +555,19 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {DEFAULT_SERVICE_CATEGORIES.map(category => {
+          {!isGlobalAdmin && myAssignedCategories.length === 0 ? (
+            <div className="p-8 bg-amber-50 border-2 border-amber-300 rounded-3xl text-center space-y-3">
+              <AlertTriangle className="w-10 h-10 text-amber-600 mx-auto" />
+              <h3 className="font-tajawal text-lg font-extrabold text-amber-950">
+                لم يتم إسناد خدمة أو مرحلة لحسابك حتى الآن
+              </h3>
+              <p className="text-xs text-amber-800 font-semibold max-w-md mx-auto leading-relaxed">
+                مرحباً بك يا {profile?.full_name}. حسابك مسجل برتبة أمين خدمة، ولكن لم يقم مسؤول النظام (Super Admin) بتعيين المرحلة المسؤولة عنها بعد. يرجى مراجعة إدارة الكنيسة لتحديد خدمتك.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {(isGlobalAdmin ? DEFAULT_SERVICE_CATEGORIES : myAssignedCategories).map(category => {
               const defaultSched = DEFAULT_SERVICE_SCHEDULES[category] || { day: 'الجمعة', start: '09:00', end: '11:30' };
               const config = serviceConfigs[category] || { 
                 priest_ids: [], 
@@ -576,7 +640,8 @@ export const ServiceLeaderDashboardPage: React.FC = () => {
               );
             })}
           </div>
-        </div>
+        )}
+      </div>
 
         {/* Quick Actions Shortcuts */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">

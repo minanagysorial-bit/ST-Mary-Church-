@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { 
   Shield, Lock, UserCheck, Plus, Trash2, Award, Edit2, Check, X, ChevronDown, ChevronUp,
-  Eye, EyeOff, Key, Copy, Download, FileSpreadsheet, Sparkles, RefreshCw, Layers
+  Eye, EyeOff, Key, Copy, Download, FileSpreadsheet, Sparkles, RefreshCw, Layers, AlertTriangle, Save
 } from 'lucide-react';
-import { api, Profile, UserRole } from '../../lib/api';
+import { api, Profile, UserRole, type ChurchServiceCategory } from '../../lib/api';
 import { adminCreateUser } from '../../lib/auth';
 import { PERMISSION_GROUPS, PERMISSION_LABELS } from '../../lib/permissions';
 import { useToast } from '../../components/common/Toast';
+import { 
+  ALL_CHURCH_SERVICE_CATEGORIES, 
+  getLeaderAssignedServices, 
+  saveLeaderAssignedServices 
+} from '../../lib/servicesAssignmentHelper';
 
 interface SavedCredential {
   id?: string;
@@ -21,6 +26,7 @@ interface SavedCredential {
 export const PermissionsPage: React.FC = () => {
   const toast = useToast();
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [userPermissions, setUserPermissions] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +41,12 @@ export const PermissionsPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(true);
   const [role, setRole] = useState<UserRole>('servant');
   const [creationPermissions, setCreationPermissions] = useState<string[]>([]);
+  const [creationAssignedServices, setCreationAssignedServices] = useState<ChurchServiceCategory[]>([]);
+
+  // Assign Services Modal for Service Leader
+  const [assigningLeaderProfile, setAssigningLeaderProfile] = useState<Profile | null>(null);
+  const [modalAssignedServices, setModalAssignedServices] = useState<ChurchServiceCategory[]>([]);
+  const [savingServiceAssignment, setSavingServiceAssignment] = useState(false);
 
   // Credentials Vault & Sheet Modal
   const [credentialsVault, setCredentialsVault] = useState<SavedCredential[]>([]);
@@ -57,6 +69,7 @@ export const PermissionsPage: React.FC = () => {
       ]);
 
       setProfiles(data);
+      setSiteSettings(settings);
 
       // Load Saved Credentials Vault
       const rawVault = settings['admin_credentials_vault'];
@@ -283,6 +296,15 @@ https://www.tibarthenos.com/login`;
         }
       }
 
+      // If service_leader, save assigned services immediately
+      if (role === 'service_leader' && res.user?.id && creationAssignedServices.length > 0) {
+        try {
+          await saveLeaderAssignedServices(res.user.id, creationAssignedServices, siteSettings);
+        } catch (servErr) {
+          console.warn('Could not assign services on user creation:', servErr);
+        }
+      }
+
       // Save to Credentials Vault & Sheet
       await saveToVault({
         id: res.user?.id,
@@ -301,6 +323,7 @@ https://www.tibarthenos.com/login`;
       setPassword('');
       setRole('servant');
       setCreationPermissions([]);
+      setCreationAssignedServices([]);
 
       // Refresh list
       await fetchProfiles();
@@ -308,6 +331,43 @@ https://www.tibarthenos.com/login`;
       toast.error(err.message || 'حدث خطأ أثناء إنشاء الحساب. تأكد من صحة البيانات وعدم تكرار البريد.');
     } finally {
       setSubmitLoading(false);
+    }
+  };
+
+  const handleOpenAssignModal = (p: Profile) => {
+    setAssigningLeaderProfile(p);
+    const assigned = getLeaderAssignedServices(p.id, siteSettings);
+    setModalAssignedServices(assigned);
+  };
+
+  const handleSaveLeaderServices = async () => {
+    if (!assigningLeaderProfile) return;
+    setSavingServiceAssignment(true);
+    try {
+      await saveLeaderAssignedServices(assigningLeaderProfile.id, modalAssignedServices, siteSettings);
+      
+      // Update local siteSettings state
+      const updatedSettings = { ...siteSettings };
+      updatedSettings[`service_leader_assigned_services_${assigningLeaderProfile.id}`] = JSON.stringify(modalAssignedServices);
+      
+      ALL_CHURCH_SERVICE_CATEGORIES.forEach(item => {
+        const catKey = `service_assignment_${item.category}`;
+        const raw = updatedSettings[catKey];
+        let cfg = raw ? JSON.parse(raw) : { leader_ids: [] };
+        let lIds = new Set(cfg.leader_ids || []);
+        if (modalAssignedServices.includes(item.category)) lIds.add(assigningLeaderProfile.id);
+        else lIds.delete(assigningLeaderProfile.id);
+        cfg.leader_ids = Array.from(lIds);
+        updatedSettings[catKey] = JSON.stringify(cfg);
+      });
+
+      setSiteSettings(updatedSettings);
+      toast.success(`تم تحديث الخدمات المسندة لأمين الخدمة (${assigningLeaderProfile.full_name}) بنجاح ✨`);
+      setAssigningLeaderProfile(null);
+    } catch (err: any) {
+      toast.error('حدث خطأ أثناء حفظ الخدمات المسندة');
+    } finally {
+      setSavingServiceAssignment(false);
     }
   };
 
@@ -488,6 +548,21 @@ https://www.tibarthenos.com/login`;
                               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] border ${getRoleBadgeClass(p.role)}`}>
                                 <span>{getRoleLabel(p.role)}</span>
                               </span>
+                              {p.role === 'service_leader' && (
+                                <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                                  {getLeaderAssignedServices(p.id, siteSettings).length === 0 ? (
+                                    <span className="text-[9px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md font-bold">
+                                      لم تحدد خدمة بعد
+                                    </span>
+                                  ) : (
+                                    getLeaderAssignedServices(p.id, siteSettings).map(cat => (
+                                      <span key={cat} className="text-[9px] text-cyan-800 bg-cyan-50 border border-cyan-200 px-1.5 py-0.5 rounded-md font-bold">
+                                        {cat}
+                                      </span>
+                                    ))
+                                  )}
+                                </div>
+                              )}
                             </td>
                             <td className="p-4">
                               <select
@@ -506,6 +581,17 @@ https://www.tibarthenos.com/login`;
                               </select>
                             </td>
                             <td className="p-4 flex items-center justify-center gap-2">
+                              {p.role === 'service_leader' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenAssignModal(p)}
+                                  className="p-1.5 font-tajawal text-[10px] font-bold rounded-lg border border-cyan-200 bg-cyan-50 text-cyan-800 hover:bg-cyan-100 transition-colors flex items-center gap-1 shadow-xs"
+                                  title="تحديد الخدمات المسندة لهذا الأمين"
+                                >
+                                  <Layers className="w-3.5 h-3.5 text-cyan-700" />
+                                  <span>إسناد الخدمات</span>
+                                </button>
+                              )}
                               {p.role !== 'super_admin' && p.role !== 'admin' && (
                                 <button
                                   type="button"
@@ -683,6 +769,7 @@ https://www.tibarthenos.com/login`;
                     onChange={e => {
                       setRole(e.target.value as UserRole);
                       setCreationPermissions([]);
+                      setCreationAssignedServices([]);
                     }}
                     className="w-full bg-white/10 border border-white/10 focus:border-[#fed65b] rounded-xl px-4 py-2.5 text-xs text-white outline-none transition-colors font-semibold [&>option]:text-slate-800"
                   >
@@ -695,6 +782,37 @@ https://www.tibarthenos.com/login`;
                     <option value="board">عضو المجلس (Board)</option>
                   </select>
                 </div>
+
+                {/* Assigned Services Selection for Service Leader */}
+                {role === 'service_leader' && (
+                  <div className="space-y-2 pt-2 border-t border-white/10">
+                    <label className="block text-xs font-bold text-[#fed65b] flex items-center justify-between">
+                      <span>الخدمة المسندة لأمين الخدمة:</span>
+                      <span className="text-[10px] text-slate-300 font-normal">
+                        {creationAssignedServices.length > 0 ? `(${creationAssignedServices.length} خدمة محددة)` : '(حدد خدمة واحدة على الأقل)'}
+                      </span>
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 p-2 bg-white/5 rounded-xl border border-white/5 max-h-40 overflow-y-auto">
+                      {ALL_CHURCH_SERVICE_CATEGORIES.map(cat => (
+                        <label key={cat.category} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10 text-[11px] text-slate-100 cursor-pointer transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={creationAssignedServices.includes(cat.category)}
+                            onChange={() => {
+                              setCreationAssignedServices(prev => 
+                                prev.includes(cat.category) 
+                                  ? prev.filter(c => c !== cat.category) 
+                                  : [...prev, cat.category]
+                              );
+                            }}
+                            className="accent-[#fed65b] w-3.5 h-3.5"
+                          />
+                          <span className="font-semibold">{cat.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {role !== 'super_admin' && role !== 'admin' && (
                   <div className="space-y-2 pt-2 border-t border-white/10">
@@ -846,6 +964,121 @@ https://www.tibarthenos.com/login`;
                   className="px-5 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
                 >
                   إغلاق
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Assign Services to Service Leader */}
+        {assigningLeaderProfile && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-100 text-right animate-scale-in" dir="rtl">
+              
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-700 flex items-center justify-center font-bold">
+                    <Layers className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-tajawal text-lg font-extrabold text-[#00174a]">
+                      تحديد الخدمات المسندة لأمين الخدمة
+                    </h3>
+                    <p className="text-xs text-slate-500 font-semibold">
+                      {assigningLeaderProfile.full_name} ({assigningLeaderProfile.email})
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setAssigningLeaderProfile(null)}
+                  className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-slate-700">
+                    اختر المرحلة أو المراحل التي يشرف عليها هذا الأمين:
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setModalAssignedServices(ALL_CHURCH_SERVICE_CATEGORIES.map(c => c.category))}
+                      className="text-cyan-700 hover:underline"
+                    >
+                      تحديد الكل
+                    </button>
+                    <span>•</span>
+                    <button
+                      type="button"
+                      onClick={() => setModalAssignedServices([])}
+                      className="text-slate-400 hover:underline"
+                    >
+                      إلغاء التحديد
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto p-1">
+                  {ALL_CHURCH_SERVICE_CATEGORIES.map(cat => {
+                    const isSelected = modalAssignedServices.includes(cat.category);
+                    return (
+                      <div
+                        key={cat.category}
+                        onClick={() => {
+                          setModalAssignedServices(prev => 
+                            isSelected ? prev.filter(c => c !== cat.category) : [...prev, cat.category]
+                          );
+                        }}
+                        className={`p-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                          isSelected
+                            ? 'bg-cyan-50/80 border-cyan-500 text-cyan-950 font-bold shadow-xs'
+                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="material-symbols-outlined text-cyan-600 text-xl">{cat.icon}</span>
+                          <span className="text-xs">{cat.label}</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}} // Handled by parent container click
+                          className="accent-cyan-600 w-4 h-4"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {modalAssignedServices.length === 0 && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-semibold flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>تنبيه: إذا لم يتم تحديد أي خدمة، لن تظهر أي أسر أو بيانات لهذا الأمين عند تسجيل دخوله.</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setAssigningLeaderProfile(null)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  disabled={savingServiceAssignment}
+                  onClick={handleSaveLeaderServices}
+                  className="bg-[#002366] hover:bg-[#00174a] text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-md flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4 text-[#fed65b]" />
+                  <span>{savingServiceAssignment ? 'جاري الحفظ...' : 'حفظ تعيين الخدمات'}</span>
                 </button>
               </div>
 

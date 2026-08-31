@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { 
   Users, Check, MapPin, Search, X, PlusCircle, Church, Calendar, ChevronDown, ChevronUp, UserCircle, Settings, Trash2,
-  Phone, Sparkles, FolderPlus, Layers, ShieldCheck, Heart
+  Phone, Sparkles, FolderPlus, Layers, ShieldCheck, Heart, AlertTriangle
 } from 'lucide-react';
 import { api, type Family, type FamilyMember, type FamilyServant, type Profile, type ChurchServiceCategory } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLocation } from 'react-router-dom';
+import { 
+  ALL_CHURCH_SERVICE_CATEGORIES, 
+  getLeaderAssignedServices 
+} from '../../lib/servicesAssignmentHelper';
 
 const SERVICE_CATEGORIES: ChurchServiceCategory[] = [
   'ابتدائي بنين',
@@ -27,6 +31,7 @@ export const ServiceFamiliesManagementPage: React.FC = () => {
   const initialCategory = searchParams.get('category') || 'الكل';
 
   const [families, setFamilies] = useState<Family[]>([]);
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [familyMembers, setFamilyMembers] = useState<Record<string, FamilyMember[]>>({});
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [familyServantsMap, setFamilyServantsMap] = useState<Record<string, string[]>>({});
@@ -59,17 +64,33 @@ export const ServiceFamiliesManagementPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const fetchedFamilies = await api.getFamilies();
+      const [fetchedFamilies, profilesData, settings] = await Promise.all([
+        api.getFamilies(),
+        api.getProfiles(),
+        api.getSiteSettings().catch(() => ({} as Record<string, string>))
+      ]);
+      setSiteSettings(settings);
+
+      const isGlobalAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
+      const myAssigned = isGlobalAdmin
+        ? ALL_CHURCH_SERVICE_CATEGORIES.map(c => c.category)
+        : (profile?.id ? getLeaderAssignedServices(profile.id, settings) : []);
+
+      const scopedFamilies = fetchedFamilies.filter(f => {
+        if (f.family_type !== 'sunday_school') return false;
+        if (isGlobalAdmin) return true;
+        if (myAssigned.length === 0) return false;
+        return myAssigned.some(cat => (f.stage && f.stage.includes(cat)) || (f.area && f.area.includes(cat)) || (f.notes && f.notes.includes(cat)));
+      });
       
-      const membersPromises = fetchedFamilies.map(f => api.getFamilyMembers(f.id));
+      const membersPromises = scopedFamilies.map(f => api.getFamilyMembers(f.id));
       const membersResults = await Promise.all(membersPromises);
       
       const membersMap: Record<string, FamilyMember[]> = {};
-      fetchedFamilies.forEach((f, index) => {
+      scopedFamilies.forEach((f, index) => {
         membersMap[f.id] = membersResults[index];
       });
 
-      const profilesData = await api.getProfiles();
       const profMap: Record<string, Profile> = {};
       if (profilesData) {
         profilesData.forEach(p => { profMap[p.id] = p; });
@@ -88,7 +109,7 @@ export const ServiceFamiliesManagementPage: React.FC = () => {
         console.warn("family_servants error:", tableErr);
       }
 
-      setFamilies(fetchedFamilies.filter(f => f.family_type === 'sunday_school'));
+      setFamilies(scopedFamilies);
       setFamilyMembers(membersMap);
       setProfiles(profMap);
       setFamilyServantsMap(relationsMap);
@@ -103,6 +124,13 @@ export const ServiceFamiliesManagementPage: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const isGlobalAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
+  const myAssignedCategories: ChurchServiceCategory[] = isGlobalAdmin
+    ? ALL_CHURCH_SERVICE_CATEGORIES.map(c => c.category)
+    : (profile?.id ? getLeaderAssignedServices(profile.id, siteSettings) : []);
+
+  const availableCategories = isGlobalAdmin ? SERVICE_CATEGORIES : myAssignedCategories;
 
   const allServants = Object.values(profiles).filter(p => p.role === 'servant' || p.role === 'service_leader');
 
@@ -236,7 +264,19 @@ export const ServiceFamiliesManagementPage: React.FC = () => {
           {/* Category Chips */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
             <span className="text-xs font-bold text-slate-500 shrink-0">الخدمة:</span>
-            {['الكل', ...SERVICE_CATEGORIES].map(cat => (
+            {availableCategories.length > 1 && (
+              <button
+                onClick={() => setSelectedCategory('الكل')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  selectedCategory === 'الكل'
+                    ? 'bg-[#002366] text-[#fed65b] shadow-md shadow-[#002366]/20'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                الكل
+              </button>
+            )}
+            {availableCategories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
@@ -250,6 +290,13 @@ export const ServiceFamiliesManagementPage: React.FC = () => {
               </button>
             ))}
           </div>
+
+          {!isGlobalAdmin && myAssignedCategories.length === 0 && (
+            <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl text-amber-900 text-xs font-bold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>تنبيه: لم يتم إسناد أي مرحلة أو خدمة لحسابك بعد من قِبل مسؤول النظام (Super Admin). يرجى مراجعة إدارة الكنيسة لتحديد خدمتك.</span>
+            </div>
+          )}
         </div>
 
         {/* Families Grid */}
