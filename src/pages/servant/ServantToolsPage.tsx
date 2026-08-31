@@ -4,7 +4,7 @@ import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { 
   Wrench, BookOpen, Download, FileText, CheckSquare, 
   HelpCircle, ChevronLeft, Volume2, Play, Pause, RefreshCw, PlusCircle, Gamepad, Award, Bell, Presentation,
-  ExternalLink, Eye, Sparkles, X, Settings
+  ExternalLink, Eye, Sparkles, X, Settings, Trophy
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../lib/api';
@@ -24,15 +24,6 @@ export const ServantToolsPage: React.FC = () => {
 
   // Coming Soon Modal (Animated)
   const [comingSoonModal, setComingSoonModal] = useState<{ open: boolean; title: string }>({ open: false, title: '' });
-
-  // Tombola Game State
-  const [tombolaNumbers, setTombolaNumbers] = useState<number[]>([]);
-  const [lastTombolaNumber, setLastTombolaNumber] = useState<number | null>(null);
-  const [tombolaHistory, setTombolaHistory] = useState<number[]>([]);
-
-  // Audio Hymn Player State
-  const [isPlayingHymn, setIsPlayingHymn] = useState(false);
-  const [audioProgress, setAudioProgress] = useState(0);
 
   // Guide modal state
   const [showGuide, setShowGuide] = useState(false);
@@ -56,43 +47,6 @@ export const ServantToolsPage: React.FC = () => {
     };
     loadCurriculums();
   }, []);
-
-  // Draw a number for Tombola
-  const drawTombolaNumber = () => {
-    if (tombolaHistory.length >= 90) {
-      alert('تم سحب جميع الأرقام من 1 إلى 90!');
-      return;
-    }
-    let num: number;
-    do {
-      num = Math.floor(Math.random() * 90) + 1;
-    } while (tombolaHistory.includes(num));
-
-    setLastTombolaNumber(num);
-    setTombolaHistory(prev => [num, ...prev]);
-  };
-
-  const resetTombola = () => {
-    setLastTombolaNumber(null);
-    setTombolaHistory([]);
-  };
-
-  // Toggle play audio simulation
-  const toggleHymnPlay = () => {
-    setIsPlayingHymn(!isPlayingHymn);
-    if (!isPlayingHymn) {
-      const interval = setInterval(() => {
-        setAudioProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setIsPlayingHymn(false);
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    }
-  };
 
   return (
     <DashboardLayout role="servant">
@@ -131,69 +85,6 @@ export const ServantToolsPage: React.FC = () => {
           <div className="absolute -top-20 -right-20 w-60 h-60 bg-secondary/10 rounded-full blur-2xl"></div>
         </section>
 
-        {/* Dynamic Tool Interface Area (Shows if a tool is maximized) */}
-        {activeTool === 'tombola' && (
-          <div className="bg-white rounded-2xl p-6 border border-secondary/30 shadow-md space-y-6 animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-[#eae8e7] pb-3">
-              <h3 className="font-headline font-bold text-primary flex items-center gap-2 text-sm lg:text-base">
-                <Gamepad className="w-5 h-5 text-secondary" />
-                <span>أداة الطمبولة الرقمية (لعبة سحب الأرقام)</span>
-              </h3>
-              <button 
-                onClick={() => setActiveTool(null)}
-                className="text-xs font-bold text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-all"
-              >
-                إغلاق الأداة
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="bg-primary/5 rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-4 border border-[#c5c6d2]/35">
-                <p className="text-xs text-slate-500 font-bold">الرقم المسحوب حالياً</p>
-                <div className="w-24 h-24 rounded-full bg-secondary-container text-primary border-4 border-secondary flex items-center justify-center font-headline font-black text-4xl shadow-inner animate-pulse">
-                  {lastTombolaNumber !== null ? lastTombolaNumber : '—'}
-                </div>
-                <div className="flex gap-2 w-full pt-2">
-                  <button 
-                    onClick={drawTombolaNumber}
-                    className="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary-container text-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow"
-                  >
-                    <Play className="w-3.5 h-3.5" />
-                    <span>اسحب رقم</span>
-                  </button>
-                  <button 
-                    onClick={resetTombola}
-                    className="border border-[#c5c6d2] bg-white text-slate-550 font-bold px-3 py-2.5 rounded-lg hover:bg-slate-50 text-xs transition-all active:scale-95 flex items-center justify-center"
-                    title="إعادة تعيين السحب"
-                  >
-                    <RefreshCw className="w-4 h-4 text-slate-550" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="col-span-2 space-y-2">
-                <h4 className="text-xs font-extrabold text-[#002366]">لوحة الأرقام المسحوبة (السجل)</h4>
-                <div className="bg-slate-50 rounded-xl p-4 border border-[#eae8e7] h-40 overflow-y-auto font-mono text-[11px] grid grid-cols-10 gap-1.5 text-center">
-                  {Array.from({ length: 90 }, (_, k) => k + 1).map(n => {
-                    const isDrawn = tombolaHistory.includes(n);
-                    return (
-                      <span 
-                        key={n} 
-                        className={`py-1 rounded font-bold border transition-colors ${
-                          isDrawn 
-                            ? 'bg-secondary-container border-secondary text-primary font-black scale-105 shadow-sm' 
-                            : 'bg-white border-slate-100 text-slate-300'
-                        }`}
-                      >
-                        {n}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {activeTool === 'curriculum' && (
           <div className="bg-white rounded-2xl p-6 border border-secondary/30 shadow-md space-y-6 animate-fadeIn text-right" dir="rtl">
@@ -363,21 +254,28 @@ export const ServantToolsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Tool 4: Tambola */}
+          {/* Tool 4: Honor Board (لوحة الشرف للأولاد) */}
           <div 
-            onClick={() => setActiveTool(activeTool === 'tombola' ? null : 'tombola')}
-            className="group bg-white border border-[#c5c6d2]/50 hover:border-secondary rounded-2xl p-8 hover:-translate-y-2 hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col items-center text-center space-y-4"
+            onClick={() => window.open('/leaderboard', '_blank')}
+            className="group bg-gradient-to-br from-white to-amber-50/50 border border-amber-200 hover:border-[#d4af37] rounded-2xl p-8 hover:-translate-y-2 hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col items-center text-center space-y-4 relative overflow-hidden"
           >
-            <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-[#735c00] group-hover:text-white transition-all duration-300 shadow-sm border border-amber-100">
-              <span className="text-xl font-bold font-mono">90</span>
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#d4af37] to-[#fed65b] text-[#00174a] flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-md shadow-amber-500/20">
+              <Trophy className="w-8 h-8 text-[#00174a]" />
             </div>
-            <h3 className="font-headline font-extrabold text-[#002366] text-base group-hover:text-primary transition-colors">طمبولة</h3>
-            <p className="font-body-md text-on-surface-variant text-xs leading-relaxed max-w-[200px]">
-              أداة رقمية لسحب الأرقام وإدارة لعبة الطمبولة التقليدية.
+            <div className="space-y-1">
+              <span className="text-[10px] font-black text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full inline-block">
+                صفحة خارجية تفاعلية 🌟
+              </span>
+              <h3 className="font-headline font-extrabold text-[#002366] text-base group-hover:text-amber-700 transition-colors">
+                لوحة الشرف وأبطال الخدمة
+              </h3>
+            </div>
+            <p className="font-body-md text-on-surface-variant text-xs leading-relaxed max-w-[210px]">
+              لوحة ترتيب النقاط للأولاد لكل خدمة (ابتدائي، إعدادي، ثانوي) مع إمكانية مشاركة الترتيب على فيسبوك وواتساب.
             </p>
-            <div className="w-full pt-4 border-t border-[#eae8e7] text-secondary font-bold text-xs flex justify-center items-center gap-2 group-hover:gap-3 transition-all">
-              <span>فتح اللوحة</span>
-              <ChevronLeft className="w-4 h-4 text-secondary scale-x-[-1]" />
+            <div className="w-full pt-4 border-t border-[#eae8e7] text-amber-700 font-bold text-xs flex justify-center items-center gap-2 group-hover:gap-3 transition-all">
+              <span>فتح لوحة الشرف للأولاد</span>
+              <ExternalLink className="w-4 h-4 text-amber-700" />
             </div>
           </div>
 
@@ -419,60 +317,6 @@ export const ServantToolsPage: React.FC = () => {
 
         </section>
 
-        {/* Coptic Hymns Encyclopedia Section */}
-        <section className="bg-surface-container-low rounded-2xl p-6 lg:p-8 flex flex-col lg:flex-row gap-8 items-center border border-[#c5c6d2]/50 shadow-inner">
-          <div className="flex-1 space-y-4">
-            <span className="inline-block bg-secondary-container text-[#574500] px-3.5 py-1 rounded-md text-[10px] font-extrabold mb-2 uppercase tracking-wide">
-              جديد وحصري
-            </span>
-            <h2 className="font-headline font-black text-[#002366] text-xl">موسوعة الألحان القبطية</h2>
-            <p className="font-body-md text-on-surface-variant leading-relaxed text-xs">
-              تم إضافة قسم جديد للألحان مع ملفات صوتية تعليمية وشروحات للمعاني الروحية. يمكنك استخدامها الآن في فترات الترتيل ومجامر مدارس الأحد والاجتماعات.
-            </p>
-            
-            {/* Audio Simulation Controls */}
-            {isPlayingHymn && (
-              <div className="bg-white p-3 rounded-xl border border-[#c5c6d2]/40 w-full max-w-sm space-y-2 mt-4 transition-all">
-                <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
-                  <span className="flex items-center gap-1">
-                    <Volume2 className="w-3.5 h-3.5 text-secondary animate-pulse" />
-                    <span>جاري تشغيل: لحن الـ بي إكيسوستيس</span>
-                  </span>
-                  <span>{audioProgress}%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5">
-                  <div className="bg-[#735c00] h-1.5 rounded-full transition-all" style={{ width: `${audioProgress}%` }}></div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-4 mt-6">
-              <button 
-                onClick={toggleHymnPlay}
-                className="bg-primary hover:bg-primary-container text-white py-2 px-6 rounded-xl font-bold flex items-center gap-2 hover:scale-105 active:scale-95 transition-all text-xs shadow-md shadow-primary/10"
-              >
-                {isPlayingHymn ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                <span>{isPlayingHymn ? 'إيقاف مؤقت' : 'استماع للحن'}</span>
-              </button>
-              <button 
-                onClick={() => alert('جاري تنزيل ملفات نوت وكلمات الألحان القبطية الملحقة...')}
-                className="border border-primary text-primary px-6 py-2 rounded-xl font-bold hover:bg-primary/5 transition-colors text-xs flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>تنزيل الملفات</span>
-              </button>
-            </div>
-          </div>
-          
-          {/* Coptic manuscript image placeholder wrapper */}
-          <div className="w-full lg:w-1/3 h-48 rounded-xl overflow-hidden relative shadow-md border border-[#c5c6d2]/35 bg-white">
-            <img 
-              className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBzm2p4CYcVmvvmRXHNHaVZgsCEbaHapzrZAOoAo96lN7uUiiVKfzSkBk7_J6gYuWS2pd6aDGsjs66n4BFr6DcmEfNp2p6zXVAvLeccDnh9ZhSrBjnJVC0zjOsozeIDjMijBwsU8KCY9NYl3iyhxrJydAk1GrPRksuFyUuHT_gajFR8TAny882Bn7E8cy3Bbx73lmYrrtrU9-Z7uYeJ7xAzXM2JTGZeeX1CS_jOByG7o4J4a-IBWYBmVq0xh5xYgGQ3fU_1i3EQqcv" 
-              alt="المخطوطات القبطية الروحية"
-            />
-          </div>
-        </section>
 
       </div>
 

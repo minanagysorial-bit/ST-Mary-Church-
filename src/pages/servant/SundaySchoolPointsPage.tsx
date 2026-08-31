@@ -23,8 +23,10 @@ import {
   ShoppingBag,
   History,
   TrendingUp,
-  X
+  X,
+  ExternalLink
 } from 'lucide-react';
+import { extractPointsFromNotes, setPointsInNotes } from '../public/HonorBoardPage';
 
 interface GiftItem {
   id: string;
@@ -84,9 +86,22 @@ export const SundaySchoolPointsPage: React.FC = () => {
     }
   };
 
-  const savePoints = (updated: Record<string, number>) => {
+  const savePoints = async (updated: Record<string, number>, targetStudentId?: string) => {
     setPointsMap(updated);
     localStorage.setItem('sunday_school_points_map', JSON.stringify(updated));
+
+    // Also persist live points to Supabase family_members.notes [PTS:N]
+    if (targetStudentId) {
+      try {
+        const student = students.find(s => s.id === targetStudentId);
+        const currentNotes = (student as any)?.notes || '';
+        const newPts = updated[targetStudentId] || 0;
+        const updatedNotes = setPointsInNotes(currentNotes, newPts);
+        await api.updateFamilyMember(targetStudentId, { notes: updatedNotes });
+      } catch (err) {
+        console.warn('Could not persist points to Supabase:', err);
+      }
+    }
   };
 
   const fetchStudents = async () => {
@@ -120,6 +135,7 @@ export const SundaySchoolPointsPage: React.FC = () => {
         studentList = allMembers.map(fm => {
           const fam = allFamilies.find(f => f.id === fm.family_id);
           const stage = fam?.stage || fam?.area || fm.sunday_school_stage || 'ابتدائي';
+          const ptsFromDb = extractPointsFromNotes(fm.notes);
           return {
             id: fm.id,
             full_name: fm.full_name,
@@ -130,7 +146,8 @@ export const SundaySchoolPointsPage: React.FC = () => {
             father_of_confession: 'كنيسة السيدة العذراء مريم',
             spiritual_status: 'منتظم',
             attendance_status: 'حاضر',
-            points: 0,
+            points: ptsFromDb,
+            notes: fm.notes || '',
             qr_code: fm.id
           } as unknown as Member;
         });
@@ -141,21 +158,24 @@ export const SundaySchoolPointsPage: React.FC = () => {
 
       setStudents(studentList);
 
-      // Initialize default points if not set
+      // Initialize points from Supabase notes or cache
       const saved = localStorage.getItem('sunday_school_points_map');
       const existing: Record<string, number> = saved ? JSON.parse(saved) : {};
-      let changed = false;
+
+      allMembers.forEach(fm => {
+        const pts = extractPointsFromNotes(fm.notes);
+        if (pts > 0) {
+          existing[fm.id] = pts;
+        }
+      });
 
       studentList.forEach((s, idx) => {
         if (existing[s.id] === undefined) {
           existing[s.id] = (idx % 5 + 1) * 20 + 20;
-          changed = true;
         }
       });
 
-      if (changed) {
-        savePoints(existing);
-      }
+      savePoints(existing);
     } catch (err: any) {
       toast.error('حدث خطأ في تحميل المخدومين: ' + err.message);
     } finally {
@@ -168,7 +188,7 @@ export const SundaySchoolPointsPage: React.FC = () => {
     const current = pointsMap[student.id] || 0;
     const next = Math.max(0, current + amount);
     const updated = { ...pointsMap, [student.id]: next };
-    savePoints(updated);
+    savePoints(updated, student.id);
     toast.success(`تمت إضافة ${amount} نقطة لـ ${student.full_name} (${reason}) 🌟`);
   };
 
@@ -182,7 +202,7 @@ export const SundaySchoolPointsPage: React.FC = () => {
     const next = Math.max(0, current + delta);
 
     const updated = { ...pointsMap, [targetStudent.id]: next };
-    savePoints(updated);
+    savePoints(updated, targetStudent.id);
 
     if (isDeduction) {
       toast.success(`تم خصم ${pointsAmount} نقطة من ${targetStudent.full_name} (${pointsReason})`);
@@ -205,7 +225,7 @@ export const SundaySchoolPointsPage: React.FC = () => {
 
     const next = current - gift.pointsCost;
     const updated = { ...pointsMap, [student.id]: next };
-    savePoints(updated);
+    savePoints(updated, student.id);
     toast.success(`مبروك! تم استبدال ${gift.name} لـ ${student.full_name} بنجاح 🎉`);
   };
 
@@ -258,6 +278,31 @@ export const SundaySchoolPointsPage: React.FC = () => {
     <DashboardLayout role="servant">
       <div className="space-y-6 text-right font-cairo" dir="rtl">
         
+        {/* Page Top Title & Public Leaderboard Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-[#00174a]">
+              نقاط وبطاقات أبطال مدارس الأحد ⭐
+            </h2>
+            <p className="text-xs text-slate-500 font-bold mt-1">
+              تسجيل ومنح النقاط، متجر الجوائز الكنسي، ومزامنة لوحة الشرف المباشرة للأولاد
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <a
+              href="/leaderboard"
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-2.5 bg-gradient-to-r from-[#d4af37] to-[#fed65b] text-[#00174a] rounded-2xl font-black text-xs flex items-center gap-2 shadow-md shadow-amber-500/20 hover:scale-105 transition-all active:scale-95"
+            >
+              <Trophy className="w-4 h-4 text-[#00174a]" />
+              <span>عرض لوحة الشرف العامة للأولاد 🏆</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
+
         {/* Top Header & Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-gradient-to-br from-[#002366] to-[#00174a] text-white p-5 rounded-3xl border border-[#d4af37]/40 shadow-lg flex items-center justify-between">

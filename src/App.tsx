@@ -88,6 +88,9 @@ const QuizListPage = lazy(() => import('./pages/quiz/QuizListPage').then(m => ({
 const QuizHostPage = lazy(() => import('./pages/quiz/QuizHostPage').then(m => ({ default: m.QuizHostPage })));
 const QuizPlayerPage = lazy(() => import('./pages/quiz/QuizPlayerPage').then(m => ({ default: m.QuizPlayerPage })));
 
+// Honor Board / Leaderboard (Lazy Loaded)
+const HonorBoardPage = lazy(() => import('./pages/public/HonorBoardPage').then(m => ({ default: m.HonorBoardPage })));
+
 interface ProtectedRouteProps {
   children: React.ReactElement;
   allowedRoles: UserRole[];
@@ -194,9 +197,14 @@ const AppLayout: React.FC = () => {
      location.pathname.startsWith('/membership')) &&
     location.pathname !== '/membership/register';
 
+  const isStandaloneApp =
+    location.pathname.startsWith('/leaderboard') ||
+    location.pathname.startsWith('/honor-board') ||
+    location.pathname.startsWith('/quiz/play');
+
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf9f8] text-[#1b1c1c] font-cairo">
-      {!isDashboard && <Navbar onOpenPrayerModal={() => setIsPrayerModalOpen(true)} />}
+      {!isDashboard && !isStandaloneApp && <Navbar onOpenPrayerModal={() => setIsPrayerModalOpen(true)} />}
 
       <div className="flex-1">
         <Suspense fallback={<LoadingFallback />}>
@@ -277,6 +285,10 @@ const AppLayout: React.FC = () => {
             <Route path="/board/plans" element={<ProtectedRoute allowedRoles={['board', 'super_admin', 'admin']}><ImplementationPlansPage /></ProtectedRoute>} />
             <Route path="/board/agenda" element={<ProtectedRoute allowedRoles={['board', 'super_admin', 'admin']}><MeetingAgendaPage /></ProtectedRoute>} />
 
+            {/* Public Honor Board & Leaderboard */}
+            <Route path="/leaderboard" element={<HonorBoardPage />} />
+            <Route path="/honor-board" element={<HonorBoardPage />} />
+
             {/* Kahoot Quizzes */}
             <Route path="/quiz" element={<QuizListPage />} />
             <Route path="/quiz/host/:id" element={<QuizHostPage />} />
@@ -288,10 +300,10 @@ const AppLayout: React.FC = () => {
         </Suspense>
       </div>
 
-      {!isDashboard && <Footer />}
+      {!isDashboard && !isStandaloneApp && <Footer />}
 
       {/* Native Mobile Bottom Navigation Bar */}
-      <MobileBottomNav onOpenPrayerModal={() => setIsPrayerModalOpen(true)} />
+      {!isStandaloneApp && <MobileBottomNav onOpenPrayerModal={() => setIsPrayerModalOpen(true)} />}
 
       {/* Floating PWA Installation Prompt on Mobile */}
       <PWAInstallPrompt />
