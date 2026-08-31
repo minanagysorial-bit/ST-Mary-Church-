@@ -1391,6 +1391,16 @@ export const api = {
     return member as ChurchMember;
   },
 
+  createChurchMember: async (data: Partial<ChurchMember>): Promise<ChurchMember> => {
+    const { data: member, error } = await supabase
+      .from('church_members')
+      .insert(data)
+      .select()
+      .single();
+    if (error) throw error;
+    return member as ChurchMember;
+  },
+
   // ── Priest-Only Member Visitations ──
   getMemberVisitations: async (memberId?: string): Promise<MemberVisitation[]> => {
     let query = supabase

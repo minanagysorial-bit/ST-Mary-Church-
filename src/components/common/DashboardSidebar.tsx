@@ -78,8 +78,10 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         return [
           { label: 'لوحة التحكم الرعوية', path: '/priest', icon: 'dashboard' },
           { label: 'طلبات الصلاة والرسائل', path: '/admin/communications', icon: 'chat', permission: PERMISSIONS.VIEW_PRAYERS_AND_CONTACT },
-          { label: 'سجل الافتقاد ومتابعة الحالات', path: '/priest/member-visitation', icon: 'volunteer_activism', permission: PERMISSIONS.VIEW_MEMBER_VISITATIONS },
           { label: 'متابعة الخدمات وفصول الأسر', path: '/priest/services', icon: 'diversity_3', permission: PERMISSIONS.VIEW_SERVICES },
+          { label: 'تفقد الحضور والغياب', path: '/servant/attendance', icon: 'checklist', permission: PERMISSIONS.MANAGE_ATTENDANCE },
+          { label: 'سجل الافتقاد ومتابعة الحالات', path: '/priest/member-visitation', icon: 'volunteer_activism', permission: PERMISSIONS.VIEW_MEMBER_VISITATIONS },
+          { label: 'خريطة الافتقاد والعناوين 🗺️', path: '/servant/visitation-map', icon: 'explore' },
           { label: 'شعب الكنيسة', path: '/membership/members', icon: 'group', permission: PERMISSIONS.MANAGE_CHURCH_MEMBERS },
           { label: 'طلبات العضوية', path: '/priest/membership-requests', icon: 'app_registration', permission: PERMISSIONS.REVIEW_MEMBERSHIP_REQUESTS },
           { label: 'إدارة الإعلانات', path: '/priest/announcements', icon: 'campaign', permission: PERMISSIONS.MANAGE_ANNOUNCEMENTS },

@@ -24,6 +24,7 @@ export const CommunicationsPage: React.FC = () => {
   
   const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -36,17 +37,86 @@ export const CommunicationsPage: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [prayersData, messagesData] = await Promise.all([
+      const [prayersData, messagesData, settings] = await Promise.all([
         api.getPrayerRequests(),
-        api.getContactMessages()
+        api.getContactMessages(),
+        api.getSiteSettings().catch(() => ({} as Record<string, string>))
       ]);
-      setPrayers(prayersData);
+
+      setSiteSettings(settings);
+
+      // Auto-clean & delete prayers older than 7 days (Weekly Pruning)
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const expiredPrayers = prayersData.filter(p => new Date(p.submitted_at) < sevenDaysAgo);
+      if (expiredPrayers.length > 0) {
+        expiredPrayers.forEach(p => api.deletePrayerRequest(p.id).catch(console.warn));
+      }
+
+      const validWeeklyPrayers = prayersData.filter(p => new Date(p.submitted_at) >= sevenDaysAgo);
+      setPrayers(validWeeklyPrayers);
       setMessages(messagesData);
     } catch (err: any) {
       console.error('Error loading communications:', err);
       setErrorMsg('حدث خطأ أثناء تحميل البيانات');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getHandledInfo = (key: string): { priest_name: string; handled_at: string } | null => {
+    const raw = siteSettings[key];
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  };
+
+  const handleMarkPrayerPrayed = async (id: string) => {
+    const priestTitle = profile?.full_name?.startsWith('أبونا') 
+      ? profile.full_name 
+      : (profile?.role === 'priest' ? `أبونا ${profile.full_name}` : (profile?.full_name || 'أحد الآباء الكهنة'));
+    const key = `prayer_handled_${id}`;
+    const info = JSON.stringify({
+      priest_name: priestTitle,
+      priest_id: profile?.id,
+      handled_at: new Date().toISOString()
+    });
+
+    try {
+      await api.updatePrayerRequestStatus(id, true);
+      await api.updateSiteSettings({ [key]: info }).catch(console.warn);
+      setSiteSettings(prev => ({ ...prev, [key]: info }));
+      setPrayers(prev => prev.map(p => (p.id === id ? { ...p, is_read: true } : p)));
+      setSuccessMsg(`تم تسجيل الصلاة للطلب بواسطة ${priestTitle} بنجاح 🙏`);
+      setTimeout(() => setSuccessMsg(''), 3500);
+    } catch (err: any) {
+      setErrorMsg('فشل تحديث حالة الصلاة: ' + err.message);
+    }
+  };
+
+  const handleMarkMessageReceived = async (id: string) => {
+    const priestTitle = profile?.full_name?.startsWith('أبونا') 
+      ? profile.full_name 
+      : (profile?.role === 'priest' ? `أبونا ${profile.full_name}` : (profile?.full_name || 'أحد الآباء الكهنة'));
+    const key = `contact_handled_${id}`;
+    const info = JSON.stringify({
+      priest_name: priestTitle,
+      priest_id: profile?.id,
+      handled_at: new Date().toISOString()
+    });
+
+    try {
+      await api.updateContactMessageStatus(id, 'replied');
+      await api.updateSiteSettings({ [key]: info }).catch(console.warn);
+      setSiteSettings(prev => ({ ...prev, [key]: info }));
+      setMessages(prev => prev.map(m => (m.id === id ? { ...m, status: 'replied' } : m)));
+      setSuccessMsg(`تم تسجيل استلام الحالة والتواصل بواسطة ${priestTitle} بنجاح 📞`);
+      setTimeout(() => setSuccessMsg(''), 3500);
+    } catch (err: any) {
+      setErrorMsg('فشل تحديث حالة الرسالة: ' + err.message);
     }
   };
 
@@ -278,72 +348,96 @@ export const CommunicationsPage: React.FC = () => {
           filteredPrayers.length === 0 ? (
             <div className="py-16 text-center bg-white rounded-3xl border border-slate-100 text-slate-400 space-y-2">
               <Heart className="w-12 h-12 text-slate-200 mx-auto" />
-              <p className="font-bold text-slate-600">لا يوجد طلبات صلاة مطابقة</p>
+              <p className="font-bold text-slate-600">لا يوجد طلبات صلاة للأسبوع الحالي</p>
+              <p className="text-xs text-slate-400">يتم تجديد طلبات الصلاة ومسحها تلقائياً كل ٧ أيام للمحافظة على المتابعة الدورية.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredPrayers.map(p => (
-                <div
-                  key={p.id}
-                  className={`p-6 rounded-3xl border transition-all duration-200 flex flex-col justify-between gap-4 ${
-                    !p.is_read
-                      ? 'bg-gradient-to-r from-blue-50/50 to-indigo-50/20 border-blue-200 shadow-md ring-1 ring-blue-400/20'
-                      : 'bg-white border-slate-100 shadow-sm hover:shadow-md'
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-base font-tajawal text-[#00123a] flex items-center gap-2">
-                        <span>{p.requester_name || 'فاعل خير'}</span>
-                        {!p.is_read && (
-                          <span className="px-2 py-0.5 rounded-lg text-[10px] bg-blue-100 text-blue-800 font-bold border border-blue-200">
-                            جديد
-                          </span>
-                        )}
-                      </h4>
-                      <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {new Date(p.submitted_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}
-                      </span>
-                    </div>
+            <div className="space-y-4">
+              <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl text-xs font-bold text-blue-900 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-blue-700 shrink-0" />
+                <span>تنبيه رعوي: طلبات الصلاة خاصة بالأسبوع الحالي وتُحذف تلقائياً كل أسبوع (٧ أيام) لضمان الصلاة من أجل الحالات والطلبات الجديدة أولاً بأول.</span>
+              </div>
 
-                    <p className="text-sm text-slate-600 leading-relaxed font-semibold bg-slate-50/50 p-4 rounded-2xl border border-slate-100 font-cairo">
-                      "{p.request_text}"
-                    </p>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredPrayers.map(p => {
+                  const handledInfo = getHandledInfo(`prayer_handled_${p.id}`);
 
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                    <button
-                      onClick={() => handleTogglePrayerRead(p.id, p.is_read)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                        p.is_read
-                          ? 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                          : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                  return (
+                    <div
+                      key={p.id}
+                      className={`p-6 rounded-3xl border transition-all duration-200 flex flex-col justify-between gap-4 ${
+                        !p.is_read
+                          ? 'bg-gradient-to-r from-blue-50/50 to-indigo-50/20 border-blue-200 shadow-md ring-1 ring-blue-400/20'
+                          : 'bg-white border-slate-100 shadow-sm hover:shadow-md'
                       }`}
                     >
-                      {p.is_read ? (
-                        <>
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>تحديد كغير مقروء</span>
-                        </>
-                      ) : (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>تحديد كمقروء</span>
-                        </>
-                      )}
-                    </button>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-base font-tajawal text-[#00123a] flex items-center gap-2">
+                            <span>{p.requester_name || 'فاعل خير'}</span>
+                            {!p.is_read ? (
+                              <span className="px-2 py-0.5 rounded-lg text-[10px] bg-blue-100 text-blue-800 font-bold border border-blue-200">
+                                جديد
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-lg text-[10px] bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                                تمت الصلاة
+                              </span>
+                            )}
+                          </h4>
+                          <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {new Date(p.submitted_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}
+                          </span>
+                        </div>
 
-                    <button
-                      onClick={() => handleDeletePrayer(p.id)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                      title="حذف الطلب"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                        <p className="text-sm text-slate-600 leading-relaxed font-semibold bg-slate-50/50 p-4 rounded-2xl border border-slate-100 font-cairo">
+                          "{p.request_text}"
+                        </p>
+
+                        {/* Priest Handled Status Badge */}
+                        {handledInfo && (
+                          <div className="flex items-center gap-1.5 p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-bold text-amber-900 shadow-xs">
+                            <Heart className="w-4 h-4 text-amber-600 shrink-0 fill-current" />
+                            <span>تمت الصلاة بواسطة: {handledInfo.priest_name} ({new Date(handledInfo.handled_at).toLocaleDateString('ar-EG')})</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleMarkPrayerPrayed(p.id)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                              p.is_read
+                                ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                : 'bg-[#002366] hover:bg-[#00174a] text-[#fed65b]'
+                            }`}
+                          >
+                            <Heart className="w-3.5 h-3.5" />
+                            <span>{p.is_read ? 'تمت الصلاة ✓' : 'تم الصلاة'}</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleTogglePrayerRead(p.id, p.is_read)}
+                            className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors"
+                          >
+                            {p.is_read ? 'تغيير لجديد' : 'كمقروء'}
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => handleDeletePrayer(p.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
+                          title="حذف الطلب"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )
         ) : (
@@ -354,73 +448,89 @@ export const CommunicationsPage: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredMessages.map(m => (
-                <div
-                  key={m.id}
-                  className={`p-6 rounded-3xl border transition-all duration-200 flex flex-col justify-between gap-4 ${
-                    m.status === 'unread'
-                      ? 'bg-gradient-to-r from-blue-50/50 to-indigo-50/20 border-blue-200 shadow-md ring-1 ring-blue-400/20'
-                      : 'bg-white border-slate-100 shadow-sm hover:shadow-md'
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-base font-tajawal text-[#00123a] flex items-center gap-2">
-                        <span>{m.name}</span>
-                        {m.status === 'unread' && (
-                          <span className="px-2 py-0.5 rounded-lg text-[10px] bg-blue-100 text-blue-800 font-bold border border-blue-200">
-                            جديد
-                          </span>
-                        )}
-                      </h4>
-                      <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {new Date(m.created_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}
-                      </span>
-                    </div>
+              {filteredMessages.map(m => {
+                const handledInfo = getHandledInfo(`contact_handled_${m.id}`);
 
-                    <div className="flex items-center gap-2 text-xs text-[#002366] font-bold">
-                      <Phone className="w-3.5 h-3.5 text-[#d4af37]" />
-                      <span dir="ltr">{m.phone}</span>
-                    </div>
+                return (
+                  <div
+                    key={m.id}
+                    className={`p-6 rounded-3xl border transition-all duration-200 flex flex-col justify-between gap-4 ${
+                      m.status === 'unread'
+                        ? 'bg-gradient-to-r from-blue-50/50 to-indigo-50/20 border-blue-200 shadow-md ring-1 ring-blue-400/20'
+                        : 'bg-white border-slate-100 shadow-sm hover:shadow-md'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold text-base font-tajawal text-[#00123a] flex items-center gap-2">
+                          <span>{m.name}</span>
+                          {m.status === 'unread' ? (
+                            <span className="px-2 py-0.5 rounded-lg text-[10px] bg-blue-100 text-blue-800 font-bold border border-blue-200">
+                              جديد
+                            </span>
+                          ) : m.status === 'replied' ? (
+                            <span className="px-2 py-0.5 rounded-lg text-[10px] bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                              تم التواصل
+                            </span>
+                          ) : null}
+                        </h4>
+                        <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(m.created_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}
+                        </span>
+                      </div>
 
-                    <p className="text-sm text-slate-600 leading-relaxed font-semibold bg-slate-50/50 p-4 rounded-2xl border border-slate-100 font-cairo">
-                      {m.message}
-                    </p>
-                  </div>
+                      <div className="flex items-center gap-2 text-xs text-[#002366] font-bold">
+                        <Phone className="w-3.5 h-3.5 text-[#d4af37]" />
+                        <span dir="ltr">{m.phone}</span>
+                      </div>
 
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                    <button
-                      onClick={() => handleToggleMessageStatus(m.id, m.status)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                        m.status !== 'unread'
-                          ? 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                          : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-                      }`}
-                    >
-                      {m.status !== 'unread' ? (
-                        <>
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>تحديد كغير مقروء</span>
-                        </>
-                      ) : (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>تحديد كمقروء</span>
-                        </>
+                      <p className="text-sm text-slate-600 leading-relaxed font-semibold bg-slate-50/50 p-4 rounded-2xl border border-slate-100 font-cairo">
+                        {m.message}
+                      </p>
+
+                      {/* Handled Info Badge for Contact Messages */}
+                      {handledInfo && (
+                        <div className="flex items-center gap-1.5 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-bold text-emerald-900 shadow-xs">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>تم الاستلام والتواصل بواسطة: {handledInfo.priest_name} ({new Date(handledInfo.handled_at).toLocaleDateString('ar-EG')})</span>
+                        </div>
                       )}
-                    </button>
+                    </div>
 
-                    <button
-                      onClick={() => handleDeleteMessage(m.id)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                      title="حذف الرسالة"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleMarkMessageReceived(m.id)}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                            m.status === 'replied'
+                              ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          }`}
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>{m.status === 'replied' ? 'تم الاستلام والتواصل ✓' : 'تم الاستلام للتواصل معنا'}</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleToggleMessageStatus(m.id, m.status)}
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors"
+                        >
+                          {m.status !== 'unread' ? 'تغيير لغير مقروء' : 'تحديد كمقروء'}
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteMessage(m.id)}
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
+                        title="حذف الرسالة"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )
         )}

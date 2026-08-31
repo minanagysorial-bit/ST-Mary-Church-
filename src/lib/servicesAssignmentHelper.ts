@@ -123,3 +123,112 @@ export async function saveLeaderAssignedServices(
     // ignore
   }
 }
+
+/**
+ * Retrieves the list of assigned service categories for a specific Priest.
+ * Checks both direct priest assignments and category priest_ids for 100% synchronization.
+ */
+export function getPriestAssignedServices(
+  priestId: string,
+  settings: Record<string, string> = {}
+): ChurchServiceCategory[] {
+  if (!priestId) return [];
+
+  const resultSet = new Set<ChurchServiceCategory>();
+
+  // 1. Check direct setting: priest_assigned_services_${priestId}
+  const directKey = `priest_assigned_services_${priestId}`;
+  const rawDirect = settings[directKey];
+  if (rawDirect) {
+    try {
+      const parsed = JSON.parse(rawDirect);
+      if (Array.isArray(parsed)) {
+        parsed.forEach(cat => resultSet.add(cat as ChurchServiceCategory));
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Also check all service_assignment_${cat} to see if priestId is in priest_ids
+  ALL_CHURCH_SERVICE_CATEGORIES.forEach(item => {
+    const catKey = `service_assignment_${item.category}`;
+    const rawCat = settings[catKey];
+    if (rawCat) {
+      try {
+        const parsed = JSON.parse(rawCat);
+        if (Array.isArray(parsed.priest_ids) && parsed.priest_ids.includes(priestId)) {
+          resultSet.add(item.category);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  });
+
+  return Array.from(resultSet);
+}
+
+/**
+ * Saves and updates service assignments for a Priest across both direct mapping and service configs.
+ */
+export async function savePriestAssignedServices(
+  priestId: string,
+  newCategories: ChurchServiceCategory[],
+  currentSettings: Record<string, string> = {}
+): Promise<void> {
+  if (!priestId) return;
+
+  const updates: Record<string, string> = {};
+
+  // 1. Direct priest mapping
+  const directKey = `priest_assigned_services_${priestId}`;
+  updates[directKey] = JSON.stringify(newCategories);
+
+  // 2. Cross-update each service_assignment_${cat}
+  ALL_CHURCH_SERVICE_CATEGORIES.forEach(item => {
+    const catKey = `service_assignment_${item.category}`;
+    const defaultSched = DEFAULT_SERVICE_SCHEDULES[item.category] || { day: 'الجمعة', start: '09:00', end: '11:30' };
+    
+    let config: ServiceScheduleConfig = {
+      priest_ids: [],
+      leader_ids: [],
+      day_of_week: defaultSched.day,
+      start_time: defaultSched.start,
+      end_time: defaultSched.end
+    };
+
+    const rawCat = currentSettings[catKey];
+    if (rawCat) {
+      try {
+        config = { ...config, ...JSON.parse(rawCat) };
+      } catch {
+        // use default
+      }
+    }
+
+    const currentPriests = new Set(config.priest_ids || []);
+    if (newCategories.includes(item.category)) {
+      currentPriests.add(priestId);
+    } else {
+      currentPriests.delete(priestId);
+    }
+
+    config.priest_ids = Array.from(currentPriests);
+    updates[catKey] = JSON.stringify(config);
+    
+    try {
+      localStorage.setItem(`church_service_assign_${item.category}`, JSON.stringify(config));
+    } catch {
+      // ignore
+    }
+  });
+
+  await api.updateSiteSettings(updates);
+  try {
+    localStorage.setItem(directKey, JSON.stringify(newCategories));
+  } catch {
+    // ignore
+  }
+}
+

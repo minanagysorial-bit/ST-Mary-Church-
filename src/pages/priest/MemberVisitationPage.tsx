@@ -22,7 +22,11 @@ export const MemberVisitationPage: React.FC = () => {
 
   // Log Visit Modal State
   const [showLogModal, setShowLogModal] = useState(false);
+  const [nameInput, setNameInput] = useState('');
   const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [phoneInput, setPhoneInput] = useState('');
+  const [addressInput, setAddressInput] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]);
   const [visitType, setVisitType] = useState<'منزلية' | 'تليفونية' | 'كنسية'>('منزلية');
   const [notes, setNotes] = useState('');
@@ -78,10 +82,24 @@ export const MemberVisitationPage: React.FC = () => {
     return acc;
   }, {} as Record<string, { name: string; totalVisits: number; lastVisitDate: string | null; groupName: string }>);
 
+  // Autocomplete matching members
+  const matchingMembers = nameInput.trim()
+    ? members.filter(m => m.full_name.toLowerCase().includes(nameInput.trim().toLowerCase()))
+    : [];
+
+  const handleSelectMember = (m: ChurchMember) => {
+    setNameInput(m.full_name);
+    setSelectedMemberId(m.id);
+    setPhoneInput(m.phone || '');
+    setAddressInput(m.address || '');
+    setShowSuggestions(false);
+  };
+
   const handleLogVisitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMemberId) {
-      setModalError('يرجى اختيار العضو.');
+    const cleanName = nameInput.trim();
+    if (!cleanName) {
+      setModalError('يرجى كتابة اسم الشخص المراد افتقاده.');
       return;
     }
     if (!profile?.id) return;
@@ -89,17 +107,37 @@ export const MemberVisitationPage: React.FC = () => {
     setSaving(true);
     setModalError(null);
     try {
+      let targetMemberId = selectedMemberId;
+      if (!targetMemberId) {
+        const found = members.find(m => m.full_name.trim().toLowerCase() === cleanName.toLowerCase());
+        if (found) {
+          targetMemberId = found.id;
+        } else {
+          // Automatically register as church member
+          const created = await api.createChurchMember({
+            full_name: cleanName,
+            phone: phoneInput.trim() || 'بدون هاتف',
+            address: addressInput.trim() || 'محرم بك، الإسكندرية',
+            marital_status: 'أعزب'
+          });
+          targetMemberId = created.id;
+        }
+      }
+
       await api.createMemberVisitation({
-        church_member_id: selectedMemberId,
+        church_member_id: targetMemberId,
         visited_by: profile.id,
         visit_date: visitDate,
         visit_type: visitType,
-        notes: notes || null
+        notes: notes.trim() || null
       });
 
       // Reset & refresh
       setShowLogModal(false);
+      setNameInput('');
       setSelectedMemberId('');
+      setPhoneInput('');
+      setAddressInput('');
       setNotes('');
       setVisitDate(new Date().toISOString().split('T')[0]);
       setVisitType('منزلية');
@@ -299,20 +337,82 @@ export const MemberVisitationPage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Select Member */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 block">اختر العضو المراد افتقاده</label>
-                  <select
+                {/* Member Name Autocomplete Input */}
+                <div className="space-y-1 relative">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    اسم المخدوم / الشخص المراد افتقاده *
+                  </label>
+                  <input
+                    type="text"
                     required
-                    value={selectedMemberId}
-                    onChange={(e) => setSelectedMemberId(e.target.value)}
-                    className="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-1 focus:ring-[#002366]/20 outline-none"
-                  >
-                    <option value="">-- اختر من السجل --</option>
-                    {members.map(m => (
-                      <option key={m.id} value={m.id}>{m.full_name}</option>
-                    ))}
-                  </select>
+                    placeholder="اكتب اسم الشخص (مثال: مينا...)"
+                    value={nameInput}
+                    onChange={(e) => {
+                      setNameInput(e.target.value);
+                      setSelectedMemberId('');
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    className="w-full text-xs font-bold border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-[#002366] outline-none bg-slate-50"
+                  />
+
+                  {/* Autocomplete Dropdown List */}
+                  {showSuggestions && nameInput.trim().length > 0 && (
+                    <div className="absolute top-full right-0 left-0 mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 max-h-48 overflow-y-auto divide-y divide-slate-100 animate-scale-in">
+                      {matchingMembers.length > 0 ? (
+                        matchingMembers.map(m => (
+                          <div
+                            key={m.id}
+                            onClick={() => handleSelectMember(m)}
+                            className="p-3 hover:bg-blue-50/80 cursor-pointer transition-colors flex items-center justify-between text-right"
+                          >
+                            <div>
+                              <p className="font-bold text-xs text-[#002366]">{m.full_name}</p>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                                {m.phone && <span>📞 {m.phone}</span>}
+                                {m.address && <span>📍 {m.address}</span>}
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                              عضو مسجل
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div
+                          onClick={() => setShowSuggestions(false)}
+                          className="p-3 hover:bg-slate-50 cursor-pointer text-xs font-bold text-amber-800 flex items-center justify-between"
+                        >
+                          <span>➕ اسم جديد (سيتم حفظه وإضافته لسجل الكنيسة تلقائياً)</span>
+                          <span className="text-[10px] text-slate-400">إغلاق</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Phone & Address Fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 block">رقم الهاتف</label>
+                    <input
+                      type="tel"
+                      placeholder="01xxxxxxxxx"
+                      value={phoneInput}
+                      onChange={(e) => setPhoneInput(e.target.value)}
+                      className="w-full text-xs font-bold border border-slate-200 rounded-xl px-3.5 py-2 focus:ring-1 focus:ring-[#002366] outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 block">العنوان / المنطقة</label>
+                    <input
+                      type="text"
+                      placeholder="محرم بك، الإسكندرية..."
+                      value={addressInput}
+                      onChange={(e) => setAddressInput(e.target.value)}
+                      className="w-full text-xs font-bold border border-slate-200 rounded-xl px-3.5 py-2 focus:ring-1 focus:ring-[#002366] outline-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Visit Date */}

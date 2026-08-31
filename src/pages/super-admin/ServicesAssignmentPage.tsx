@@ -202,6 +202,23 @@ export const ServicesAssignmentPage: React.FC = () => {
         syncUpdates[directKey] = JSON.stringify(Array.from(currentServices));
       });
 
+      // Synchronize for all Priests as well
+      allPriests.forEach(priest => {
+        const directKey = `priest_assigned_services_${priest.id}`;
+        const currentServices = new Set<ChurchServiceCategory>();
+        APPROVED_CATEGORIES.forEach(c => {
+          if (c.category === category) {
+            if (selectedPriests.includes(priest.id)) currentServices.add(c.category);
+          } else {
+            const otherConfig = assignments[c.category];
+            if (otherConfig?.priest_ids?.includes(priest.id)) {
+              currentServices.add(c.category);
+            }
+          }
+        });
+        syncUpdates[directKey] = JSON.stringify(Array.from(currentServices));
+      });
+
       await api.updateSiteSettings(syncUpdates);
       
       // Save local backup
