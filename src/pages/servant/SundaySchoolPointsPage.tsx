@@ -348,7 +348,7 @@ export const SundaySchoolPointsPage: React.FC = () => {
   const topStudent = sortedStudents[0];
 
   return (
-    <DashboardLayout role="servant">
+    <DashboardLayout role={profile?.role as any || 'servant'}>
       <div className="space-y-6 text-right font-cairo" dir="rtl">
         
         {/* Page Top Title & Public Leaderboard Button */}

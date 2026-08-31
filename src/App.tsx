@@ -266,14 +266,14 @@ const AppLayout: React.FC = () => {
             <Route path="/service-leader/families" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServiceFamiliesManagementPage /></ProtectedRoute>} />
             <Route path="/service-leader/servants" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServiceFamiliesManagementPage /></ProtectedRoute>} />
 
-            {/* Servant Routes */}
-            <Route path="/servant" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><ServantDashboardPage /></ProtectedRoute>} />
-            <Route path="/servant/families" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><FamilyManagementPage /></ProtectedRoute>} />
-            <Route path="/servant/visitations" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><VisitationPage /></ProtectedRoute>} />
-            <Route path="/servant/attendance" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><AttendancePage /></ProtectedRoute>} />
-            <Route path="/servant/tools" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><ServantToolsPage /></ProtectedRoute>} />
-            <Route path="/servant/points" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><SundaySchoolPointsPage /></ProtectedRoute>} />
-            <Route path="/servant/sunday-school" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin']}><SundaySchoolPointsPage /></ProtectedRoute>} />
+            {/* Servant & Service Leader Routes */}
+            <Route path="/servant" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><ServantDashboardPage /></ProtectedRoute>} />
+            <Route path="/servant/families" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><FamilyManagementPage /></ProtectedRoute>} />
+            <Route path="/servant/visitations" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><VisitationPage /></ProtectedRoute>} />
+            <Route path="/servant/attendance" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><AttendancePage /></ProtectedRoute>} />
+            <Route path="/servant/tools" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><ServantToolsPage /></ProtectedRoute>} />
+            <Route path="/servant/points" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><SundaySchoolPointsPage /></ProtectedRoute>} />
+            <Route path="/servant/sunday-school" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><SundaySchoolPointsPage /></ProtectedRoute>} />
             <Route path="/servant/visitation-map" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><SmartVisitationMapPage /></ProtectedRoute>} />
             <Route path="/servant/map" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><SmartVisitationMapPage /></ProtectedRoute>} />
             <Route path="/servant/lesson-bank" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><LessonBankPage /></ProtectedRoute>} />

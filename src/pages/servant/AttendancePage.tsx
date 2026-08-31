@@ -131,7 +131,7 @@ export const AttendancePage: React.FC = () => {
         console.warn("family_servants table not created yet or RLS error:", err);
       }
 
-      // Filtered families list (admins/priests see all, servants see their own or assigned)
+      // Filtered families list (admins/priests/service_leaders see all families, servants see their own or assigned)
       let filtered = allFamilies;
       if (profile.role === 'servant') {
         filtered = allFamilies.filter(f => 

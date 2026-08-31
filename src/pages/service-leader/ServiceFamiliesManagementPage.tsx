@@ -90,7 +90,8 @@ export const ServiceFamiliesManagementPage: React.FC = () => {
       const scopedFamilies = fetchedFamilies.filter(f => {
         if (f.family_type !== 'sunday_school') return false;
         if (isGlobalAdmin) return true;
-        if (myAssigned.length === 0) return false;
+        // If leader has explicit service assignments, filter by them; if not yet assigned, show all families so leader is not blocked
+        if (myAssigned.length === 0) return true;
         return myAssigned.some(cat => (f.stage && f.stage.includes(cat)) || (f.area && f.area.includes(cat)) || (f.notes && f.notes.includes(cat)));
       });
       
@@ -141,7 +142,7 @@ export const ServiceFamiliesManagementPage: React.FC = () => {
     ? ALL_CHURCH_SERVICE_CATEGORIES.map(c => c.category)
     : (profile?.id ? getLeaderAssignedServices(profile.id, siteSettings) : []);
 
-  const availableCategories = isGlobalAdmin ? SERVICE_CATEGORIES : myAssignedCategories;
+  const availableCategories = isGlobalAdmin || myAssignedCategories.length === 0 ? SERVICE_CATEGORIES : myAssignedCategories;
 
   const allServants = Object.values(profiles).filter(p => p.role === 'servant' || p.role === 'service_leader');
 

@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { api } from '../../lib/api';
+import { generateDeepOrthodoxLesson } from '../../lib/orthodoxLessonAiEngine';
 
 // Types
 export interface LessonResource {
@@ -482,7 +483,7 @@ export const LessonBankPage: React.FC = () => {
     }
   };
 
-  // 🤖 Smart AI Lesson Generator Engine
+  // 🤖 Smart AI Lesson Generator Engine (Deep 1-Hour Curriculum)
   const handleGenerateAI = () => {
     const prompt = (aiTopicPrompt || newTitle).trim();
     if (!prompt) {
@@ -493,118 +494,19 @@ export const LessonBankPage: React.FC = () => {
     setIsGeneratingAI(true);
 
     setTimeout(() => {
-      const lower = prompt.toLowerCase();
-      let generated: Partial<LessonResource> = {};
-
-      if (lower.includes('يونان') || lower.includes('الحوت')) {
-        generated = {
-          title: `درس: قصة يونان النبي وطاعة وصية الله والتوبة`,
-          scripture_ref: 'سفر يونان ١ - ٤',
-          memory_verse: '«مَعَ الرَّبِّ إِلهِنَا الْمَرَاحِمُ وَالْمَغْفِرَةُ» (دا ٩: ٩)',
-          objective: 'أن يتعلم المخدوم أهمية طاعة صوت الله والصلاة في وقت الشدة ومحبة الآخرين دون إدانة.',
-          summary: 'هروب يونان إلى ترشيش، هيجان البحر، ابتلاع الحوت له، صلاته في بطن الحوت، ومناداته لأهل نينوى وخلاصهم بالتوبة والصوم.',
-          points: [
-            'صوت الله ليونان بالذهاب لنينوى وهروبه في السفينة.',
-            'العاصفة الشديدة واعتراف يونان وإلقائه في البحر.',
-            'إعداد الحوت العظيم وصلاته من الأعماق واستجابة الرب.',
-            'كرازة يونان في نينوى وصوم الشعب ومغفرة الله العظيمة.'
-          ],
-          activities: [
-            'لعبة ترتيب بطاقات قصة يونان الأربعة محطات.',
-            'نشاط صنع حوت من الورق الملون وداخله صورة يونان يصلي.',
-            'تطبيق عملي: الاعتذار السريع عند الخطأ والصلاة قبل النوم.'
-          ]
-        };
-      } else if (lower.includes('سامري') || lower.includes('الرحمة')) {
-        generated = {
-          title: `درس: مثل السامري الصالح وعمل الرحمة والمحبة العملية`,
-          scripture_ref: 'إنجيل لوقا ١٠: ٢٥ - ٣٧',
-          memory_verse: '«طُوبَى لِلرُّحَمَاءِ، لأَنَّهُمْ يُرْحَمُونَ» (مت ٥: ٧)',
-          objective: 'أن يدرك المخدوم أن قريبي هو كل إنسان محتاج، وأن المحبة الحقيقية تظهر في الأفعال والمساعدة.',
-          summary: 'الرجل المسافر من أورشليم لأريحا الذي هاجمه اللصوص، مرور الكاهن واللاوي، وإحسان السامري ومداواة جراحه ودفع نفقات الفندق.',
-          points: [
-            'سؤال الناموسي للسيد المسيح: من هو قريبي؟',
-            'الرجل الجريح على طريق أريحا وموقف الكاهن واللاوي.',
-            'رحمة السامري الصالح وعلاجه للجريح ونقله للفندق.',
-            'وصية الرب يسوع: اذهب أنت أيضاً واصنع هكذا.'
-          ],
-          activities: [
-            'تمثيل مسرحي للقصة كأدوار بين الأولاد.',
-            'نشاط شنطة الإسعافات الروحية (كروت بطاقات الكلمات الطيبة).',
-            'تطبيق عملي: مساعدة زميل محتاج في المدرسة أو البيت.'
-          ]
-        };
-      } else if (lower.includes('ابن الضال') || lower.includes('الابن الضال') || lower.includes('الراجع')) {
-        generated = {
-          title: `درس: مثل الابن الضال وأحضان الآب السماوي المفتوحة`,
-          scripture_ref: 'إنجيل لوقا ١٥: ١١ - ٣٢',
-          memory_verse: '«أَقُومُ وَأَذْهَبُ إِلَى أَبِي وَأَقُولُ لَهُ: يَا أَبِي، أَخْطَأْتُ إِلَى السَّمَاءِ وَقُدَّامَكَ» (لو ١٥: ١٨)',
-          objective: 'غرس الثقة في محبة الله الآب واستعداده الدائم لقبولنا ومسامحتنا مهما ابتعدنا.',
-          summary: 'طلب الابن الأصغر نصيبه وسفره لبلد بعيد، نفاذ أمواله واشتهاؤه طعام الخنازير، رجوعه لنفسه وعودته، واستقبال الأب الحنون له بالقبلات والحلة الأولى.',
-          points: [
-            'اختيار الابن للبعد عن بيت أبيه ونتيجة البعد عن الله.',
-            'لحظة الرجوع إلى النفس والقرار الشجاع بالتوبة.',
-            'مشهد الأب وهو يركض ليعانق ابنه ويقبله.',
-            'الحلة الأولى والخاتم وفرحة السماء بالخاطئ التائب.'
-          ],
-          activities: [
-            'لعبة المتاهة للوصول إلى بيت الأب.',
-            'ورشة كتابة رسالة شكر لربنا على رحمته وغفرانه.',
-            'تطبيق عملي: المواظبة على سر الاعتراف دون خوف أو تردد.'
-          ]
-        };
-      } else if (lower.includes('مارجرجس') || lower.includes('جرجس') || lower.includes('شهيد')) {
-        generated = {
-          title: `درس: سيرة أمير الشهداء مارجرجس الروماني وثبات الإيمان`,
-          scripture_ref: 'رسالة بولس الرسول الثانية إلى تيموثاوس ٤: ٧',
-          memory_verse: '«جَاهَدْتُ الْجِهَادَ الْحَسَنَ، أَكْمَلْتُ السَّعْيَ، حَفِظْتُ الإِيمَانَ» (٢ تي ٤: ٧)',
-          objective: 'غرس الشجاعة الروحية والتمسك بالرب يسوع والصليب وعدم المساومة على الإيمان.',
-          summary: 'نشأة القديس مارجرجس وترقيته في الجيش، وقوفه ضد منشور دقلديانوس لإنكار المسيح، احتماله للعذابات الشديدة ٧ سنوات، وإكليله السمائي.',
-          points: [
-            'أخلاق وشجاعة القديس في رتبة قائد الألف بالجيش.',
-            'تمزيقه لمنشور عبادة الأوثان والدفاع عن إيمانه المسيحي.',
-            'ظهورات الرب يسوع وتعزيته له وشفائه من العذابات.',
-            'إيمان الملكة ألكسندرة والعديد من الحراس بسببه.'
-          ],
-          activities: [
-            'رسم وتلوين التاج والفرس الأبيض لمارجرجس.',
-            'مسابقة أسئلة سريعة حول سيرة القديس.',
-            'تطبيق عملي: الشجاعة في الشهادة للمسيح في المدرسة بعدم التلفظ بألفاظ سيئة.'
-          ]
-        };
-      } else {
-        // Dynamic Coptic Smart Generator for any topic
-        generated = {
-          title: `درس: ${prompt} — دروس روحية وتطبيقات حياتية`,
-          scripture_ref: 'الكتاب المقدس (شواهد ومحطات كنسية مختارة)',
-          memory_verse: `«كُلُّ الْكِتَابِ هُوَ مُوحىً بِهِ مِنَ اللهِ، وَنَافِعٌ لِلتَّعْلِيمِ وَالتَّوْبِيخِ وَالتَّقْوِيمِ» (٢ تي ٣: ١٦)`,
-          objective: `أن يتعلم المخدوم كيف يطبق فضيلة ${prompt} في حياته اليومية بالمدرسة والبيت والكنيسة.`,
-          summary: `دراسة روحية شيقة لموضوع (${prompt}) بأسلوب أرثوذكسي مبسط يربط النص الكتابي بالطقس وسير الآباء القديسين.`,
-          points: [
-            `مفهوم (${prompt}) في تعاليم السيد المسيح والكتاب المقدس.`,
-            `شواهد وأمثلة حية من العهدين وسير القديسين.`,
-            `كيف نقاوم المعطلات ونحيا هذه الفضيلة بنعمة الروح القدس.`,
-            `ثمار وبركات السلوك في النور وتأثيره على من حولنا.`
-          ],
-          activities: [
-            `مسابقة الآيات والشواهد السريعة حول ${prompt}.`,
-            `لعبة تمثيل مواقف وحلها من منظور المحبة المسيحية.`,
-            `تطبيق عملي يومي للأسبوع: التزام محدد للصلاة والخدمة.`
-          ]
-        };
-      }
+      const generated = generateDeepOrthodoxLesson(prompt, newStage);
 
       setNewTitle(generated.title || prompt);
       setNewScripture(generated.scripture_ref || '');
       setNewMemoryVerse(generated.memory_verse || '');
       setNewObjective(generated.objective || '');
       setNewSummary(generated.summary || '');
-      setNewPoints((generated.points || []).join('\n'));
+      setNewPoints((generated.points || []).join('\n\n'));
       setNewActivities((generated.activities || []).join('\n'));
 
       setIsGeneratingAI(false);
-      toast.success('تم توليد وتحضير عناصر الدرس بالذكاء الاصطناعي بنجاح! ✨ يمكنك مراجعته وحفظه.');
-    }, 600);
+      toast.success('تم توليد وتحضير درس كنسي متكامل وعميق لساعة كاملة بالذكاء الاصطناعي بنجاح! 📖✨ يمكنك مراجعته وحفظه.');
+    }, 700);
   };
 
   // Add Lesson
@@ -1248,47 +1150,47 @@ export const LessonBankPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">الهدف التعليمي والروحي للدرس *</label>
-                  <input
-                    type="text"
+                  <label className="block font-bold text-slate-700 mb-1">الأهداف التعليمية والروحية للدرس (معرفي / وجداني / سلوكي) *</label>
+                  <textarea
+                    rows={4}
                     required
-                    placeholder="ما هو الهدف والفضيلة التي يخرج بها المخدوم؟"
+                    placeholder="الهدف العام والأهداف السلوكية التفصيلية الثلاثة..."
                     value={newObjective}
                     onChange={e => setNewObjective(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 font-bold"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-bold leading-relaxed"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">موجز قصة وشرح الدرس *</label>
+                  <label className="block font-bold text-slate-700 mb-1">موجز قصة وشرح الدرس والسياق التاريخي *</label>
                   <textarea
-                    rows={3}
-                    placeholder="مقدمة القصة وسرد الأحداث..."
+                    rows={5}
+                    placeholder="مقدمة القصة وسرد الأحداث والسياق الكتابي..."
                     value={newSummary}
                     onChange={e => setNewSummary(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-medium leading-relaxed"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">عناصر ونقاط الشرح (كل نقطة بسطر منفصل)</label>
+                  <label className="block font-bold text-slate-700 mb-1">عناصر ومحطات الشرح الكامل لساعة الدرس (60 دقيقة)</label>
                   <textarea
-                    rows={3}
-                    placeholder="النقطة الأولى&#10;النقطة الثانية&#10;النقطة الثالثة"
+                    rows={9}
+                    placeholder="محطات الشرح وأقوال الآباء وتطبيقات الواقع وسؤال التحدي..."
                     value={newPoints}
                     onChange={e => setNewPoints(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-medium leading-relaxed"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">الأنشطة والألعاب المقترحة (كل نشاط بسطر)</label>
+                  <label className="block font-bold text-slate-700 mb-1">الأنشطة والمسابقات والتدريب الأسبوعي المقترح</label>
                   <textarea
-                    rows={2}
-                    placeholder="نشاط تلوين ورسم&#10;لعبة أسئلة ومسابقات"
+                    rows={4}
+                    placeholder="الأنشطة العملية والمسابقات وتدريب الأسبوع والصلاة..."
                     value={newActivities}
                     onChange={e => setNewActivities(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-medium leading-relaxed"
                   />
                 </div>
 
@@ -1533,24 +1435,38 @@ export const LessonBankPage: React.FC = () => {
                 </span>
               </div>
 
-              {/* Objective & Summary */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#00174a]">الهدف التعليمي والروحي للدرس:</h4>
-                <p className="text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200 font-semibold leading-relaxed">
+              {/* Objective & Behavioral Goals */}
+              <div className="space-y-1.5">
+                <h4 className="text-xs font-bold text-[#00174a]">الأهداف التعليمية والروحية للدرس:</h4>
+                <p className="text-xs text-slate-700 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 font-semibold leading-relaxed whitespace-pre-line">
                   {selectedLesson.objective}
                 </p>
               </div>
 
-              {/* Lesson Main Points */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#00174a]">عناصر وشرح الدرس:</h4>
+              {/* Story Summary & Context */}
+              {selectedLesson.summary && (
                 <div className="space-y-1.5">
+                  <h4 className="text-xs font-bold text-[#00174a]">سرد قصة الدرس والسياق الكتابي والتاريخي:</h4>
+                  <p className="text-xs text-slate-800 bg-amber-50/50 p-4 rounded-2xl border border-amber-200/80 font-medium leading-relaxed whitespace-pre-line shadow-xs">
+                    {selectedLesson.summary}
+                  </p>
+                </div>
+              )}
+
+              {/* Lesson Main Points (60 Minutes Timeline) */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-[#00174a]">محطات الشرح لساعة الدرس الكاملة (٦٠ دقيقة):</h4>
+                <div className="space-y-2.5">
                   {selectedLesson.points.map((pt, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs text-slate-700 font-medium">
-                      <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-800 font-bold flex items-center justify-center shrink-0 text-[10px]">
-                        {i + 1}
-                      </span>
-                      <span>{pt}</span>
+                    <div key={i} className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1 text-xs text-slate-800">
+                      <div className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-[#002366] text-[#fed65b] font-bold flex items-center justify-center shrink-0 text-[10px] mt-0.5 shadow-xs">
+                          {i + 1}
+                        </span>
+                        <div className="whitespace-pre-line leading-relaxed font-medium flex-1">
+                          {pt}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>

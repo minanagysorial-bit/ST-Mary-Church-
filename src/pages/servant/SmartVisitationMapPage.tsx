@@ -509,7 +509,7 @@ export const SmartVisitationMapPage: React.FC = () => {
   });
 
   return (
-    <DashboardLayout role="servant">
+    <DashboardLayout role={profile?.role as any || 'servant'}>
       <div className="space-y-6 text-right font-cairo" dir="rtl">
         
         {/* Top Stats Banner */}

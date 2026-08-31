@@ -49,7 +49,7 @@ export const ServantToolsPage: React.FC = () => {
   }, []);
 
   return (
-    <DashboardLayout role="servant">
+    <DashboardLayout role={profile?.role as any || 'servant'}>
       <div className="space-y-8 font-cairo">
         
         {/* Page Title */}
