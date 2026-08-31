@@ -1633,7 +1633,7 @@ export const api = {
     if (error) throw error;
   },
 
-  updateContactMessageStatus: async (id: string, status: 'unread' | 'read' | 'replied'): Promise<void> => {
+  updateContactMessageStatus: async (id: string, status: 'unread' | 'read' | 'replied' | 'archived'): Promise<void> => {
     const { error } = await supabase
       .from('contact_messages')
       .update({ status })

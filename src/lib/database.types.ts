@@ -569,7 +569,7 @@ export interface ContactMessage {
   name: string;
   phone: string;
   message: string;
-  status: 'unread' | 'read' | 'replied';
+  status: 'unread' | 'read' | 'replied' | 'archived';
   created_at: string;
 }
 export type ContactMessageInsert = Omit<ContactMessage, 'id' | 'created_at'> & { id?: string };

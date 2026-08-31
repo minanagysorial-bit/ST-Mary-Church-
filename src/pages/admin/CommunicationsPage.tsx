@@ -159,12 +159,36 @@ export const CommunicationsPage: React.FC = () => {
     }
   };
 
-  const handleDeleteMessage = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذه الرسالة نهائياً؟')) return;
+  const [messageFilter, setMessageFilter] = useState<'active' | 'trash'>('active');
+
+  const handleSoftDeleteMessage = async (id: string) => {
+    try {
+      await api.updateContactMessageStatus(id, 'archived');
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'archived' as any } : m));
+      setSuccessMsg('تم نقل الرسالة إلى سلة المحذوفات. يمكنك استرجاعها في أي وقت ♻️');
+      setTimeout(() => setSuccessMsg(''), 3500);
+    } catch (err: any) {
+      setErrorMsg('فشل نقل الرسالة للمحذوفات: ' + err.message);
+    }
+  };
+
+  const handleRestoreMessage = async (id: string) => {
+    try {
+      await api.updateContactMessageStatus(id, 'unread');
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'unread' as any } : m));
+      setSuccessMsg('تم استرجاع الرسالة بنجاح إلى صندوق الوارد ↩️✨');
+      setTimeout(() => setSuccessMsg(''), 3500);
+    } catch (err: any) {
+      setErrorMsg('فشل استرجاع الرسالة: ' + err.message);
+    }
+  };
+
+  const handleDeleteMessagePermanently = async (id: string) => {
+    if (!confirm('هل أنت متأكد من مسح هذه الرسالة نهائياً من سلة المحذوفات؟')) return;
     try {
       await api.deleteContactMessage(id);
       setMessages(prev => prev.filter(m => m.id !== id));
-      setSuccessMsg('تم حذف الرسالة بنجاح');
+      setSuccessMsg('تم مسح الرسالة نهائياً');
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err: any) {
       setErrorMsg('فشل حذف الرسالة: ' + err.message);
@@ -238,7 +262,10 @@ export const CommunicationsPage: React.FC = () => {
     p.request_text.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredMessages = messages.filter(m =>
+  const activeMessages = messages.filter(m => (m.status as string) !== 'archived');
+  const trashedMessages = messages.filter(m => (m.status as string) === 'archived');
+
+  const filteredMessages = (messageFilter === 'active' ? activeMessages : trashedMessages).filter(m =>
     m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.phone.includes(searchTerm) ||
     m.message.toLowerCase().includes(searchTerm.toLowerCase())
@@ -246,7 +273,7 @@ export const CommunicationsPage: React.FC = () => {
 
   // Unread counts for badges
   const unreadPrayersCount = prayers.filter(p => !p.is_read).length;
-  const unreadMessagesCount = messages.filter(m => m.status === 'unread').length;
+  const unreadMessagesCount = activeMessages.filter(m => m.status === 'unread').length;
 
   return (
     <DashboardLayout role={profile?.role as any || 'admin'}>
@@ -266,40 +293,69 @@ export const CommunicationsPage: React.FC = () => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-200 gap-6">
-          <button
-            onClick={() => { setActiveTab('prayers'); setSearchTerm(''); }}
-            className={`pb-4 text-base font-bold transition-all relative flex items-center gap-2 ${
-              activeTab === 'prayers'
-                ? 'text-[#002366] border-b-2 border-[#d4af37]'
-                : 'text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            <Heart className="w-5 h-5" />
-            <span>طلبات الصلاة</span>
-            {unreadPrayersCount > 0 && (
-              <span className="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {unreadPrayersCount} جديد
-              </span>
-            )}
-          </button>
+        <div className="flex flex-wrap items-center justify-between border-b border-slate-200 gap-4">
+          <div className="flex gap-6">
+            <button
+              onClick={() => { setActiveTab('prayers'); setSearchTerm(''); }}
+              className={`pb-4 text-base font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+                activeTab === 'prayers'
+                  ? 'text-[#002366] border-b-2 border-[#d4af37]'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              <Heart className="w-5 h-5" />
+              <span>طلبات الصلاة</span>
+              {unreadPrayersCount > 0 && (
+                <span className="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {unreadPrayersCount} جديد
+                </span>
+              )}
+            </button>
 
-          <button
-            onClick={() => { setActiveTab('messages'); setSearchTerm(''); }}
-            className={`pb-4 text-base font-bold transition-all relative flex items-center gap-2 ${
-              activeTab === 'messages'
-                ? 'text-[#002366] border-b-2 border-[#d4af37]'
-                : 'text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            <Mail className="w-5 h-5" />
-            <span>رسائل تواصل معنا</span>
-            {unreadMessagesCount > 0 && (
-              <span className="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {unreadMessagesCount} جديد
-              </span>
-            )}
-          </button>
+            <button
+              onClick={() => { setActiveTab('messages'); setSearchTerm(''); }}
+              className={`pb-4 text-base font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+                activeTab === 'messages'
+                  ? 'text-[#002366] border-b-2 border-[#d4af37]'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              <Mail className="w-5 h-5" />
+              <span>رسائل تواصل معنا</span>
+              {unreadMessagesCount > 0 && (
+                <span className="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {unreadMessagesCount} جديد
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Messages Sub-filter (Inbox vs Recycle Bin) */}
+          {activeTab === 'messages' && (
+            <div className="flex items-center gap-1.5 pb-2">
+              <button
+                onClick={() => setMessageFilter('active')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  messageFilter === 'active'
+                    ? 'bg-[#002366] text-[#fed65b] shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                صندوق الوارد ({activeMessages.length})
+              </button>
+              <button
+                onClick={() => setMessageFilter('trash')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  messageFilter === 'trash'
+                    ? 'bg-rose-700 text-white shadow-xs'
+                    : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                }`}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>سلة المحذوفات والأرشيف ({trashedMessages.length})</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Search Bar & Export */}
@@ -316,7 +372,7 @@ export const CommunicationsPage: React.FC = () => {
           </div>
           <button
             onClick={activeTab === 'prayers' ? handleExportPrayers : handleExportMessages}
-            className="bg-[#002366] hover:bg-[#00113a] text-white font-bold text-sm px-6 py-3 rounded-2xl transition-all shadow flex items-center justify-center gap-2"
+            className="bg-[#002366] hover:bg-[#00113a] text-white font-bold text-sm px-6 py-3 rounded-2xl transition-all shadow flex items-center justify-center gap-2 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>تصدير إلى Excel</span>
@@ -444,18 +500,23 @@ export const CommunicationsPage: React.FC = () => {
           filteredMessages.length === 0 ? (
             <div className="py-16 text-center bg-white rounded-3xl border border-slate-100 text-slate-400 space-y-2">
               <Mail className="w-12 h-12 text-slate-200 mx-auto" />
-              <p className="font-bold text-slate-600">لا يوجد رسائل تواصل مطابقة</p>
+              <p className="font-bold text-slate-600">
+                {messageFilter === 'trash' ? 'سلة المحذوفات فارغة' : 'لا يوجد رسائل تواصل في صندوق الوارد'}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredMessages.map(m => {
                 const handledInfo = getHandledInfo(`contact_handled_${m.id}`);
+                const isTrash = (m.status as string) === 'archived';
 
                 return (
                   <div
                     key={m.id}
                     className={`p-6 rounded-3xl border transition-all duration-200 flex flex-col justify-between gap-4 ${
-                      m.status === 'unread'
+                      isTrash 
+                        ? 'bg-rose-50/40 border-rose-200 shadow-xs'
+                        : m.status === 'unread'
                         ? 'bg-gradient-to-r from-blue-50/50 to-indigo-50/20 border-blue-200 shadow-md ring-1 ring-blue-400/20'
                         : 'bg-white border-slate-100 shadow-sm hover:shadow-md'
                     }`}
@@ -464,7 +525,11 @@ export const CommunicationsPage: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <h4 className="font-bold text-base font-tajawal text-[#00123a] flex items-center gap-2">
                           <span>{m.name}</span>
-                          {m.status === 'unread' ? (
+                          {isTrash ? (
+                            <span className="px-2 py-0.5 rounded-lg text-[10px] bg-rose-100 text-rose-800 font-bold border border-rose-200">
+                              في المحذوفات
+                            </span>
+                          ) : m.status === 'unread' ? (
                             <span className="px-2 py-0.5 rounded-lg text-[10px] bg-blue-100 text-blue-800 font-bold border border-blue-200">
                               جديد
                             </span>
@@ -499,34 +564,55 @@ export const CommunicationsPage: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleMarkMessageReceived(m.id)}
-                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-                            m.status === 'replied'
-                              ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                          }`}
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>{m.status === 'replied' ? 'تم الاستلام والتواصل ✓' : 'تم الاستلام للتواصل معنا'}</span>
-                        </button>
+                      {isTrash ? (
+                        <div className="flex items-center justify-between w-full">
+                          <button
+                            onClick={() => handleRestoreMessage(m.id)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>استرجاع الرسالة لصندوق الوارد ↩️</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMessagePermanently(m.id)}
+                            className="p-2 text-rose-600 hover:bg-rose-100 rounded-xl transition-all cursor-pointer"
+                            title="مسح نهائي"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleMarkMessageReceived(m.id)}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                                m.status === 'replied'
+                                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                              }`}
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>{m.status === 'replied' ? 'تم الاستلام والتواصل ✓' : 'تم الاستلام للتواصل معنا'}</span>
+                            </button>
 
-                        <button
-                          onClick={() => handleToggleMessageStatus(m.id, m.status)}
-                          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors"
-                        >
-                          {m.status !== 'unread' ? 'تغيير لغير مقروء' : 'تحديد كمقروء'}
-                        </button>
-                      </div>
+                            <button
+                              onClick={() => handleToggleMessageStatus(m.id, m.status)}
+                              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors"
+                            >
+                              {m.status !== 'unread' ? 'تغيير لغير مقروء' : 'تحديد كمقروء'}
+                            </button>
+                          </div>
 
-                      <button
-                        onClick={() => handleDeleteMessage(m.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
-                        title="حذف الرسالة"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                          <button
+                            onClick={() => handleSoftDeleteMessage(m.id)}
+                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
+                            title="نقل لسلة المحذوفات"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
