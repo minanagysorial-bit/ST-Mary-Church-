@@ -226,6 +226,21 @@ const compressImage = (file: File): Promise<string> => {
           </div>
         </div>
 
+        {/* Animated Coming Soon Notice */}
+        <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-amber-500/10 border border-amber-300/60 rounded-3xl p-5 text-center shadow-md relative overflow-hidden animate-pulse">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <span className="bg-[#002366] text-[#fed65b] px-3.5 py-1 rounded-full text-xs font-black shadow-sm">
+              قريباً جداً ✨
+            </span>
+            <p className="font-tajawal text-base sm:text-lg font-black text-[#00174a]">
+              « منصة الألعاب التفاعلية وكاهوت مدارس الأحد قريباً.. اذكرونا في صلواتكم ✝️ »
+            </p>
+          </div>
+          <p className="text-xs text-slate-600 font-semibold mt-1.5">
+            يتم حالياً تطوير وتجهيز أحدث الألعاب الحركية والتنافسية ومسابقات البث المباشر لأولادنا المخدومين.
+          </p>
+        </div>
+
         {/* Quizzes List Section */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

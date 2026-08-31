@@ -27,6 +27,11 @@ export const VisitationPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
+  
+  // Date Range Filter States (From / To)
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [showDateFilter, setShowDateFilter] = useState<boolean>(false);
 
   // Form State
   const [selectedMemberId, setSelectedMemberId] = useState('');
@@ -141,13 +146,44 @@ export const VisitationPage: React.FC = () => {
   const phoneVisits = logs.filter(l => l.visit_type === 'تليفونية').length;
   const churchVisits = logs.filter(l => l.visit_type === 'كنسية').length;
 
+  const setQuickRange = (type: 'this_month' | 'last_month' | 'last_30_days' | 'all') => {
+    const now = new Date();
+    if (type === 'this_month') {
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      setStartDate(`${y}-${m}-01`);
+      const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+      setEndDate(`${y}-${m}-${String(lastDay).padStart(2, '0')}`);
+    } else if (type === 'last_month') {
+      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const y = prevMonth.getFullYear();
+      const m = String(prevMonth.getMonth() + 1).padStart(2, '0');
+      setStartDate(`${y}-${m}-01`);
+      const lastDay = new Date(y, prevMonth.getMonth() + 1, 0).getDate();
+      setEndDate(`${y}-${m}-${String(lastDay).padStart(2, '0')}`);
+    } else if (type === 'last_30_days') {
+      const past = new Date();
+      past.setDate(past.getDate() - 30);
+      setStartDate(past.toISOString().split('T')[0]);
+      setEndDate(now.toISOString().split('T')[0]);
+    } else {
+      setStartDate('');
+      setEndDate('');
+    }
+  };
+
   const filteredLogs = logs.filter(log => {
     // Resolve name for local searching
     const resolvedName = members.find(m => m.id === log.member_id)?.full_name || log.member_name || '';
     const matchesSearch = resolvedName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (log.notes && log.notes.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFilter = filterType === 'all' || log.visit_type === filterType;
-    return matchesSearch && matchesFilter;
+    
+    // Date Range Matching (من - إلى)
+    const matchesStartDate = !startDate || log.visit_date >= startDate;
+    const matchesEndDate = !endDate || log.visit_date <= endDate;
+
+    return matchesSearch && matchesFilter && matchesStartDate && matchesEndDate;
   });
 
   return (
@@ -356,15 +392,29 @@ export const VisitationPage: React.FC = () => {
                 <h2 className="font-tajawal font-bold text-lg text-[#00123a]">سجل الافتقادات السابقة</h2>
               </div>
 
-              {/* Filters */}
-              <div className="flex items-center gap-2 text-xs">
-                <div className="relative flex-1 sm:w-48">
+              {/* Filters & Date Range Toggle */}
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowDateFilter(!showDateFilter)}
+                  className={`py-2 px-3 rounded-xl font-bold flex items-center gap-1.5 transition-all border ${
+                    showDateFilter || startDate || endDate
+                      ? 'bg-[#002366] text-[#fed65b] border-[#002366] shadow-xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                  title="تحديد مدة من - إلى"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>{startDate && endDate ? `${startDate} إلى ${endDate}` : 'تحديد مدة (من - إلى) 📅'}</span>
+                </button>
+
+                <div className="relative flex-1 sm:w-44">
                   <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="بحث باسم المخدوم..."
+                    placeholder="بحث بالمخدوم..."
                     className="w-full pl-3 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none"
                   />
                 </div>
@@ -381,6 +431,75 @@ export const VisitationPage: React.FC = () => {
                 </select>
               </div>
             </div>
+
+            {/* Date Range Picker Expandable Box */}
+            {showDateFilter && (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 animate-fade-in text-xs font-tajawal">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700">من تاريخ:</span>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 font-mono text-slate-800 focus:outline-none focus:border-[#002366]"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700">إلى تاريخ:</span>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 font-mono text-slate-800 focus:outline-none focus:border-[#002366]"
+                      />
+                    </div>
+                  </div>
+
+                  {(startDate || endDate) && (
+                    <button
+                      type="button"
+                      onClick={() => setQuickRange('all')}
+                      className="text-xs text-rose-600 hover:underline font-bold self-end sm:self-center"
+                    >
+                      إلغاء تصفية المدة ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200">
+                  <span className="text-[11px] font-bold text-slate-400">فترات سريعة:</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuickRange('this_month')}
+                    className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg border border-slate-200 text-[11px] transition-colors"
+                  >
+                    الشهر الحالي
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuickRange('last_month')}
+                    className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg border border-slate-200 text-[11px] transition-colors"
+                  >
+                    الشهر السابق
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuickRange('last_30_days')}
+                    className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-lg border border-slate-200 text-[11px] transition-colors"
+                  >
+                    آخر 30 يوم
+                  </button>
+                  {startDate && endDate && (
+                    <span className="mr-auto text-[11px] font-bold text-[#002366] bg-blue-50 px-2.5 py-1 rounded-lg">
+                      عدد الافتقادات في هذه الفترة: {filteredLogs.length} افتقاد
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* List Table / Cards */}
             {loading ? (

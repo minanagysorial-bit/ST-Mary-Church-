@@ -3,6 +3,7 @@ import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { api } from '../../lib/api';
 import type { Member } from '../../lib/database.types';
 import { useToast } from '../../components/common/Toast';
+import { useAuth } from '../../contexts/AuthContext';
 import { StudentIdCardModal } from '../../components/sunday-school/StudentIdCardModal';
 import {
   Award,
@@ -44,6 +45,7 @@ const DEFAULT_GIFTS: GiftItem[] = [
 ];
 
 export const SundaySchoolPointsPage: React.FC = () => {
+  const { profile } = useAuth();
   const toast = useToast();
   const [students, setStudents] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +71,7 @@ export const SundaySchoolPointsPage: React.FC = () => {
   useEffect(() => {
     fetchStudents();
     loadPoints();
-  }, []);
+  }, [profile]);
 
   const loadPoints = () => {
     try {
@@ -90,18 +92,63 @@ export const SundaySchoolPointsPage: React.FC = () => {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const data = await api.getSundaySchoolStudents();
-      setStudents(data);
+      // 1. Fetch Sunday School families
+      const allFamilies = await api.getFamilies('sunday_school');
+      
+      let targetFamilies = allFamilies;
+      if (profile?.role === 'servant') {
+        try {
+          const relations = await api.getFamilyServantsForAll();
+          const myFamilyIds = relations.filter(r => r.servant_id === profile.id).map(r => r.family_id);
+          const myFamilies = allFamilies.filter(f => myFamilyIds.includes(f.id) || f.assigned_servant_id === profile.id);
+          if (myFamilies.length > 0) {
+            targetFamilies = myFamilies;
+          }
+        } catch (e) {
+          console.warn('Could not filter servant families:', e);
+        }
+      }
+
+      // 2. Load members of families
+      const membersPromises = targetFamilies.map(f => api.getFamilyMembers(f.id));
+      const membersResults = await Promise.all(membersPromises);
+      const allMembers = membersResults.flat();
+
+      let studentList: Member[] = [];
+
+      if (allMembers.length > 0) {
+        studentList = allMembers.map(fm => {
+          const fam = allFamilies.find(f => f.id === fm.family_id);
+          const stage = fam?.stage || fam?.area || fm.sunday_school_stage || 'ابتدائي';
+          return {
+            id: fm.id,
+            full_name: fm.full_name,
+            national_id: '',
+            phone: fm.phone || '',
+            service: stage,
+            registration_date: fm.created_at || new Date().toISOString(),
+            father_of_confession: 'كنيسة السيدة العذراء مريم',
+            spiritual_status: 'منتظم',
+            attendance_status: 'حاضر',
+            points: 0,
+            qr_code: fm.id
+          } as unknown as Member;
+        });
+      } else {
+        // Fallback to Sunday school members table
+        studentList = await api.getSundaySchoolStudents();
+      }
+
+      setStudents(studentList);
 
       // Initialize default points if not set
       const saved = localStorage.getItem('sunday_school_points_map');
       const existing: Record<string, number> = saved ? JSON.parse(saved) : {};
       let changed = false;
 
-      data.forEach((s, idx) => {
+      studentList.forEach((s, idx) => {
         if (existing[s.id] === undefined) {
-          // Give realistic sample seed points
-          existing[s.id] = (idx % 5 + 1) * 25 + 30;
+          existing[s.id] = (idx % 5 + 1) * 20 + 20;
           changed = true;
         }
       });
@@ -186,10 +233,12 @@ export const SundaySchoolPointsPage: React.FC = () => {
   };
 
   // Filter students
+  const availableStages = Array.from(new Set(students.map(s => s.service).filter(Boolean)));
+
   const filteredStudents = students.filter(s => {
     const matchSearch = s.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         (s.phone && s.phone.includes(searchTerm));
-    const matchStage = selectedStage === 'الكل' || s.service === selectedStage;
+    const matchStage = selectedStage === 'الكل' || s.service === selectedStage || (s.service && s.service.includes(selectedStage));
     return matchSearch && matchStage;
   });
 
@@ -333,10 +382,9 @@ export const SundaySchoolPointsPage: React.FC = () => {
                   className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-[#002366]"
                 >
                   <option value="الكل">كل المراحل</option>
-                  <option value="ابتدائي">ابتدائي</option>
-                  <option value="إعدادي">إعدادي</option>
-                  <option value="ثانوي">ثانوي</option>
-                  <option value="جامعة">جامعة</option>
+                  {availableStages.map(st => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
                 </select>
               </div>
             </div>

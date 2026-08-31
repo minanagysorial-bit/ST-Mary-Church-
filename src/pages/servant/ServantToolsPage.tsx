@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { 
   Wrench, BookOpen, Download, FileText, CheckSquare, 
-  HelpCircle, ChevronLeft, Volume2, Play, Pause, RefreshCw, PlusCircle, Gamepad, Award, Bell, Presentation
+  HelpCircle, ChevronLeft, Volume2, Play, Pause, RefreshCw, PlusCircle, Gamepad, Award, Bell, Presentation,
+  ExternalLink, Eye, Sparkles, X, Settings
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../lib/api';
+import { ChurchCurriculum, formatDriveUrl } from '../super-admin/CurriculumManagementPage';
 
 export const ServantToolsPage: React.FC = () => {
   const { profile } = useAuth();
+  const isLeaderOrAdmin = profile && ['super_admin', 'admin', 'service_leader'].includes(profile.role);
   
   // Interactive Tools state
   const [activeTool, setActiveTool] = useState<string | null>(null);
+
+  // Curriculums State
+  const [curriculums, setCurriculums] = useState<ChurchCurriculum[]>([]);
+  const [selectedCurriculumStage, setSelectedCurriculumStage] = useState<string>('الكل');
+  const [previewingCurriculum, setPreviewingCurriculum] = useState<ChurchCurriculum | null>(null);
+
+  // Coming Soon Modal (Animated)
+  const [comingSoonModal, setComingSoonModal] = useState<{ open: boolean; title: string }>({ open: false, title: '' });
 
   // Tombola Game State
   const [tombolaNumbers, setTombolaNumbers] = useState<number[]>([]);
@@ -24,6 +36,26 @@ export const ServantToolsPage: React.FC = () => {
 
   // Guide modal state
   const [showGuide, setShowGuide] = useState(false);
+
+  useEffect(() => {
+    const loadCurriculums = async () => {
+      try {
+        const settings = await api.getSiteSettings();
+        if (settings && settings['church_curriculums']) {
+          const parsed = JSON.parse(settings['church_curriculums']);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCurriculums(parsed);
+            return;
+          }
+        }
+        const local = localStorage.getItem('church_curriculums_cache');
+        if (local) setCurriculums(JSON.parse(local));
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    loadCurriculums();
+  }, []);
 
   // Draw a number for Tombola
   const drawTombolaNumber = () => {
@@ -164,46 +196,113 @@ export const ServantToolsPage: React.FC = () => {
         )}
 
         {activeTool === 'curriculum' && (
-          <div className="bg-white rounded-2xl p-6 border border-secondary/30 shadow-md space-y-6 animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-[#eae8e7] pb-3">
-              <h3 className="font-headline font-bold text-primary flex items-center gap-2 text-sm lg:text-base">
+          <div className="bg-white rounded-2xl p-6 border border-secondary/30 shadow-md space-y-6 animate-fadeIn text-right" dir="rtl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#eae8e7] pb-3">
+              <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-secondary" />
-                <span>دليل ومقترحات مناهج مدارس الأحد</span>
-              </h3>
-              <button 
-                onClick={() => setActiveTool(null)}
-                className="text-xs font-bold text-slate-400 hover:text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg transition-all"
-              >
-                إغلاق
-              </button>
+                <h3 className="font-headline font-bold text-primary text-sm lg:text-base">
+                  دليل ومناهج مدارس الأحد (Google Drive)
+                </h3>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isLeaderOrAdmin && (
+                  <Link
+                    to="/admin/curriculums"
+                    className="bg-[#002366] hover:bg-[#00113a] text-[#fed65b] px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>إدارة المناهج (سوبر أدمن) ⚙️</span>
+                  </Link>
+                )}
+                <button 
+                  onClick={() => setActiveTool(null)}
+                  className="text-xs font-bold text-slate-400 hover:text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg transition-all"
+                >
+                  إغلاق
+                </button>
+              </div>
+            </div>
+
+            {/* Stage filter tabs */}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold font-tajawal">
+              {['الكل', 'حضانة', 'ابتدائي', 'إعدادي', 'ثانوي', 'جامعة', 'عام'].map(st => (
+                <button
+                  key={st}
+                  onClick={() => setSelectedCurriculumStage(st)}
+                  className={`px-3 py-1.5 rounded-xl transition-all ${
+                    selectedCurriculumStage === st
+                      ? 'bg-[#002366] text-[#fed65b] shadow-xs'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                  }`}
+                >
+                  {st === 'الكل' ? 'جميع المراحل' : `مرحلة ${st}`}
+                </button>
+              ))}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-bold font-tajawal">
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-between space-y-3">
-                <p className="text-primary text-sm font-extrabold">منهج حضانة (الملائكة)</p>
-                <p className="text-slate-500 text-[11px] font-normal leading-relaxed font-cairo">تحضير قصص شيقة تفاعلية مع وسائل إيضاح وتلوين مجسمة.</p>
-                <button className="bg-primary hover:bg-primary-container text-white py-2 rounded-lg flex items-center justify-center gap-1.5 text-[11px] transition-colors">
-                  <Download className="w-3.5 h-3.5" />
-                  <span>تنزيل الدليل PDF</span>
-                </button>
+            {/* Dynamic Curriculums Cards */}
+            {curriculums.filter(c => selectedCurriculumStage === 'الكل' || c.stage === selectedCurriculumStage).length === 0 ? (
+              <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                <BookOpen className="w-8 h-8 text-slate-300 mx-auto" />
+                <p className="text-xs font-bold text-slate-500">لا توجد مناهج مضافة لهذه المرحلة حالياً.</p>
+                {isLeaderOrAdmin && (
+                  <Link to="/admin/curriculums" className="text-xs text-[#002366] font-bold underline">
+                    + اضغط هنا لإضافة منهج من درايف
+                  </Link>
+                )}
               </div>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-between space-y-3">
-                <p className="text-primary text-sm font-extrabold">منهج ابتدائي</p>
-                <p className="text-slate-500 text-[11px] font-normal leading-relaxed font-cairo">منهج العقيدة والطقوس المبسط والأنشطة والمسابقات الرياضية والدينية.</p>
-                <button className="bg-primary hover:bg-primary-container text-white py-2 rounded-lg flex items-center justify-center gap-1.5 text-[11px] transition-colors">
-                  <Download className="w-3.5 h-3.5" />
-                  <span>تنزيل الدليل PDF</span>
-                </button>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs font-bold font-tajawal">
+                {curriculums
+                  .filter(c => selectedCurriculumStage === 'الكل' || c.stage === selectedCurriculumStage)
+                  .map(c => {
+                    const { previewUrl, downloadUrl, isFolder } = formatDriveUrl(c.drive_url);
+                    return (
+                      <div key={c.id} className="p-4 bg-slate-50 hover:bg-white rounded-2xl border border-slate-200 hover:border-[#002366] flex flex-col justify-between space-y-3 transition-all shadow-xs">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="bg-blue-100 text-[#002366] text-[10px] px-2 py-0.5 rounded-md font-extrabold">
+                              {c.stage}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold">
+                              {c.file_type} {c.term ? `• ${c.term}` : ''}
+                            </span>
+                          </div>
+                          <p className="text-primary text-sm font-extrabold leading-snug">{c.title}</p>
+                          {c.description && (
+                            <p className="text-slate-500 text-[11px] font-normal leading-relaxed font-cairo line-clamp-2">
+                              {c.description}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                          <a
+                            href={c.drive_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 bg-[#002366] hover:bg-[#00113a] text-[#fed65b] py-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] transition-colors shadow-xs"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>فتح الملف في Google Drive</span>
+                          </a>
+
+                          {!isFolder && (
+                            <button
+                              onClick={() => setPreviewingCurriculum(c)}
+                              className="p-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 transition-colors"
+                              title="معاينة المنهج"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-blue-600" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-between space-y-3">
-                <p className="text-primary text-sm font-extrabold">منهج إعدادي وثانوي</p>
-                <p className="text-slate-500 text-[11px] font-normal leading-relaxed font-cairo">دراسات كتابية، دفاعيات مبسطة وحلقات نقاش اجتماعية وإيجاد حلول للمشاكل.</p>
-                <button className="bg-primary hover:bg-primary-container text-white py-2 rounded-lg flex items-center justify-center gap-1.5 text-[11px] transition-colors">
-                  <Download className="w-3.5 h-3.5" />
-                  <span>تنزيل الدليل PDF</span>
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -230,7 +329,7 @@ export const ServantToolsPage: React.FC = () => {
 
           {/* Tool 2: Interactive Games */}
           <div 
-            onClick={() => alert('قريباً: سيتم توفير مكتبة تضم أفكار الألعاب التفاعلية والألعاب الجماعية الصيفية للأخوة الخدام.')}
+            onClick={() => setComingSoonModal({ open: true, title: 'الألعاب التفاعلية' })}
             className="group bg-white border border-[#c5c6d2]/50 hover:border-secondary rounded-2xl p-8 hover:-translate-y-2 hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col items-center text-center space-y-4"
           >
             <div className="w-16 h-16 rounded-full bg-secondary-container/10 text-secondary flex items-center justify-center group-hover:bg-secondary-container group-hover:text-primary transition-all duration-300 shadow-sm border border-secondary/5">
@@ -248,7 +347,7 @@ export const ServantToolsPage: React.FC = () => {
 
           {/* Tool 3: Kahoot */}
           <div 
-            onClick={() => window.open('https://kahoot.it/', '_blank')}
+            onClick={() => setComingSoonModal({ open: true, title: 'مسابقات كاهوت الروحية' })}
             className="group bg-white border border-[#c5c6d2]/50 hover:border-secondary rounded-2xl p-8 hover:-translate-y-2 hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col items-center text-center space-y-4"
           >
             <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center group-hover:bg-rose-500 group-hover:text-white transition-all duration-300 shadow-sm border border-rose-100">
@@ -412,6 +511,86 @@ export const ServantToolsPage: React.FC = () => {
                   className="bg-primary text-white font-bold py-2 px-6 rounded-xl hover:bg-primary-container transition-all"
                 >
                   فهمت ذلك
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Preview Curriculum Drive Document */}
+      {previewingCurriculum && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-4xl w-full h-[85vh] p-6 flex flex-col space-y-4 shadow-2xl border border-slate-100 animate-scale-in" dir="rtl">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-[#002366]" />
+                <h3 className="font-tajawal text-base font-bold text-[#00174a]">
+                  معاينة: {previewingCurriculum.title}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewingCurriculum.drive_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-slate-700 font-bold flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>فتح في درايف</span>
+                </a>
+                <button
+                  onClick={() => setPreviewingCurriculum(null)}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 bg-slate-100 rounded-2xl overflow-hidden relative">
+              <iframe
+                src={formatDriveUrl(previewingCurriculum.drive_url).previewUrl}
+                className="w-full h-full border-0"
+                title={previewingCurriculum.title}
+                allow="autoplay"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Animated Coming Soon for Interactive Games & Kahoot in the center */}
+      {comingSoonModal.open && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl border border-[#fed65b]/40 relative overflow-hidden animate-scale-in" dir="rtl">
+            {/* Background glowing rings */}
+            <div className="absolute -top-16 -left-16 w-44 h-44 bg-[#fed65b]/20 rounded-full blur-2xl pointer-events-none animate-pulse"></div>
+            <div className="absolute -bottom-16 -right-16 w-44 h-44 bg-[#002366]/15 rounded-full blur-2xl pointer-events-none animate-pulse"></div>
+
+            <div className="relative z-10 space-y-5">
+              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#00174a] to-[#002366] text-[#fed65b] flex items-center justify-center shadow-xl border border-[#fed65b]/40 animate-bounce">
+                <Sparkles className="w-10 h-10 text-[#fed65b]" />
+              </div>
+
+              <div className="space-y-2">
+                <span className="inline-block bg-[#fed65b]/25 border border-[#fed65b]/50 text-[#735c00] text-xs font-black px-4 py-1 rounded-full uppercase tracking-wider animate-pulse">
+                  قريباً جداً ✨
+                </span>
+                <h3 className="font-tajawal text-2xl sm:text-3xl font-black text-[#00174a]">
+                  اذكرونا في صلواتكم ✝️
+                </h3>
+                <p className="text-xs text-slate-600 font-bold leading-relaxed max-w-xs mx-auto">
+                  يجري إعداد وتجهيز باقة مميزة ومبتكرة من الألعاب التفاعلية الجماعية ومسابقات كاهوت الروحية لمدارس الأحد لخدمة أولادنا ومخدومينا.
+                </p>
+              </div>
+
+              <div className="pt-3">
+                <button
+                  onClick={() => setComingSoonModal({ open: false, title: '' })}
+                  className="w-full py-3 bg-[#002366] hover:bg-[#00113a] text-[#fed65b] font-black text-xs sm:text-sm rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <span>حسناً، نرافقكم بالصلاة 🙏</span>
                 </button>
               </div>
             </div>

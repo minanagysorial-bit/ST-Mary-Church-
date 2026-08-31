@@ -56,6 +56,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           { label: 'سجل الافتقاد', path: '/priest/member-visitation', icon: 'volunteer_activism', permission: PERMISSIONS.VIEW_MEMBER_VISITATIONS },
           { label: 'إدارة الكهنة', path: '/admin/priests', icon: 'supervisor_account', permission: PERMISSIONS.MANAGE_CONTENT },
           { label: 'إدارة العظات', path: '/admin/content?tab=sermons', icon: 'settings_voice', permission: PERMISSIONS.MANAGE_CONTENT },
+          { label: 'مناهج التربية الكنسية ودرايف', path: '/admin/curriculums', icon: 'menu_book', permission: PERMISSIONS.MANAGE_CONTENT },
           { label: 'باني الصفحات', path: '/admin/site-builder', icon: 'design_services', permission: PERMISSIONS.MANAGE_CONTENT },
           { label: 'ألبومات الذاكرة', path: '/admin/albums', icon: 'images', permission: PERMISSIONS.MANAGE_CONTENT },
         ];
@@ -69,6 +70,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           { label: 'إدارة الإعلانات', path: '/admin/content?tab=announcements', icon: 'campaign', permission: PERMISSIONS.MANAGE_ANNOUNCEMENTS },
           { label: 'شعب الكنيسة', path: '/membership/members', icon: 'group', permission: PERMISSIONS.MANAGE_CHURCH_MEMBERS },
           { label: 'طلبات العضوية', path: '/priest/membership-requests', icon: 'app_registration', permission: PERMISSIONS.REVIEW_MEMBERSHIP_REQUESTS },
+          { label: 'مناهج التربية الكنسية ودرايف', path: '/admin/curriculums', icon: 'menu_book', permission: PERMISSIONS.MANAGE_CONTENT },
           { label: 'طلبات الصلاة والرسائل', path: '/admin/communications', icon: 'chat', permission: PERMISSIONS.VIEW_PRAYERS_AND_CONTACT },
         ];
 
@@ -92,6 +94,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           { label: 'فصول وأسر التربية الكنسية', path: '/service-leader/families', icon: 'family_restroom', permission: PERMISSIONS.CREATE_FAMILIES },
           { label: 'تعيين وتوزيع الخدام', path: '/service-leader/servants', icon: 'badge', permission: PERMISSIONS.ASSIGN_SERVANTS },
           { label: 'تفقد الحضور والغياب', path: '/servant/attendance', icon: 'checklist', permission: PERMISSIONS.MANAGE_ATTENDANCE },
+          { label: 'مناهج التربية الكنسية ودرايف 📚', path: '/admin/curriculums', icon: 'menu_book' },
           { label: 'بنك تحضير الدروس 📖', path: '/servant/lesson-bank', icon: 'menu_book' },
           { label: 'نقاط مدارس الأحد 🌟', path: '/servant/points', icon: 'stars' },
           { label: 'سجل الافتقاد', path: '/servant/visitations', icon: 'volunteer_activism', permission: PERMISSIONS.MANAGE_VISITATION },
