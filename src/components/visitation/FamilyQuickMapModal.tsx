@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Phone, 
@@ -11,9 +11,10 @@ import {
   Home, 
   FileText, 
   Sparkles,
-  Send
+  Send,
+  MapPin
 } from 'lucide-react';
-import type { Family } from '../../lib/database.types';
+import type { Family, FamilyMember } from '../../lib/database.types';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
@@ -23,13 +24,15 @@ interface FamilyQuickMapModalProps {
   isOpen: boolean;
   onClose: () => void;
   onVisitationLogged?: (familyId: string, visitDate: string) => void;
+  onStartEditLocation?: (family: Family) => void;
 }
 
 export const FamilyQuickMapModal: React.FC<FamilyQuickMapModalProps> = ({
   family,
   isOpen,
   onClose,
-  onVisitationLogged
+  onVisitationLogged,
+  onStartEditLocation
 }) => {
   const { profile } = useAuth();
   const toast = useToast();
@@ -38,6 +41,32 @@ export const FamilyQuickMapModal: React.FC<FamilyQuickMapModalProps> = ({
   const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Kids / Makhdoumeen state
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState<string>('');
+
+  useEffect(() => {
+    if (!family || !isOpen) return;
+    const fetchKids = async () => {
+      setLoadingMembers(true);
+      try {
+        const kids = await api.getFamilyMembers(family.id);
+        setFamilyMembers(kids);
+        if (kids.length > 0) {
+          setSelectedMemberId(kids[0].id);
+        } else {
+          setSelectedMemberId('');
+        }
+      } catch (err) {
+        console.warn('Failed to load family members for map modal:', err);
+      } finally {
+        setLoadingMembers(false);
+      }
+    };
+    fetchKids();
+  }, [family, isOpen]);
 
   if (!isOpen || !family) return null;
 
@@ -67,14 +96,43 @@ export const FamilyQuickMapModal: React.FC<FamilyQuickMapModalProps> = ({
     setSaving(true);
 
     try {
-      // 1. Create log
+      let targetMemberId = selectedMemberId;
+
+      // If no member exists yet in this family, create one automatically to satisfy foreign key constraint
+      if (!targetMemberId) {
+        try {
+          const autoMember = await api.createFamilyMember({
+            family_id: family.id,
+            full_name: family.head_name || 'مخدوم الأسرة',
+            age: 10,
+            sunday_school_stage: (family as any).stage || family.area || 'ابتدائي',
+            phone: family.phone || '',
+            phone_2: '',
+            birth_date: '',
+            address: family.address || '',
+            notes: 'تم إنشاؤه تلقائياً لتوثيق سجل الافتقاد'
+          });
+          targetMemberId = autoMember.id;
+        } catch (mErr: any) {
+          console.warn('Could not auto-create member:', mErr);
+        }
+      }
+
+      if (!targetMemberId) {
+        throw new Error('يرجى اختيار المخدوم المفتقد أو التأكد من إضافة أفراد للأسرة');
+      }
+
+      // 1. Create log with valid family_member ID
+      const chosenMember = familyMembers.find(m => m.id === targetMemberId);
+      const memberDisplayName = chosenMember ? chosenMember.full_name : family.head_name;
+
       await api.createVisitationLog({
         servant_id: profile.id,
-        member_id: family.id,
+        member_id: targetMemberId,
         group_id: null,
         visit_date: visitDate,
         visit_type: visitType,
-        notes: `افتقاد لأسرة: ${family.head_name} — ${notes}`
+        notes: `افتقاد للمخدوم: ${memberDisplayName} (أسرة ${family.head_name}) — ${notes}`
       });
 
       // 2. Update family last_visit_date
@@ -82,7 +140,7 @@ export const FamilyQuickMapModal: React.FC<FamilyQuickMapModalProps> = ({
         last_visit_date: visitDate
       });
 
-      toast.success('تم تسجيل تقرير الافتقاد وتحديث تاريخ الزيارة بنجاح ✝️');
+      toast.success(`تم تسجيل تقرير افتقاد ${memberDisplayName} بنجاح ✝️✨`);
       if (onVisitationLogged) {
         onVisitationLogged(family.id, visitDate);
       }
@@ -151,7 +209,70 @@ export const FamilyQuickMapModal: React.FC<FamilyQuickMapModalProps> = ({
             {family.notes && (
               <div className="flex items-start gap-2 text-slate-600 border-t border-slate-200/60 pt-2 text-[11px]">
                 <FileText className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                <span>{family.notes}</span>
+                <span>{family.notes.replace(/\[GEO:[-\d.]+,[-\d.]+\]/g, '').trim()}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Edit Location on Map Button */}
+          {onStartEditLocation && (
+            <button
+              type="button"
+              onClick={() => {
+                onStartEditLocation(family);
+                onClose();
+              }}
+              className="w-full py-2.5 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-300/80 text-amber-900 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xs"
+            >
+              <MapPin className="w-4 h-4 text-amber-600 animate-bounce" />
+              <span>تعديل وضبط موقع المنزل على الخريطة 📍</span>
+            </button>
+          )}
+
+          {/* Kids / Makhdoumeen List */}
+          <div className="space-y-2 border-t border-slate-100 pt-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-[#002366] flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>أبناء ومخدومي الأسرة ({familyMembers.length})</span>
+              </span>
+            </div>
+
+            {loadingMembers ? (
+              <div className="py-2 text-center text-slate-400 text-xs font-bold">جاري تحميل بيانات المخدومين...</div>
+            ) : familyMembers.length === 0 ? (
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-500 text-center font-bold">
+                لا يوجد أبناء مسجلين بالأسرة حتى الآن
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {familyMembers.map(m => {
+                  const kidPhone = m.phone ? m.phone.replace(/[^0-9+]/g, '') : '';
+                  const kidWa = kidPhone ? `https://wa.me/${kidPhone.startsWith('0') ? '2' + kidPhone : kidPhone}` : null;
+                  return (
+                    <div key={m.id} className="p-2.5 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-2 text-xs transition-colors">
+                      <div>
+                        <p className="font-extrabold text-slate-800">{m.full_name}</p>
+                        <p className="text-[10px] text-slate-500 font-bold">
+                          {m.sunday_school_stage || 'مخدوم'} {m.age ? `• ${m.age} سنة` : ''}
+                          {m.address ? ` • 📍 ${m.address}` : ''}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {kidPhone && (
+                          <a href={`tel:${kidPhone}`} className="p-1.5 bg-[#002366] text-white rounded-lg hover:bg-black transition-colors" title="اتصال">
+                            <Phone className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        {kidWa && (
+                          <a href={kidWa} target="_blank" rel="noreferrer" className="p-1.5 bg-[#25D366] text-white rounded-lg hover:bg-[#1faa4e] transition-colors" title="واتساب">
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -209,6 +330,26 @@ export const FamilyQuickMapModal: React.FC<FamilyQuickMapModalProps> = ({
                 >
                   إلغاء
                 </button>
+              </div>
+
+              {/* Select Member to visit */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-600">اختر المخدوم المفتقد: *</label>
+                <select
+                  value={selectedMemberId}
+                  onChange={(e) => setSelectedMemberId(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700"
+                >
+                  {familyMembers.length > 0 ? (
+                    familyMembers.map(m => (
+                      <option key={m.id} value={m.id}>
+                        {m.full_name} ({m.sunday_school_stage || 'مخدوم'})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">{family.head_name} (تسجيل باسم عائل الأسرة)</option>
+                  )}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-2">

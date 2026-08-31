@@ -734,7 +734,8 @@ export const api = {
       .from('visitation_logs')
       .select(`
         *,
-        profiles:servant_id(full_name)
+        profiles:servant_id(full_name),
+        family_members:member_id(full_name)
       `)
       .order('visit_date', { ascending: false });
 
@@ -748,7 +749,7 @@ export const api = {
     return (data || []).map((row: any) => ({
       ...row,
       servant_name: row.profiles?.full_name,
-      member_name: row.member_name || ''
+      member_name: row.family_members?.full_name || row.member_name || ''
     })) as VisitationLog[];
   },
 

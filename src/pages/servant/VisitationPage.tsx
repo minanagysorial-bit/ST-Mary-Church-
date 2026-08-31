@@ -64,18 +64,49 @@ export const VisitationPage: React.FC = () => {
         console.warn("family_servants table not ready or empty:", err);
       }
 
-      // Filter families (servants see their own, admins/priests see all)
+      // Filter families (servants see their assigned, or fallback to all families)
       let filteredFamilies = allFamilies;
       if (profile && profile.role === 'servant') {
-        filteredFamilies = allFamilies.filter(f => 
+        const myAssigned = allFamilies.filter(f => 
           myFamilyIds.includes(f.id) || f.assigned_servant_id === profile?.id
         );
+        if (myAssigned.length > 0) {
+          filteredFamilies = myAssigned;
+        }
       }
 
       // Fetch family members for each of these families
-      const membersPromises = filteredFamilies.map(f => api.getFamilyMembers(f.id));
+      const membersPromises = filteredFamilies.map(async f => {
+        try {
+          const kids = await api.getFamilyMembers(f.id);
+          return kids.map(k => ({
+            ...k,
+            family_name: f.head_name,
+            family_stage: f.stage || f.area || ''
+          }));
+        } catch {
+          return [];
+        }
+      });
       const membersLists = await Promise.all(membersPromises);
-      const allFamilyMembers = membersLists.flat();
+      let allFamilyMembers = membersLists.flat();
+
+      // If servant has no kids in assigned list, fallback to all families
+      if (allFamilyMembers.length === 0 && allFamilies.length > 0) {
+        const allKidsPromises = allFamilies.map(async f => {
+          try {
+            const kids = await api.getFamilyMembers(f.id);
+            return kids.map(k => ({
+              ...k,
+              family_name: f.head_name,
+              family_stage: f.stage || f.area || ''
+            }));
+          } catch {
+            return [];
+          }
+        });
+        allFamilyMembers = (await Promise.all(allKidsPromises)).flat();
+      }
 
       // Deduplicate members
       const uniqueMembers = Array.from(new Map(allFamilyMembers.map(m => [m.id, m])).values());
@@ -286,10 +317,10 @@ export const VisitationPage: React.FC = () => {
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-[#002366] outline-none"
                   required
                 >
-                  <option value="">-- اختر المخدوم من القائمة --</option>
+                  <option value="">-- اختر المخدوم من القائمة ({members.length} مخدوم متاح) --</option>
                   {members.map(m => (
                     <option key={m.id} value={m.id}>
-                      {m.full_name} ({m.phone || 'بدون هاتف'})
+                      {m.full_name} {(m as any).family_name ? `• أسرة ${(m as any).family_name}` : ''} ({m.phone || 'بدون هاتف'})
                     </option>
                   ))}
                 </select>
