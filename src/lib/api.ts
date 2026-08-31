@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { fastCache } from './cacheHelper';
 import type {
   Sermon, Member, Meeting, Project, FinancialRecord,
   Family, FamilyServant, FamilyAttendanceRecord, ServiceArea, PrayerRequest, MembershipComment, Liturgy,
@@ -504,15 +505,18 @@ export const api = {
 
   // ── Liturgies ────────────────────────────────────────────
   getLiturgies: async (): Promise<Liturgy[]> => {
-    const { data, error } = await supabase
-      .from('liturgies')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    return data as Liturgy[];
+    return fastCache.getOrFetch('liturgies', async () => {
+      const { data, error } = await supabase
+        .from('liturgies')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data as Liturgy[];
+    }, 60_000);
   },
 
   createLiturgy: async (liturgy: LiturgyInsert): Promise<Liturgy> => {
+    fastCache.invalidate('liturgies');
     const { data, error } = await supabase
       .from('liturgies')
       .insert(liturgy)
@@ -523,6 +527,7 @@ export const api = {
   },
 
   updateLiturgy: async (id: string, updates: Partial<Liturgy>): Promise<Liturgy> => {
+    fastCache.invalidate('liturgies');
     const { data, error } = await supabase
       .from('liturgies')
       .update(updates)
@@ -534,6 +539,7 @@ export const api = {
   },
 
   deleteLiturgy: async (id: string): Promise<void> => {
+    fastCache.invalidate('liturgies');
     const { error } = await supabase
       .from('liturgies')
       .delete()
@@ -1145,25 +1151,25 @@ export const api = {
 
   // ── Verses CRUD ──
   getVerses: async (): Promise<Verse[]> => {
-    const { data, error } = await supabase
-      .from('verses')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data as Verse[];
+    return fastCache.getOrFetch('verses', async () => {
+      const { data, error } = await supabase
+        .from('verses')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Verse[];
+    }, 60_000);
   },
 
   getRandomVerse: async (): Promise<Verse | null> => {
-    const { data, error } = await supabase
-      .from('verses')
-      .select('*');
-    if (error) throw error;
-    if (!data || data.length === 0) return null;
-    const randomIndex = Math.floor(Math.random() * data.length);
-    return data[randomIndex] as Verse;
+    const verses = await api.getVerses();
+    if (!verses || verses.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * verses.length);
+    return verses[randomIndex] as Verse;
   },
 
   createVerse: async (verse: VerseInsert): Promise<Verse> => {
+    fastCache.invalidate('verses');
     const { data, error } = await supabase
       .from('verses')
       .insert(verse)
@@ -1174,6 +1180,7 @@ export const api = {
   },
 
   updateVerse: async (id: string, updates: Partial<Verse>): Promise<Verse> => {
+    fastCache.invalidate('verses');
     const { data, error } = await supabase
       .from('verses')
       .update(updates)
@@ -1185,6 +1192,7 @@ export const api = {
   },
 
   deleteVerse: async (id: string): Promise<void> => {
+    fastCache.invalidate('verses');
     const { error } = await supabase
       .from('verses')
       .delete()
@@ -1194,52 +1202,57 @@ export const api = {
 
   // ── Announcements CRUD ──
   getAnnouncements: async (): Promise<Announcement[]> => {
-    const { data, error } = await supabase
-      .from('announcements')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data as Announcement[];
+    return fastCache.getOrFetch('announcements_all', async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Announcement[];
+    }, 60_000);
   },
 
   getActiveAnnouncements: async (): Promise<Announcement[]> => {
-    const { data, error } = await supabase
-      .from('announcements')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    
-    // Filter out announcements that have expired or don't match specific days
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // normalize time
-    const dayName = today.toLocaleDateString('ar-EG', { weekday: 'long' });
-
-    return (data || []).filter(ann => {
-      const startDate = new Date(ann.start_date);
-      startDate.setHours(0, 0, 0, 0);
-
-      // if start date is in the future, it's not active yet
-      if (startDate > today) return false;
-
-      if (ann.duration_type === 'permanent') return true;
+    return fastCache.getOrFetch('announcements_active', async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
       
-      if (ann.duration_type === 'days_limit' && ann.duration_days) {
-        const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + ann.duration_days);
-        return today <= endDate;
-      }
-      
-      if (ann.duration_type === 'days_specific' && ann.specific_days) {
-        // e.g. "الجمعة", "الأحد"
-        return ann.specific_days.includes(dayName);
-      }
+      // Filter out announcements that have expired or don't match specific days
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // normalize time
+      const dayName = today.toLocaleDateString('ar-EG', { weekday: 'long' });
 
-      return false;
-    }) as Announcement[];
+      return (data || []).filter(ann => {
+        const startDate = new Date(ann.start_date);
+        startDate.setHours(0, 0, 0, 0);
+
+        // if start date is in the future, it's not active yet
+        if (startDate > today) return false;
+
+        if (ann.duration_type === 'permanent') return true;
+        
+        if (ann.duration_type === 'days_limit' && ann.duration_days) {
+          const endDate = new Date(startDate);
+          endDate.setDate(endDate.getDate() + ann.duration_days);
+          return today <= endDate;
+        }
+        
+        if (ann.duration_type === 'days_specific' && ann.specific_days) {
+          // e.g. "الجمعة", "الأحد"
+          return ann.specific_days.includes(dayName);
+        }
+
+        return false;
+      }) as Announcement[];
+    }, 60_000);
   },
 
   createAnnouncement: async (ann: AnnouncementInsert): Promise<Announcement> => {
+    fastCache.invalidate('announcements');
     const { data, error } = await supabase
       .from('announcements')
       .insert(ann)
@@ -1250,6 +1263,7 @@ export const api = {
   },
 
   updateAnnouncement: async (id: string, updates: Partial<Announcement>): Promise<Announcement> => {
+    fastCache.invalidate('announcements');
     const { data, error } = await supabase
       .from('announcements')
       .update(updates)
@@ -1261,6 +1275,7 @@ export const api = {
   },
 
   deleteAnnouncement: async (id: string): Promise<void> => {
+    fastCache.invalidate('announcements');
     const { error } = await supabase
       .from('announcements')
       .delete()
@@ -1269,6 +1284,7 @@ export const api = {
   },
 
   toggleAnnouncementActive: async (id: string, isActive: boolean): Promise<void> => {
+    fastCache.invalidate('announcements');
     const { error } = await supabase
       .from('announcements')
       .update({ is_active: isActive })
@@ -1278,19 +1294,22 @@ export const api = {
 
   // ── Site Settings CRUD ──
   getSiteSettings: async (): Promise<Record<string, string>> => {
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('*');
-    if (error) throw error;
-    
-    const settings: Record<string, string> = {};
-    (data || []).forEach(s => {
-      settings[s.key] = s.value;
-    });
-    return settings;
+    return fastCache.getOrFetch('site_settings', async () => {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*');
+      if (error) throw error;
+      
+      const settings: Record<string, string> = {};
+      (data || []).forEach(s => {
+        settings[s.key] = s.value;
+      });
+      return settings;
+    }, 120_000); // 2 minutes cache
   },
 
   updateSiteSettings: async (settings: Record<string, string>): Promise<void> => {
+    fastCache.invalidate('site_settings');
     const updates = Object.entries(settings).map(([key, value]) => ({
       key,
       value,

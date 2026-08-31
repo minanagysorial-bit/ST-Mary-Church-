@@ -18,19 +18,19 @@ import { PERMISSIONS } from './lib/permissions';
 
 // Public Core Pages (Eagerly loaded for instant load)
 import { HomePage } from './pages/HomePage';
-import { SermonsPage } from './pages/SermonsPage';
-import { SermonDetailPage } from './pages/SermonDetailPage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { AboutPage } from './pages/AboutPage';
-import { HistoryPage } from './pages/about/HistoryPage';
-import { PriestsPage } from './pages/about/PriestsPage';
-import { MemoryPage } from './pages/about/MemoryPage';
-import { LiveStreamPage } from './pages/LiveStreamPage';
-import { ContactUsPage } from './pages/ContactUsPage';
-import { LiturgiesSchedulePage } from './pages/LiturgiesSchedulePage';
-import { ReadingsPage } from './pages/ReadingsPage';
-import { MembershipRegistrationPage } from './pages/MembershipRegistrationPage';
+const SermonsPage = lazy(() => import('./pages/SermonsPage').then(m => ({ default: m.SermonsPage })));
+const SermonDetailPage = lazy(() => import('./pages/SermonDetailPage').then(m => ({ default: m.SermonDetailPage })));
+const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
+const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
+const HistoryPage = lazy(() => import('./pages/about/HistoryPage').then(m => ({ default: m.HistoryPage })));
+const PriestsPage = lazy(() => import('./pages/about/PriestsPage').then(m => ({ default: m.PriestsPage })));
+const MemoryPage = lazy(() => import('./pages/about/MemoryPage').then(m => ({ default: m.MemoryPage })));
+const LiveStreamPage = lazy(() => import('./pages/LiveStreamPage').then(m => ({ default: m.LiveStreamPage })));
+const ContactUsPage = lazy(() => import('./pages/ContactUsPage').then(m => ({ default: m.ContactUsPage })));
+const LiturgiesSchedulePage = lazy(() => import('./pages/LiturgiesSchedulePage').then(m => ({ default: m.LiturgiesSchedulePage })));
+const ReadingsPage = lazy(() => import('./pages/ReadingsPage').then(m => ({ default: m.ReadingsPage })));
+const MembershipRegistrationPage = lazy(() => import('./pages/MembershipRegistrationPage').then(m => ({ default: m.MembershipRegistrationPage })));
 
 // Admin Dashboards (Lazy Loaded for Speed & Code Splitting)
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));

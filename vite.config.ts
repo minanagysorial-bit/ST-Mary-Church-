@@ -15,11 +15,20 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
               return 'react-vendor';
             }
-            if (id.includes('lucide-react')) {
-              return 'lucide-icons';
+            if (id.includes('leaflet')) {
+              return 'leaflet-vendor';
             }
             if (id.includes('@supabase')) {
               return 'supabase-vendor';
+            }
+            if (id.includes('lucide-react')) {
+              return 'lucide-icons';
+            }
+            if (id.includes('qrcode')) {
+              return 'qrcode-vendor';
+            }
+            if (id.includes('@capacitor')) {
+              return 'capacitor-vendor';
             }
             if (id.includes('react-helmet-async')) {
               return 'helmet-vendor';
