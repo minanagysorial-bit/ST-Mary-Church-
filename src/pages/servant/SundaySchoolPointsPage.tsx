@@ -24,9 +24,19 @@ import {
   History,
   TrendingUp,
   X,
-  ExternalLink
+  ExternalLink,
+  Camera,
+  Upload,
+  Link as LinkIcon
 } from 'lucide-react';
-import { extractPointsFromNotes, setPointsInNotes } from '../public/HonorBoardPage';
+import { 
+  extractPointsFromNotes, 
+  setPointsInNotes,
+  extractPhotoFromNotes,
+  setPhotoInNotes,
+  normalizeGoogleDriveImageUrl
+} from '../public/HonorBoardPage';
+import { compressImage, fileToBase64 } from '../../lib/fileUpload';
 
 interface GiftItem {
   id: string;
@@ -65,6 +75,11 @@ export const SundaySchoolPointsPage: React.FC = () => {
   const [pointsAmount, setPointsAmount] = useState<number>(10);
   const [pointsReason, setPointsReason] = useState<string>('حضور القداس الإلهي');
   const [isDeduction, setIsDeduction] = useState<boolean>(false);
+
+  // Student Photo Upload & Drive Link Modal State
+  const [photoModalStudent, setPhotoModalStudent] = useState<Member | null>(null);
+  const [photoInputUrl, setPhotoInputUrl] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Scanner manual code
   const [scannerCode, setScannerCode] = useState('');
@@ -136,6 +151,7 @@ export const SundaySchoolPointsPage: React.FC = () => {
           const fam = allFamilies.find(f => f.id === fm.family_id);
           const stage = fam?.stage || fam?.area || fm.sunday_school_stage || 'ابتدائي';
           const ptsFromDb = extractPointsFromNotes(fm.notes);
+          const photoFromDb = extractPhotoFromNotes(fm.notes);
           return {
             id: fm.id,
             full_name: fm.full_name,
@@ -148,6 +164,7 @@ export const SundaySchoolPointsPage: React.FC = () => {
             attendance_status: 'حاضر',
             points: ptsFromDb,
             notes: fm.notes || '',
+            photo_url: photoFromDb,
             qr_code: fm.id
           } as unknown as Member;
         });
@@ -227,6 +244,62 @@ export const SundaySchoolPointsPage: React.FC = () => {
     const updated = { ...pointsMap, [student.id]: next };
     savePoints(updated, student.id);
     toast.success(`مبروك! تم استبدال ${gift.name} لـ ${student.full_name} بنجاح 🎉`);
+  };
+
+  // Open Photo Modal
+  const openPhotoModal = (student: Member) => {
+    setPhotoModalStudent(student);
+    const existing = (student as any).photo_url || extractPhotoFromNotes((student as any).notes);
+    setPhotoInputUrl(existing || '');
+  };
+
+  // Upload Photo File from Device
+  const handlePhotoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPhoto(true);
+    try {
+      const compressed = await compressImage(file, 800, 0.85);
+      const base64 = await fileToBase64(compressed);
+      setPhotoInputUrl(base64);
+      toast.success('تم تجهيز الصورة بنجاح! اضغط "حفظ" لاعتمادها.');
+    } catch (err: any) {
+      toast.error('حدث خطأ أثناء قراءة الصورة: ' + err.message);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // Save Photo to Member Notes
+  const handleSavePhoto = async () => {
+    if (!photoModalStudent) return;
+    setUploadingPhoto(true);
+    try {
+      const finalPhoto = normalizeGoogleDriveImageUrl(photoInputUrl);
+      const currentNotes = (photoModalStudent as any).notes || '';
+      const updatedNotes = setPhotoInNotes(currentNotes, finalPhoto);
+
+      await api.updateFamilyMember(photoModalStudent.id, { notes: updatedNotes });
+
+      setStudents(prev => prev.map(s => {
+        if (s.id === photoModalStudent.id) {
+          return {
+            ...s,
+            notes: updatedNotes,
+            photo_url: finalPhoto
+          } as any;
+        }
+        return s;
+      }));
+
+      toast.success(`تم حفظ وتحديث صورة ${photoModalStudent.full_name} بنجاح وستظهر في لوحة الشرف 📸✨`);
+      setPhotoModalStudent(null);
+    } catch (err: any) {
+      toast.error('حدث خطأ في حفظ الصورة: ' + err.message);
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   // Quick Scanner Submission
@@ -456,17 +529,37 @@ export const SundaySchoolPointsPage: React.FC = () => {
                       className="bg-white rounded-3xl p-5 border border-slate-200 hover:border-[#d4af37]/60 shadow-sm hover:shadow-md transition-all space-y-4 flex flex-col justify-between"
                     >
                       {/* Top Student Header */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-1">
-                          <span className="bg-[#002366]/10 text-[#002366] text-[10px] font-extrabold px-2.5 py-0.5 rounded-md">
-                            {student.service || 'مدارس الأحد'}
-                          </span>
-                          <h3 className="font-extrabold text-base text-slate-800 leading-tight">
-                            {student.full_name}
-                          </h3>
-                          {student.phone && (
-                            <p className="text-xs text-slate-400 font-mono">{student.phone}</p>
-                          )}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {/* Student Avatar / Photo with click to edit */}
+                          <div 
+                            onClick={() => openPhotoModal(student)}
+                            className="relative w-12 h-12 rounded-2xl p-0.5 bg-gradient-to-tr from-[#d4af37] to-amber-200 shadow-md cursor-pointer group shrink-0"
+                            title="انقر لتعديل صورة البطل من درايف أو الجهاز"
+                          >
+                            <div className="w-full h-full rounded-2xl overflow-hidden bg-slate-100 flex items-center justify-center">
+                              {(student as any).photo_url ? (
+                                <img src={(student as any).photo_url} alt={student.full_name} className="w-full h-full object-cover" />
+                              ) : (
+                                <Camera className="w-5 h-5 text-slate-400 group-hover:text-[#002366] transition-colors" />
+                              )}
+                            </div>
+                            <span className="absolute -bottom-1 -left-1 bg-[#002366] text-white p-0.5 rounded-full text-[8px] shadow-sm group-hover:scale-110 transition-transform">
+                              📷
+                            </span>
+                          </div>
+
+                          <div className="space-y-0.5 min-w-0">
+                            <span className="bg-[#002366]/10 text-[#002366] text-[10px] font-extrabold px-2.5 py-0.5 rounded-md inline-block">
+                              {student.service || 'مدارس الأحد'}
+                            </span>
+                            <h3 className="font-extrabold text-base text-slate-800 leading-tight truncate">
+                              {student.full_name}
+                            </h3>
+                            {student.phone && (
+                              <p className="text-xs text-slate-400 font-mono">{student.phone}</p>
+                            )}
+                          </div>
                         </div>
 
                         {/* Points Pill */}
@@ -518,7 +611,15 @@ export const SundaySchoolPointsPage: React.FC = () => {
                           className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl transition-colors flex items-center justify-center gap-1.5"
                         >
                           <QrCode className="w-3.5 h-3.5 text-[#002366]" />
-                          <span>عرض بطاقة QR</span>
+                          <span>بطاقة QR</span>
+                        </button>
+                        <button
+                          onClick={() => openPhotoModal(student)}
+                          className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 p-2 rounded-xl font-bold text-xs transition-colors flex items-center gap-1 shadow-xs"
+                          title="إضافة أو تعديل صورة البطل من درايف أو الجهاز"
+                        >
+                          <Camera className="w-3.5 h-3.5 text-amber-700" />
+                          <span className="text-[11px] hidden sm:inline">صورة البطل</span>
                         </button>
                         <button
                           onClick={() => {
@@ -834,6 +935,112 @@ export const SundaySchoolPointsPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Student Photo Modal (Direct Upload & Google Drive Link) */}
+      {photoModalStudent && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm font-cairo" dir="rtl">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-amber-300 space-y-4 animate-scale-in">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-800 shadow-sm">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-[#00174a]">صورة بطل مدارس الأحد 📸</h3>
+                  <p className="text-xs text-slate-500 font-bold">{photoModalStudent.full_name}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setPhotoModalStudent(null)} 
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Live Circular Preview */}
+            <div className="flex flex-col items-center justify-center py-2 space-y-2">
+              <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-amber-400 to-yellow-300 shadow-xl border-4 border-white overflow-hidden flex items-center justify-center bg-slate-100">
+                {photoInputUrl ? (
+                  <img src={normalizeGoogleDriveImageUrl(photoInputUrl)} alt="معاينة الصورة" className="w-full h-full object-cover rounded-full" />
+                ) : (
+                  <div className="text-center p-2 text-slate-400">
+                    <Camera className="w-8 h-8 mx-auto mb-1 opacity-40" />
+                    <span className="text-[10px] font-bold block">لا توجد صورة بعد</span>
+                  </div>
+                )}
+              </div>
+              <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                هكذا ستظهر صورة البطل في لوحة الشرف 🏆
+              </span>
+            </div>
+
+            {/* Option 1: Direct File Upload from Phone or PC */}
+            <div className="space-y-1.5 p-3 rounded-2xl bg-slate-50 border border-slate-200">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Upload className="w-4 h-4 text-blue-600" />
+                <span>رفع صورة من الموبايل أو الكمبيوتر:</span>
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoFileUpload}
+                disabled={uploadingPhoto}
+                className="w-full text-xs text-slate-600 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-[#002366] file:text-white hover:file:bg-[#00174a] cursor-pointer"
+              />
+            </div>
+
+            {/* Option 2: Google Drive or Web Image Link */}
+            <div className="space-y-1.5 p-3 rounded-2xl bg-amber-50/70 border border-amber-200">
+              <label className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                <LinkIcon className="w-4 h-4 text-amber-700" />
+                <span>أو لصق رابط ملف من Google Drive:</span>
+              </label>
+              <input
+                type="url"
+                value={photoInputUrl}
+                onChange={(e) => setPhotoInputUrl(e.target.value)}
+                placeholder="https://drive.google.com/file/d/.../view"
+                className="w-full bg-white border border-amber-300 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500"
+              />
+              <p className="text-[10px] text-amber-800/80 font-bold leading-relaxed">
+                💡 يمكنك نسخ رابط مشاركة أي صورة من درايف (مع جعل الرابط متاحاً للمشاهدة) وسيتم تحويله تلقائياً وعرضه في لوحة الشرف.
+              </p>
+            </div>
+
+            {/* Save Actions */}
+            <div className="pt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSavePhoto}
+                disabled={uploadingPhoto}
+                className="flex-1 bg-gradient-to-r from-[#002366] to-[#00174a] hover:from-black hover:to-[#00174a] text-white font-extrabold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                {uploadingPhoto ? (
+                  <span>جاري الحفظ والمعالجة...</span>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>حفظ صورة البطل في لوحة الشرف 💾</span>
+                  </>
+                )}
+              </button>
+
+              {photoInputUrl && (
+                <button
+                  type="button"
+                  onClick={() => setPhotoInputUrl('')}
+                  className="px-3 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-colors cursor-pointer"
+                  title="مسح الصورة"
+                >
+                  حذف
+                </button>
+              )}
+            </div>
+
           </div>
         </div>
       )}

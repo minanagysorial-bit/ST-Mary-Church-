@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 import { 
   Trophy, 
   Award, 
-  Star, 
   Crown, 
   Share2, 
   Search, 
@@ -16,7 +15,6 @@ import {
   Download, 
   X,
   MessageCircle,
-  PartyPopper,
   Image as ImageIcon
 } from 'lucide-react';
 
@@ -36,6 +34,7 @@ export interface LeaderboardStudent {
   serviceName: string;
   grade: string;
   points: number;
+  photoUrl?: string;
 }
 
 export const SERVICES_CONFIG = [
@@ -43,59 +42,64 @@ export const SERVICES_CONFIG = [
     key: 'primary_boys', 
     name: 'ابتدائي بنين', 
     icon: '👦', 
-    description: 'أبطال المرحلة الابتدائية (من أولى حتى سادسة ابتدائي بنين)',
+    description: 'أبطال المرحلة الابتدائية (من أولى حتى سادسة بنين)',
     mascot: '/assets/leaderboard/mascot_boy.jpg'
   },
   { 
     key: 'primary_girls', 
     name: 'ابتدائي بنات', 
     icon: '👧', 
-    description: 'أميرات المرحلة الابتدائية (من أولى حتى سادسة ابتدائي بنات)',
+    description: 'أميرات المرحلة الابتدائية (من أولى حتى سادسة بنات)',
     mascot: '/assets/leaderboard/mascot_girl.jpg'
   },
   { 
     key: 'prep_boys', 
-    name: 'إعدادي بنين (فتيان)', 
+    name: 'فتيان إعدادي', 
     icon: '👔', 
     description: 'فرسان مرحلة إعدادي بنين (الصف الأول والثاني والثالث الإعدادي)',
     mascot: '/assets/leaderboard/mascot_boy.jpg'
   },
   { 
     key: 'prep_girls', 
-    name: 'إعدادي بنات (فتيات)', 
+    name: 'بنات إعدادي', 
     icon: '🎀', 
     description: 'بطلات مرحلة إعدادي بنات (الصف الأول والثاني والثالث الإعدادي)',
     mascot: '/assets/leaderboard/mascot_girl.jpg'
   },
   { 
-    key: 'secondary_boys', 
-    name: 'ثانوي بنين', 
-    icon: '🎓', 
-    description: 'شباب المرحلة الثانوية (من أولى حتى ثالثة ثانوي)',
-    mascot: '/assets/leaderboard/mascot_boy.jpg'
-  },
-  { 
-    key: 'secondary_girls', 
-    name: 'ثانوي بنات', 
-    icon: '🌸', 
-    description: 'شابات المرحلة الثانوية (من أولى حتى ثالثة ثانوي)',
-    mascot: '/assets/leaderboard/mascot_girl.jpg'
-  },
-  { 
-    key: 'nursery', 
-    name: 'حضانة (الملائكة)', 
-    icon: '🕊️', 
-    description: 'ملائكة حضانة والطفولة المبكرة الأبرار',
-    mascot: '/assets/leaderboard/mascot_boy.jpg'
-  },
-  { 
     key: 'all', 
-    name: 'أبطال الكنيسة ككل', 
-    icon: '🌟', 
+    name: 'جميع الأبطال 🌟', 
+    icon: '🏆', 
     description: 'الترتيب العام الشامل لجميع مخدومي وأبناء الكنيسة',
     mascot: '/assets/leaderboard/trophy_gold.jpg'
   }
 ];
+
+export function normalizeGoogleDriveImageUrl(url?: string | null): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  const match = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || 
+                trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+  }
+  return trimmed;
+}
+
+export function extractPhotoFromNotes(notes?: string | null): string {
+  if (!notes) return '';
+  const match = notes.match(/\[IMG:([^\]]+)\]/);
+  if (match && match[1]) {
+    return normalizeGoogleDriveImageUrl(match[1]);
+  }
+  return '';
+}
+
+export function setPhotoInNotes(notes: string | null | undefined, photoUrl: string): string {
+  const clean = (notes || '').replace(/\[IMG:[^\]]+\]/g, '').trim();
+  const trimmed = photoUrl.trim();
+  return trimmed ? `${clean} [IMG:${trimmed}]`.trim() : clean;
+}
 
 export function extractPointsFromNotes(notes?: string | null): number {
   if (!notes) return 0;
@@ -171,25 +175,18 @@ export const HonorBoardPage: React.FC = () => {
           serviceName = 'ابتدائي بنين';
         } else if ((combined.includes('إعدادي') || combined.includes('اعدادي')) && (combined.includes('بنات') || combined.includes('فتيات'))) {
           serviceKey = 'prep_girls';
-          serviceName = 'إعدادي بنات (فتيات)';
+          serviceName = 'بنات إعدادي';
         } else if (combined.includes('إعدادي') || combined.includes('اعدادي') || combined.includes('فتيان')) {
           serviceKey = 'prep_boys';
-          serviceName = 'إعدادي بنين (فتيان)';
-        } else if (combined.includes('ثانوي') && (combined.includes('بنات') || combined.includes('شابات'))) {
-          serviceKey = 'secondary_girls';
-          serviceName = 'ثانوي بنات';
-        } else if (combined.includes('ثانوي') || combined.includes('شباب')) {
-          serviceKey = 'secondary_boys';
-          serviceName = 'ثانوي بنين';
-        } else if (combined.includes('حضانة') || combined.includes('ملائكة')) {
-          serviceKey = 'nursery';
-          serviceName = 'حضانة (الملائكة)';
+          serviceName = 'فتيان إعدادي';
         }
 
         let pts = extractPointsFromNotes(m.notes);
         if (pts === 0 && localPointsCache[m.id]) {
           pts = localPointsCache[m.id];
         }
+
+        const photoUrl = extractPhotoFromNotes(m.notes);
 
         allStudents.push({
           id: m.id,
@@ -199,7 +196,8 @@ export const HonorBoardPage: React.FC = () => {
           serviceKey,
           serviceName,
           grade: m.sunday_school_stage || fam?.stage || 'مرحلة كنسية',
-          points: pts
+          points: pts,
+          photoUrl: photoUrl || undefined
         });
       });
 
@@ -236,7 +234,7 @@ export const HonorBoardPage: React.FC = () => {
 
   const getShareText = (student: LeaderboardStudent, rank: number) => {
     const rankTitle = rank === 1 ? 'المركز الأول 🥇' : rank === 2 ? 'المركز الثاني 🥈' : rank === 3 ? 'المركز الثالث 🥉' : `المركز رقم #${rank} 🌟`;
-    return `🏰 بطل مدارس الأحد في عالم ديزني الساحر 🏆\nأنا البطل: ${student.fullName}\nحصلت على ${student.points} نقطة في ${rankTitle} على ${student.serviceName} بكنيسة السيدة العذراء مريم بمحرم بك! 🎈✨\nشوفوا لوحة الشرف هنا: ${window.location.origin}/leaderboard?service=${student.serviceKey}`;
+    return `🏰 بطل مدارس الأحد في لوحة الشرف 🏆\nأنا البطل: ${student.fullName}\nحصلت على ${student.points} نقطة في ${rankTitle} على ${student.serviceName} بكنيسة السيدة العذراء مريم بمحرم بك! 🎈✨\nشوفوا لوحة الشرف هنا: ${window.location.origin}/leaderboard?service=${student.serviceKey}`;
   };
 
   const handleShareFacebook = (student: LeaderboardStudent, rank: number) => {
@@ -256,7 +254,7 @@ export const HonorBoardPage: React.FC = () => {
     setTimeout(() => setCopiedShareText(false), 3000);
   };
 
-  // Generate & Download Magical Disney Achievement Badge
+  // Generate & Download Achievement Certificate Image
   const handleDownloadBadge = (student: LeaderboardStudent, rank: number) => {
     const canvas = document.createElement('canvas');
     canvas.width = 1000;
@@ -274,7 +272,7 @@ export const HonorBoardPage: React.FC = () => {
     ctx.fillRect(0, 0, 1000, 1000);
 
     // Crystal white card
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
     ctx.shadowBlur = 40;
     ctx.roundRect(50, 50, 900, 900, 55);
@@ -299,16 +297,16 @@ export const HonorBoardPage: React.FC = () => {
     ctx.fillText('🌟 لوحة الشرف وأبطال مدارس الأحد 🏆', 500, 230);
 
     // Student Box
-    ctx.fillStyle = '#fef3c7';
-    ctx.strokeStyle = '#fbbf24';
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 4;
     ctx.roundRect(100, 310, 800, 480, 40);
     ctx.fill();
     ctx.stroke();
 
     // Student Name
-    ctx.fillStyle = '#0f172a';
-    ctx.font = '900 70px Tahoma, Arial, sans-serif';
+    ctx.fillStyle = '#00174a';
+    ctx.font = '900 65px Tahoma, Arial, sans-serif';
     ctx.fillText(student.fullName, 500, 435);
 
     // Service Name
@@ -361,8 +359,8 @@ export const HonorBoardPage: React.FC = () => {
       }}
       dir="rtl"
     >
-      {/* Soft Ambient Cinematic Vignette Overlay (Background remains 100% visible!) */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none z-0"></div>
+      {/* Soft Ambient Cinematic Vignette Overlay */}
+      <div className="fixed inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/65 pointer-events-none z-0"></div>
 
       {/* Floating Disney Sparkles */}
       <div className="fixed top-10 left-8 text-3xl animate-bounce pointer-events-none opacity-90 z-10" style={{ animationDuration: '3.5s' }}>✨</div>
@@ -370,8 +368,8 @@ export const HonorBoardPage: React.FC = () => {
       <div className="fixed bottom-20 left-12 text-3xl animate-pulse pointer-events-none opacity-80 z-10">🌟</div>
       <div className="fixed bottom-32 right-14 text-4xl animate-bounce pointer-events-none opacity-90 z-10" style={{ animationDuration: '5s' }}>🎉</div>
 
-      {/* Sleek Floating Glass Header (No solid white block) */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-black/40 border-b border-white/20 shadow-2xl px-4 py-3">
+      {/* Sleek Floating Glass Header */}
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-black/45 border-b border-white/20 shadow-2xl px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
           
           <div className="flex items-center gap-3">
@@ -419,16 +417,15 @@ export const HonorBoardPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Flow Container */}
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-8 relative z-10">
+      {/* Main Container */}
+      <main className="max-w-5xl mx-auto px-4 py-6 space-y-7 relative z-10">
         
-        {/* Seamless Hero Header (NO Big White Card!) */}
+        {/* Seamless Hero Header */}
         <section className="text-center space-y-3 pt-2 relative">
           
-          {/* Floating Mascots alongside Title */}
           <div className="flex items-center justify-center gap-4 sm:gap-8">
             
-            {/* 3D Boy Avatar Floating */}
+            {/* 3D Boy Avatar */}
             <div className="hidden sm:flex flex-col items-center animate-bounce" style={{ animationDuration: '4s' }}>
               <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-amber-400 to-sky-400 shadow-[0_0_25px_rgba(56,189,248,0.5)] border-2 border-white">
                 <img 
@@ -455,12 +452,12 @@ export const HonorBoardPage: React.FC = () => {
                 {activeServiceObj.description}
               </p>
 
-              <div className="backdrop-blur-md bg-black/40 border border-amber-300/50 rounded-full px-5 py-1.5 inline-block text-xs text-amber-200 font-black shadow-lg">
+              <div className="backdrop-blur-md bg-black/45 border border-amber-300/50 rounded-full px-5 py-1.5 inline-block text-xs text-amber-200 font-black shadow-lg">
                 « كُونُوا رَاسِخِينَ، غَيْرَ مُتَزَعْزِعِينَ، مُكْثِرِينَ فِي عَمَلِ الرَّبِّ » (1 كو 15: 58) ✝️
               </div>
             </div>
 
-            {/* 3D Girl Avatar Floating */}
+            {/* 3D Girl Avatar */}
             <div className="hidden sm:flex flex-col items-center animate-bounce" style={{ animationDuration: '4.5s' }}>
               <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-pink-400 to-amber-400 shadow-[0_0_25px_rgba(244,114,182,0.5)] border-2 border-white">
                 <img 
@@ -476,7 +473,7 @@ export const HonorBoardPage: React.FC = () => {
 
         </section>
 
-        {/* Floating Glass Bubbles Stage Selector (No square boxes) */}
+        {/* 4 Main Services Grid (NO Horizontal Ruler/Scrollbar!) */}
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2 px-2">
             <span className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
@@ -488,7 +485,8 @@ export const HonorBoardPage: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-amber-400/50">
+          {/* Grid of All Services - All visible on screen with zero ruler/scroll */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 max-w-4xl mx-auto">
             {SERVICES_CONFIG.map(svc => {
               const isActive = activeServiceKey === svc.key;
               const count = students.filter(s => svc.key === 'all' || s.serviceKey === svc.key).length;
@@ -496,19 +494,21 @@ export const HonorBoardPage: React.FC = () => {
                 <button
                   key={svc.key}
                   onClick={() => setSearchParams({ service: svc.key })}
-                  className={`px-4 py-2.5 rounded-full font-black text-xs whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`p-3 rounded-2xl font-black text-xs transition-all flex flex-col sm:flex-row items-center justify-center gap-2 cursor-pointer text-center ${
                     isActive
                       ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-amber-950 shadow-[0_0_25px_rgba(251,191,36,0.8)] border-2 border-white scale-105 transform -translate-y-1'
-                      : 'backdrop-blur-xl bg-black/40 hover:bg-black/60 text-white border border-white/30 hover:border-amber-300 shadow-lg'
+                      : 'backdrop-blur-xl bg-black/45 hover:bg-black/65 text-white border border-white/30 hover:border-amber-300 shadow-lg'
                   }`}
                 >
-                  <span className="text-sm">{svc.icon}</span>
-                  <span>{svc.name}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
-                    isActive ? 'bg-amber-950 text-amber-300' : 'bg-white/20 text-white'
-                  }`}>
-                    {count}
-                  </span>
+                  <span className="text-xl">{svc.icon}</span>
+                  <div className="flex flex-col items-center sm:items-start leading-tight">
+                    <span>{svc.name}</span>
+                    <span className={`text-[10px] mt-0.5 px-2 py-0.2 rounded-full font-black ${
+                      isActive ? 'bg-amber-950 text-amber-300' : 'bg-white/20 text-white/90'
+                    }`}>
+                      {count} بطل
+                    </span>
+                  </div>
                 </button>
               );
             })}
@@ -523,7 +523,7 @@ export const HonorBoardPage: React.FC = () => {
             placeholder="ابحث عن اسمك أو اسم صديقك... 🔍"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full backdrop-blur-2xl bg-black/40 border-2 border-white/40 focus:border-amber-400 rounded-full pr-12 pl-5 py-3 text-xs sm:text-sm font-black text-white placeholder:text-slate-300 outline-none shadow-2xl transition-all"
+            className="w-full backdrop-blur-2xl bg-black/45 border-2 border-white/40 focus:border-amber-400 rounded-full pr-12 pl-5 py-3 text-xs sm:text-sm font-black text-white placeholder:text-slate-300 outline-none shadow-2xl transition-all"
           />
         </section>
 
@@ -553,18 +553,30 @@ export const HonorBoardPage: React.FC = () => {
                 {top2 ? (
                   <div className="flex flex-col items-center space-y-2 order-1 group">
                     <div className="relative">
-                      <div className="w-18 h-18 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-slate-400 via-slate-200 to-white text-slate-900 border-4 border-white shadow-[0_0_25px_rgba(255,255,255,0.6)] flex items-center justify-center font-black text-3xl group-hover:scale-105 transition-transform">
-                        🥈
+                      {/* Avatar Circle with child's photo */}
+                      <div className="w-18 h-18 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-slate-400 via-slate-200 to-white shadow-[0_0_25px_rgba(255,255,255,0.6)] border-4 border-white overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform">
+                        {top2.photoUrl ? (
+                          <img src={top2.photoUrl} alt={top2.fullName} className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          <div className="w-full h-full bg-slate-300 flex items-center justify-center text-3xl">
+                            🥈
+                          </div>
+                        )}
                       </div>
                       <span className="absolute -bottom-1 -right-1 bg-slate-600 text-white text-xs font-black w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-md">
                         #2
                       </span>
                     </div>
 
-                    <div className="text-center space-y-0.5">
-                      <h4 className="font-black text-xs sm:text-sm text-white line-clamp-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{top2.fullName}</h4>
+                    {/* Student Name Box with White-to-Sky Gradient */}
+                    <div className="text-center space-y-1 w-full max-w-[170px]">
+                      <div className="bg-gradient-to-r from-white via-white/95 to-sky-100 px-3 py-1.5 rounded-2xl shadow-lg border border-white/90 text-center">
+                        <h4 className="font-black text-xs sm:text-sm text-[#00174a] line-clamp-1">
+                          {top2.fullName}
+                        </h4>
+                      </div>
                       <p className="text-[11px] text-slate-300 font-bold drop-shadow">{top2.grade}</p>
-                      <span className="inline-block backdrop-blur-md bg-white/20 border border-white/40 text-white px-3 py-0.5 rounded-full text-xs font-black shadow-md mt-1">
+                      <span className="inline-block backdrop-blur-md bg-white/20 border border-white/40 text-white px-3 py-0.5 rounded-full text-xs font-black shadow-md">
                         ⭐️ {top2.points}
                       </span>
                     </div>
@@ -589,18 +601,31 @@ export const HonorBoardPage: React.FC = () => {
                 {top1 && (
                   <div className="flex flex-col items-center space-y-2 order-2 group -mt-10">
                     <div className="relative">
-                      {/* Floating Disney Crown */}
+                      {/* Floating Crown */}
                       <Crown className="w-10 h-10 text-amber-300 animate-bounce mx-auto mb-1 filter drop-shadow-[0_0_15px_rgba(251,191,36,0.9)]" />
-                      <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-200 text-amber-950 border-4 border-white shadow-[0_0_40px_rgba(251,191,36,0.8)] flex items-center justify-center font-black text-4xl sm:text-5xl group-hover:scale-105 transition-transform animate-pulse">
-                        🥇
+                      
+                      {/* Avatar Circle with child's photo */}
+                      <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full p-1 bg-gradient-to-tr from-amber-400 via-yellow-200 to-amber-300 shadow-[0_0_40px_rgba(251,191,36,0.8)] border-4 border-white overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform animate-pulse">
+                        {top1.photoUrl ? (
+                          <img src={top1.photoUrl} alt={top1.fullName} className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-tr from-amber-400 to-yellow-300 flex items-center justify-center font-black text-4xl sm:text-5xl text-amber-950">
+                            🥇
+                          </div>
+                        )}
                       </div>
                       <span className="absolute -bottom-1 -right-1 bg-amber-500 text-white text-sm font-black w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
                         #1
                       </span>
                     </div>
 
-                    <div className="text-center space-y-0.5">
-                      <h4 className="font-black text-sm sm:text-lg text-amber-300 line-clamp-1 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">{top1.fullName}</h4>
+                    {/* Student Name Box with White-to-Sky Gradient */}
+                    <div className="text-center space-y-1 w-full max-w-[210px]">
+                      <div className="bg-gradient-to-r from-white via-white/95 to-sky-100 px-4 py-2 rounded-2xl shadow-xl border-2 border-white/90 text-center">
+                        <h4 className="font-black text-sm sm:text-base text-[#00174a] line-clamp-1">
+                          {top1.fullName}
+                        </h4>
+                      </div>
                       <p className="text-[11px] text-amber-200 font-black drop-shadow">{top1.grade}</p>
                       <span className="inline-block bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 px-4 py-1 rounded-full text-xs sm:text-sm font-black shadow-[0_0_20px_rgba(251,191,36,0.7)] mt-1 border-2 border-white">
                         ⭐️ {top1.points} نقطة
@@ -630,18 +655,30 @@ export const HonorBoardPage: React.FC = () => {
                 {top3 ? (
                   <div className="flex flex-col items-center space-y-2 order-3 group">
                     <div className="relative">
-                      <div className="w-18 h-18 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-amber-700 via-amber-600 to-amber-400 text-white border-4 border-white shadow-[0_0_25px_rgba(217,119,6,0.6)] flex items-center justify-center font-black text-3xl group-hover:scale-105 transition-transform">
-                        🥉
+                      {/* Avatar Circle with child's photo */}
+                      <div className="w-18 h-18 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-amber-700 via-amber-600 to-amber-400 shadow-[0_0_25px_rgba(217,119,6,0.6)] border-4 border-white overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform">
+                        {top3.photoUrl ? (
+                          <img src={top3.photoUrl} alt={top3.fullName} className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          <div className="w-full h-full bg-amber-700 text-white flex items-center justify-center text-3xl">
+                            🥉
+                          </div>
+                        )}
                       </div>
                       <span className="absolute -bottom-1 -right-1 bg-amber-800 text-white text-xs font-black w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-md">
                         #3
                       </span>
                     </div>
 
-                    <div className="text-center space-y-0.5">
-                      <h4 className="font-black text-xs sm:text-sm text-white line-clamp-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{top3.fullName}</h4>
+                    {/* Student Name Box with White-to-Sky Gradient */}
+                    <div className="text-center space-y-1 w-full max-w-[170px]">
+                      <div className="bg-gradient-to-r from-white via-white/95 to-sky-100 px-3 py-1.5 rounded-2xl shadow-lg border border-white/90 text-center">
+                        <h4 className="font-black text-xs sm:text-sm text-[#00174a] line-clamp-1">
+                          {top3.fullName}
+                        </h4>
+                      </div>
                       <p className="text-[11px] text-slate-300 font-bold drop-shadow">{top3.grade}</p>
-                      <span className="inline-block backdrop-blur-md bg-white/20 border border-white/40 text-amber-200 px-3 py-0.5 rounded-full text-xs font-black shadow-md mt-1">
+                      <span className="inline-block backdrop-blur-md bg-white/20 border border-white/40 text-amber-200 px-3 py-0.5 rounded-full text-xs font-black shadow-md">
                         ⭐️ {top3.points}
                       </span>
                     </div>
@@ -665,7 +702,7 @@ export const HonorBoardPage: React.FC = () => {
               </div>
             </section>
 
-            {/* Creative Seamless Stream for the Rest of the Champions */}
+            {/* Seamless List for the Rest of the Champions */}
             <section className="space-y-3 pt-2">
               <div className="flex items-center justify-between border-b border-white/30 pb-2 px-2">
                 <h3 className="font-tajawal text-base sm:text-lg font-black text-white flex items-center gap-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
@@ -677,7 +714,7 @@ export const HonorBoardPage: React.FC = () => {
                 </span>
               </div>
 
-              {/* Seamless Floating Ribbons (NO Clunky Square White Boxes!) */}
+              {/* Seamless Floating Ribbons */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {filteredStudents.map((s, idx) => {
                   const rank = idx + 1;
@@ -694,28 +731,47 @@ export const HonorBoardPage: React.FC = () => {
                           : 'bg-black/35 hover:bg-black/55 border-white/20 hover:border-amber-300/60'
                       }`}
                     >
-                      {/* Rank Badge & Student Info */}
+                      {/* Rank, Child Photo & Student Info */}
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 shadow-md ${
+                        
+                        {/* Rank Badge */}
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 shadow-md ${
                           rank === 1
-                            ? 'bg-gradient-to-br from-amber-400 to-yellow-400 text-amber-950 border-2 border-white shadow-[0_0_12px_rgba(251,191,36,0.6)]'
+                            ? 'bg-gradient-to-br from-amber-400 to-yellow-400 text-amber-950 border border-white'
                             : rank === 2
-                            ? 'bg-gradient-to-br from-slate-300 to-slate-100 text-slate-900 border-2 border-white'
+                            ? 'bg-gradient-to-br from-slate-300 to-slate-100 text-slate-900 border border-white'
                             : rank === 3
-                            ? 'bg-gradient-to-br from-amber-600 to-amber-500 text-white border-2 border-white'
+                            ? 'bg-gradient-to-br from-amber-600 to-amber-500 text-white border border-white'
                             : 'backdrop-blur-md bg-white/20 text-white border border-white/40'
                         }`}>
                           #{rank}
                         </div>
 
-                        <div className="min-w-0">
-                          <h4 className="font-black text-sm sm:text-base text-white truncate drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                            {s.fullName}
-                          </h4>
-                          <p className="text-[11px] text-amber-200/90 font-bold truncate drop-shadow">
+                        {/* Child Avatar Circle (Shows Photo if Uploaded) */}
+                        <div className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 to-sky-300 border-2 border-white shadow-md overflow-hidden shrink-0 flex items-center justify-center">
+                          {s.photoUrl ? (
+                            <img src={s.photoUrl} alt={s.fullName} className="w-full h-full object-cover rounded-full" />
+                          ) : (
+                            <img 
+                              src={isGirlStage ? "/assets/leaderboard/mascot_girl.jpg" : "/assets/leaderboard/mascot_boy.jpg"} 
+                              alt="Avatar" 
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                          )}
+                        </div>
+
+                        {/* Student Name inside White-to-Sky Gradient Box */}
+                        <div className="min-w-0 space-y-1">
+                          <div className="bg-gradient-to-r from-white via-white/95 to-sky-50 px-3 py-1 rounded-xl shadow-md border border-white/90 inline-block max-w-full">
+                            <h4 className="font-black text-xs sm:text-sm text-[#00174a] truncate">
+                              {s.fullName}
+                            </h4>
+                          </div>
+                          <p className="text-[10px] text-amber-200/90 font-bold truncate drop-shadow">
                             {s.familyName} {s.grade ? `• ${s.grade}` : ''}
                           </p>
                         </div>
+
                       </div>
 
                       {/* Points Capsule & Share Button */}
@@ -765,22 +821,32 @@ export const HonorBoardPage: React.FC = () => {
               </h3>
             </div>
 
-            {/* Visual 3D Preview Celebration Card */}
+            {/* Visual Preview Celebration Card */}
             <div className="rounded-3xl p-6 bg-gradient-to-b from-white/10 via-amber-400/10 to-white/5 border border-amber-300/40 shadow-inner space-y-3 relative overflow-hidden">
               
-              <div className="w-20 h-20 mx-auto rounded-full p-1 bg-gradient-to-tr from-amber-400 to-yellow-300 shadow-[0_0_20px_rgba(251,191,36,0.6)]">
-                <img 
-                  src={isGirlStage ? "/assets/leaderboard/mascot_girl.jpg" : "/assets/leaderboard/mascot_boy.jpg"} 
-                  alt="Mascot" 
-                  className="w-full h-full object-cover rounded-full"
-                />
+              {/* Photo inside circle */}
+              <div className="w-24 h-24 mx-auto rounded-full p-1 bg-gradient-to-tr from-amber-400 to-yellow-300 shadow-[0_0_20px_rgba(251,191,36,0.6)] border-2 border-white overflow-hidden">
+                {sharingStudent.student.photoUrl ? (
+                  <img src={sharingStudent.student.photoUrl} alt="Photo" className="w-full h-full object-cover rounded-full" />
+                ) : (
+                  <img 
+                    src={isGirlStage ? "/assets/leaderboard/mascot_girl.jpg" : "/assets/leaderboard/mascot_boy.jpg"} 
+                    alt="Mascot" 
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                )}
               </div>
 
               <div className="space-y-1">
                 <span className="text-xs text-sky-300 font-black block drop-shadow">كنيسة السيدة العذراء مريم بمحرم بك ⛪</span>
-                <h4 className="font-tajawal text-2xl font-black text-amber-300 drop-shadow">
-                  {sharingStudent.student.fullName}
-                </h4>
+                
+                {/* White-to-Sky Gradient Box for Name in Share Card */}
+                <div className="bg-gradient-to-r from-white via-white/95 to-sky-100 px-5 py-2 rounded-2xl shadow-lg border border-white/90 inline-block my-1">
+                  <h4 className="font-tajawal text-2xl font-black text-[#00174a]">
+                    {sharingStudent.student.fullName}
+                  </h4>
+                </div>
+
                 <p className="text-xs text-slate-200 font-bold">
                   {sharingStudent.student.serviceName}
                 </p>
