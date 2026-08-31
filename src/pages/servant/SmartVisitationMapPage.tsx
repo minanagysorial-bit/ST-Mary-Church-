@@ -120,12 +120,9 @@ export const SmartVisitationMapPage: React.FC = () => {
 
       let filtered = allFamilies;
       if (profile && profile.role === 'servant') {
-        const myAssigned = allFamilies.filter(f => 
+        filtered = allFamilies.filter(f => 
           myFamilyIds.includes(f.id) || f.assigned_servant_id === profile.id
         );
-        if (myAssigned.length > 0) {
-          filtered = myAssigned;
-        }
       }
 
       // Fetch family members for each family
@@ -557,6 +554,14 @@ export const SmartVisitationMapPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Unassigned Servant Notice */}
+        {profile?.role === 'servant' && families.length === 0 && !loading && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-amber-800 text-xs font-bold shadow-xs">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+            <span>🔒 تنبيه الخصوصية: لم يتم إسناد أسرة أو فصل لحسابك بعد. يرجى التواصل مع أمين الخدمة لإسناد فصلك ومخدوميك لتظهر عناوينهم ومواقعهم على الخريطة.</span>
+          </div>
+        )}
 
         {/* Main Grid: Map (8 cols) + Families Sidebar (4 cols) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
