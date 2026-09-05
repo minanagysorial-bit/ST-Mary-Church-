@@ -500,6 +500,21 @@ export const LiturgiesSchedulePage: React.FC = () => {
     let hasSermon = false;
     let sermonSpeaker = '';
     let sermonTopic = '';
+    let weekScope = 'all';
+    let specificDate = '';
+
+    // Week scope parsing
+    if (notes.includes('الأسبوع: الأول') || notes.includes('الأسبوع الأول')) weekScope = 'week_1';
+    else if (notes.includes('الأسبوع: الثاني') || notes.includes('الأسبوع الثاني')) weekScope = 'week_2';
+    else if (notes.includes('الأسبوع: الثالث') || notes.includes('الأسبوع الثالث')) weekScope = 'week_3';
+    else if (notes.includes('الأسبوع: الرابع') || notes.includes('الأسبوع الرابع')) weekScope = 'week_4';
+    else if (notes.includes('الأسبوع: الخامس') || notes.includes('الأسبوع الخامس')) weekScope = 'week_5';
+    
+    const dateMatch = notes.match(/تاريخ[:\s]+(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch) {
+      weekScope = 'specific_date';
+      specificDate = dateMatch[1];
+    }
 
     const sermonMatch = notes.match(/(?:العظة|ملقي العظة|واعظ القداس|واعظ العشية)[:\s]+([^|()]+)(?:\(([^)]+)\))?/);
     if (sermonMatch) {
@@ -533,6 +548,8 @@ export const LiturgiesSchedulePage: React.FC = () => {
       hasSermon,
       sermonSpeaker,
       sermonTopic,
+      weekScope,
+      specificDate,
     };
   };
 
@@ -741,7 +758,13 @@ export const LiturgiesSchedulePage: React.FC = () => {
             ) : (
               <div className="space-y-4 animate-fadeIn">
                 {currentWeek?.days.map(dayItem => {
-                  const dayLiturgies = groupedLiturgies[dayItem.matchedDayName] || [];
+                  const dayLiturgies = (groupedLiturgies[dayItem.matchedDayName] || []).filter(l => {
+                    const parsed = parseLiturgyNotes(l.notes);
+                    if (parsed.weekScope === 'all') return true;
+                    if (parsed.weekScope === `week_${currentWeek?.weekIndex}`) return true;
+                    if (parsed.specificDate && parsed.specificDate === dayItem.dateObj.toISOString().split('T')[0]) return true;
+                    return false;
+                  });
 
                   return (
                     <div
