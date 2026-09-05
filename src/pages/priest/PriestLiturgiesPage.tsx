@@ -306,6 +306,28 @@ export const PriestLiturgiesPage: React.FC = () => {
     };
   }, []);
 
+  // Compute actual dates for the 7 days of the current week
+  const weekDayDates = useMemo(() => {
+    const datesMap: Record<string, { dateStr: string; isToday: boolean }> = {};
+    const now = new Date();
+    const currentDayOfWeek = now.getDay();
+    const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+    dayNames.forEach((dName, idx) => {
+      const diff = idx - currentDayOfWeek;
+      const targetDate = new Date(now);
+      targetDate.setDate(now.getDate() + diff);
+
+      const formatted = targetDate.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
+      datesMap[dName] = {
+        dateStr: formatted,
+        isToday: idx === currentDayOfWeek
+      };
+    });
+
+    return datesMap;
+  }, []);
+
   const fetchLiturgies = async () => {
     setLoading(true);
     setError(null);
@@ -698,15 +720,73 @@ export const PriestLiturgiesPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 📅 FULL MONTH WEEKS SELECTOR BAR */}
+          {/* ☀️ 1. PROMINENT TODAY'S DATE & 7-DAY WEEK STRIP */}
+          <div className="bg-gradient-to-r from-amber-500/25 via-[#fed65b]/30 to-amber-500/25 border-2 border-[#fed65b] rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#fed65b]/40 pb-3">
+              <div className="flex items-center gap-3 text-white">
+                <div className="w-12 h-12 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-black shadow-md shrink-0">
+                  <Sun className="w-7 h-7" />
+                </div>
+                <div>
+                  <span className="text-xs text-[#fed65b] font-black block">تاريخ اليوم الحالي:</span>
+                  <h2 className="text-lg sm:text-2xl font-tajawal font-black text-white leading-tight">
+                    {todayFullDate.gregorian}
+                  </h2>
+                </div>
+              </div>
+
+              <div className="bg-[#00174a] border border-[#fed65b]/60 px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-black text-[#fed65b] shadow-inner self-start sm:self-auto">
+                <Calendar className="w-4 h-4 text-[#fed65b]" />
+                <span>التقويم القبطي: {todayFullDate.coptic}</span>
+              </div>
+            </div>
+
+            {/* 7-Day Live Strip */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] text-slate-200 font-extrabold block">
+                📍 تواريخ أيام هذا الأسبوع الحالي لتسهيل ضبط ومراجعة القداسات:
+              </span>
+              <div className="grid grid-cols-7 gap-1.5 sm:gap-2 text-center text-xs font-bold">
+                {ALL_DAYS_OF_WEEK.map(dName => {
+                  const dayInfo = weekDayDates[dName] || { dateStr: '', isToday: false };
+                  const isDynamic = ['الجمعة', 'السبت', 'الأحد'].includes(dName);
+
+                  return (
+                    <div
+                      key={dName}
+                      className={`p-2 sm:p-2.5 rounded-xl border transition-all ${
+                        dayInfo.isToday
+                          ? 'bg-[#fed65b] text-[#00174a] border-white shadow-lg ring-2 ring-white font-black scale-105'
+                          : isDynamic
+                          ? 'bg-white/20 text-white border-white/30 hover:bg-white/30'
+                          : 'bg-white/5 text-slate-300 border-white/10'
+                      }`}
+                    >
+                      <span className="block text-[11px] sm:text-xs font-extrabold">{dName}</span>
+                      <span className={`block text-[10px] sm:text-xs mt-0.5 ${dayInfo.isToday ? 'text-[#00174a] font-black' : 'text-[#fed65b]'}`}>
+                        {dayInfo.dateStr}
+                      </span>
+                      {dayInfo.isToday && (
+                        <span className="inline-block mt-1 text-[9px] bg-[#00174a] text-[#fed65b] px-1.5 py-0.2 rounded-md font-black">
+                          اليوم 📍
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* 📅 2. FULL MONTH WEEKS SELECTOR BAR */}
           <div className="bg-white/10 border border-white/15 rounded-2xl p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5 text-xs font-bold">
               <div className="flex items-center gap-2 text-[#fed65b]">
                 <CalendarRange className="w-4 h-4" />
-                <span>تخطيط أسابيع الشهر ({monthWeeks.length} أسابيع):</span>
+                <span>تخطيط أسابيع شهر {monthName} ({monthWeeks.length} أسابيع):</span>
               </div>
               <span className="text-[11px] text-slate-300">
-                اليوم: {todayFullDate.gregorian} ({todayFullDate.coptic})
+                اختر أسبوعاً معيناً أو اعرض الشهر بالكامل
               </span>
             </div>
 
@@ -716,7 +796,7 @@ export const PriestLiturgiesPage: React.FC = () => {
                 onClick={() => setSelectedWeekFilter('all')}
                 className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
                   selectedWeekFilter === 'all'
-                    ? 'bg-[#fed65b] text-[#00174a] border-[#fed65b] shadow-md font-extrabold scale-[1.02]'
+                    ? 'bg-[#fed65b] text-[#00174a] border-[#fed65b] shadow-md font-black scale-[1.02]'
                     : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
                 }`}
               >
@@ -730,9 +810,9 @@ export const PriestLiturgiesPage: React.FC = () => {
                   onClick={() => setSelectedWeekFilter(idx)}
                   className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
                     selectedWeekFilter === idx
-                      ? 'bg-[#fed65b] text-[#00174a] border-[#fed65b] shadow-md font-extrabold scale-[1.02]'
+                      ? 'bg-[#fed65b] text-[#00174a] border-[#fed65b] shadow-md font-black scale-[1.02]'
                       : w.containsToday
-                      ? 'bg-amber-400/20 text-[#fed65b] border-[#fed65b]/50 hover:bg-amber-400/30'
+                      ? 'bg-amber-400/25 text-[#fed65b] border-[#fed65b]/60 hover:bg-amber-400/35'
                       : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
                   }`}
                 >
