@@ -27,7 +27,8 @@ import {
   LayoutList,
   Grid,
   Sparkle,
-  BookmarkCheck
+  BookmarkCheck,
+  Mic
 } from 'lucide-react';
 import { getCopticDate } from '../lib/copticReadings';
 import { type DayOfWeekArabic } from '../lib/attendanceStatusHelper';
@@ -485,26 +486,54 @@ export const LiturgiesSchedulePage: React.FC = () => {
     return `${displayHours}:${minutesStr} ${suffix}`;
   };
 
-  // Helper to extract multiple priest names from notes
-  const extractPriestNames = (liturgy: Liturgy): string[] => {
-    if (!liturgy.notes) return ['آباء الكنيسة'];
-    const matched: string[] = [];
+  // Helper to extract priest names and optional sermon info from notes
+  const parseLiturgyNotes = (notes: string | null | undefined) => {
+    if (!notes) {
+      return {
+        priests: ['آباء الكنيسة'],
+        hasSermon: false,
+        sermonSpeaker: '',
+        sermonTopic: '',
+      };
+    }
 
-    for (const p of PRIEST_NAMES_LIST) {
-      if (liturgy.notes.includes(p) && !matched.includes(p)) {
-        matched.push(p);
+    let hasSermon = false;
+    let sermonSpeaker = '';
+    let sermonTopic = '';
+
+    const sermonMatch = notes.match(/(?:العظة|ملقي العظة|واعظ القداس|واعظ العشية)[:\s]+([^|()]+)(?:\(([^)]+)\))?/);
+    if (sermonMatch) {
+      hasSermon = true;
+      sermonSpeaker = sermonMatch[1].trim();
+      if (sermonMatch[2]) {
+        sermonTopic = sermonMatch[2].trim();
       }
     }
 
-    if (matched.length > 0) return matched;
-
-    const match = liturgy.notes.match(/(?:الكهنة|الكاهن(?:\s*المصلي)?[:\s]+)?([^|]+)/);
-    if (match) {
-      const names = match[1].split(/[،,•]/).map(s => s.trim()).filter(Boolean);
-      if (names.length > 0) return names;
+    const priests: string[] = [];
+    const priestSection = notes.split(/\||\b(?:العظة|ملقي العظة)/)[0];
+    for (const p of PRIEST_NAMES_LIST) {
+      if (priestSection.includes(p) && !priests.includes(p)) {
+        priests.push(p);
+      }
+    }
+    if (priests.length === 0) {
+      const match = notes.match(/(?:الكهنة|الكاهن(?:\s*المصلي)?[:\s]+)?([^|]+)/);
+      if (match) {
+        const names = match[1].split(/[،,•]/).map(s => s.trim()).filter(Boolean);
+        if (names.length > 0) priests.push(...names);
+      }
+    }
+    if (priests.length === 0) {
+      priests.push('آباء الكنيسة');
     }
 
-    return [liturgy.notes.trim() || 'آباء الكنيسة'];
+    return {
+      priests,
+      hasSermon,
+      sermonSpeaker,
+      sermonTopic,
+    };
   };
 
   // Grouped by Day of Week
@@ -762,7 +791,7 @@ export const LiturgiesSchedulePage: React.FC = () => {
                           ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                               {dayLiturgies.map(l => {
-                                const priestNames = extractPriestNames(l);
+                                const parsed = parseLiturgyNotes(l.notes);
 
                                 return (
                                   <div
@@ -786,11 +815,11 @@ export const LiturgiesSchedulePage: React.FC = () => {
                                       </div>
                                       <div className="flex flex-col gap-1">
                                         <span className="text-[10px] text-slate-400 font-bold">
-                                          {priestNames.length > 1 ? 'الكهنة المصلون:' : 'الكاهن المصلي:'}
+                                          {parsed.priests.length > 1 ? 'الكهنة المصلون:' : 'الكاهن المصلي:'}
                                         </span>
                                         <div className="flex flex-wrap gap-1.5">
-                                          {priestNames.map((p, idx) => (
-                                           <span
+                                          {parsed.priests.map((p, idx) => (
+                                            <span
                                               key={idx}
                                               className="bg-amber-50 text-[#00174a] border border-amber-200 px-2 py-0.5 rounded-md font-tajawal text-xs font-extrabold"
                                             >
@@ -800,6 +829,21 @@ export const LiturgiesSchedulePage: React.FC = () => {
                                         </div>
                                       </div>
                                     </div>
+
+                                    {/* 🎤 Optional Sermon Preacher Chip */}
+                                    {parsed.hasSermon && (
+                                      <div className="bg-purple-50 border border-purple-200/80 p-2.5 rounded-xl flex items-start gap-2 shadow-2xs text-xs">
+                                        <div className="w-6 h-6 rounded-full bg-purple-700 text-[#fed65b] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                                          <Mic className="w-3.5 h-3.5" />
+                                        </div>
+                                        <div className="flex flex-col gap-0.5">
+                                          <span className="text-[10px] text-purple-600 font-bold">ملقي العظة والكلمة الروحية:</span>
+                                          <span className="font-tajawal text-xs font-extrabold text-purple-950">
+                                            {parsed.sermonSpeaker} {parsed.sermonTopic ? `(${parsed.sermonTopic})` : ''}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
 
                                     {/* Location */}
                                     <div className="text-[11px] text-slate-500 font-semibold flex items-center gap-1.5 pt-0.5">
