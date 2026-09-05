@@ -213,7 +213,7 @@ export const PriestLiturgiesPage: React.FC = () => {
       targetDate.setDate(now.getDate() + diff);
 
       datesMap[dName] = {
-        dateStr: targetDate.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }),
+        dateStr: targetDate.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' }),
         isToday: targetIdx === currentDayOfWeek
       };
     });
@@ -639,14 +639,23 @@ export const PriestLiturgiesPage: React.FC = () => {
                 >
                   <div className="space-y-3">
                     
-                    {/* Top Row: Day & Type Badges */}
-                    <div className="flex items-center justify-between">
-                      <span className="bg-[#002366] text-[#fed65b] px-3 py-1 rounded-xl font-black text-xs flex items-center gap-1.5 shadow-2xs">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{l.liturgy_day} {dayDate && `(${dayDate})`}</span>
-                      </span>
+                    {/* Top Row: Day & Prominent Date + Type Badge */}
+                    <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="bg-[#002366] text-[#fed65b] px-3 py-1 rounded-xl font-black text-xs flex items-center gap-1.5 shadow-2xs">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{l.liturgy_day}</span>
+                        </span>
 
-                      <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold border ${
+                        {dayDate && (
+                          <span className="bg-amber-100/90 text-[#00174a] border border-amber-300 px-2.5 py-1 rounded-xl font-black text-xs flex items-center gap-1 shadow-2xs">
+                            <Sun className="w-3 h-3 text-[#d4af37]" />
+                            <span>{dayDate}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <span className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold border shrink-0 ${
                         isVesper
                           ? 'bg-purple-100 text-purple-900 border-purple-200'
                           : isFixed
