@@ -1140,6 +1140,33 @@ export const PriestLiturgiesPage: React.FC = () => {
               {/* Modal Form */}
               <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs font-semibold max-h-[80vh] overflow-y-auto">
                 
+                {/* ☀️ PROMINENT TODAY'S DATE BADGE INSIDE MODAL */}
+                <div className="bg-gradient-to-r from-amber-50 via-amber-100/70 to-amber-50 border-2 border-[#fed65b] rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#00174a] text-[#fed65b] flex items-center justify-center font-bold shrink-0 shadow-xs">
+                      <Sun className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-amber-900 font-extrabold block">تاريخ اليوم الحالي 📍:</span>
+                      <span className="text-xs sm:text-sm font-black text-[#00174a]">
+                        {todayFullDate.gregorian}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-bold block">
+                        ({todayFullDate.coptic})
+                      </span>
+                    </div>
+                  </div>
+
+                  {weekDayDates[day] && (
+                    <div className="bg-white border border-[#fed65b] px-3.5 py-1.5 rounded-xl text-center self-start sm:self-auto shadow-2xs">
+                      <span className="text-[10px] text-slate-500 font-bold block">تاريخ يوم ({day}):</span>
+                      <span className="text-xs font-black text-[#002366]">
+                        {weekDayDates[day].dateStr} {weekDayDates[day].isToday ? '• (اليوم)' : ''}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 {/* Service Type Switch */}
                 <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl">
                   <button
@@ -1224,14 +1251,18 @@ export const PriestLiturgiesPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-slate-700 font-bold block">يوم الأسبوع *</label>
+                    <label className="text-slate-700 font-bold block">
+                      يوم الأسبوع * {weekDayDates[day] && <span className="text-[#002366] font-extrabold mr-1">({weekDayDates[day].dateStr})</span>}
+                    </label>
                     <select
                       value={day}
                       onChange={(e) => setDay(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none font-bold text-xs focus:border-[#002366]"
                     >
                       {ALL_DAYS_OF_WEEK.map(d => (
-                        <option key={d} value={d}>{d}</option>
+                        <option key={d} value={d}>
+                          {d} {weekDayDates[d] ? `(${weekDayDates[d].dateStr})` : ''} {weekDayDates[d]?.isToday ? '• (اليوم 📍)' : ''}
+                        </option>
                       ))}
                     </select>
                   </div>
