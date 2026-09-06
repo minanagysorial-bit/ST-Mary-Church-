@@ -30,5 +30,36 @@
       "type": "image/jpeg",
       "purpose": "any"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "مواعيد القداسات",
+      "short_name": "القداسات",
+      "description": "جدول ومواعيد القداسات الإلهية والصلوات",
+      "url": "/liturgies-schedule",
+      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "مكتبة العظات",
+      "short_name": "العظات",
+      "description": "استمع لعظات وكلمات آباء الكنيسة",
+      "url": "/sermons",
+      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "السنكسار والقراءات",
+      "short_name": "القراءات",
+      "description": "القراءات اليومية وسير القديسين",
+      "url": "/readings",
+      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "طلب صلاة على المذبح",
+      "short_name": "طلب صلاة",
+      "description": "تقديم طلب صلاة على مذبح الكنيسة",
+      "url": "/?action=prayer",
+      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }
+
