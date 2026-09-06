@@ -56,6 +56,13 @@ export const convertDriveUrl = (url: string | null | undefined): string => {
   return clean;
 };
 
+export const cleanAnnouncementContent = (content: string | null | undefined): string => {
+  if (!content) return '';
+  return content.replace(/\[IMG:[^\]]+\]/g, '').trim();
+};
+
+
+
 export const parseImageTransform = (url: string | null | undefined) => {
   const defaultStyles: React.CSSProperties = {
     objectPosition: '50% 50%',
@@ -1208,7 +1215,17 @@ export const api = {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Announcement[];
+      return (data || []).map((ann: any) => {
+        let finalImg = ann.image_url || null;
+        if (!finalImg && ann.content) {
+          const m = ann.content.match(/\[IMG:(https?:\/\/[^\]]+)\]/);
+          if (m) finalImg = m[1];
+        }
+        return {
+          ...ann,
+          image_url: finalImg ? convertDriveUrl(finalImg) : null
+        };
+      }) as Announcement[];
     }, 60_000);
   },
 
@@ -1226,36 +1243,81 @@ export const api = {
       today.setHours(0, 0, 0, 0); // normalize time
       const dayName = today.toLocaleDateString('ar-EG', { weekday: 'long' });
 
-      return (data || []).filter(ann => {
-        const startDate = new Date(ann.start_date);
-        startDate.setHours(0, 0, 0, 0);
+      return (data || [])
+        .map((ann: any) => {
+          let finalImg = ann.image_url || null;
+          if (!finalImg && ann.content) {
+            const m = ann.content.match(/\[IMG:(https?:\/\/[^\]]+)\]/);
+            if (m) finalImg = m[1];
+          }
+          return {
+            ...ann,
+            image_url: finalImg ? convertDriveUrl(finalImg) : null
+          };
+        })
+        .filter(ann => {
+          const startDate = new Date(ann.start_date);
+          startDate.setHours(0, 0, 0, 0);
 
-        // if start date is in the future, it's not active yet
-        if (startDate > today) return false;
+          // if start date is in the future, it's not active yet
+          if (startDate > today) return false;
 
-        if (ann.duration_type === 'permanent') return true;
-        
-        if (ann.duration_type === 'days_limit' && ann.duration_days) {
-          const endDate = new Date(startDate);
-          endDate.setDate(endDate.getDate() + ann.duration_days);
-          return today <= endDate;
-        }
-        
-        if (ann.duration_type === 'days_specific' && ann.specific_days) {
-          // e.g. "الجمعة", "الأحد"
-          return ann.specific_days.includes(dayName);
-        }
+          if (ann.duration_type === 'permanent') return true;
+          
+          if (ann.duration_type === 'days_limit' && ann.duration_days) {
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + ann.duration_days);
+            return today <= endDate;
+          }
+          
+          if (ann.duration_type === 'days_specific' && ann.specific_days) {
+            // e.g. "الجمعة", "الأحد"
+            return ann.specific_days.includes(dayName);
+          }
 
-        return false;
-      }) as Announcement[];
+          return false;
+        }) as Announcement[];
     }, 60_000);
   },
 
   createAnnouncement: async (ann: AnnouncementInsert): Promise<Announcement> => {
     fastCache.invalidate('announcements');
+    let contentToSave = ann.content;
+    if (ann.image_url && !contentToSave.includes(`[IMG:${ann.image_url}]`)) {
+      contentToSave = `${contentToSave}\n[IMG:${ann.image_url}]`;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('announcements')
+        .insert({
+          ...ann,
+          content: contentToSave
+        })
+        .select()
+        .single();
+      if (!error && data) return data as Announcement;
+    } catch (e) {
+      // If image_url column doesn't exist in schema, try without image_url field
+      const { image_url, ...rest } = ann;
+      const { data, error } = await supabase
+        .from('announcements')
+        .insert({
+          ...rest,
+          content: contentToSave
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Announcement;
+    }
+    const { image_url, ...rest } = ann;
     const { data, error } = await supabase
       .from('announcements')
-      .insert(ann)
+      .insert({
+        ...rest,
+        content: contentToSave
+      })
       .select()
       .single();
     if (error) throw error;
@@ -1264,9 +1326,47 @@ export const api = {
 
   updateAnnouncement: async (id: string, updates: Partial<Announcement>): Promise<Announcement> => {
     fastCache.invalidate('announcements');
+    let contentToSave = updates.content;
+    if (contentToSave !== undefined) {
+      // Clean existing [IMG:...] tag first
+      contentToSave = contentToSave.replace(/\[IMG:[^\]]+\]/g, '').trim();
+      if (updates.image_url) {
+        contentToSave = `${contentToSave}\n[IMG:${updates.image_url}]`;
+      }
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('announcements')
+        .update({
+          ...updates,
+          ...(contentToSave !== undefined ? { content: contentToSave } : {})
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (!error && data) return data as Announcement;
+    } catch (e) {
+      const { image_url, ...rest } = updates;
+      const { data, error } = await supabase
+        .from('announcements')
+        .update({
+          ...rest,
+          ...(contentToSave !== undefined ? { content: contentToSave } : {})
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Announcement;
+    }
+    const { image_url, ...rest } = updates;
     const { data, error } = await supabase
       .from('announcements')
-      .update(updates)
+      .update({
+        ...rest,
+        ...(contentToSave !== undefined ? { content: contentToSave } : {})
+      })
       .eq('id', id)
       .select()
       .single();
@@ -1290,6 +1390,10 @@ export const api = {
       .update({ is_active: isActive })
       .eq('id', id);
     if (error) throw error;
+  },
+
+  cleanAnnouncementContent: (content: string | null | undefined): string => {
+    return cleanAnnouncementContent(content);
   },
 
   // ── Site Settings CRUD ──

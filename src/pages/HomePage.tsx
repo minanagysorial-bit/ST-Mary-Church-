@@ -22,7 +22,9 @@ import {
   Download,
   CheckCircle2,
   Radio,
-  WifiOff
+  WifiOff,
+  X,
+  Eye
 } from 'lucide-react';
 import { api, Verse, Announcement } from '../lib/api';
 import { DailyReadingsCard } from '../components/common/DailyReadingsCard';
@@ -39,7 +41,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
   const [loadingVerse, setLoadingVerse] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeAnnouncements, setActiveAnnouncements] = useState<Announcement[]>([]);
+  const [selectedAnnImage, setSelectedAnnImage] = useState<string | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
   const [notificationStatus, setNotificationStatus] = useState<NotificationPermission>(getNotificationPermission());
   const [installSuccess, setInstallSuccess] = useState(false);
   const [heroContent, setHeroContent] = useState({
@@ -326,15 +330,43 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
               </h2>
 
               <ul className="divide-y divide-slate-100 text-xs">
-                {activeAnnouncements.map((ann) => (
-                  <li key={ann.id} className="py-3 space-y-1">
-                    <span className="bg-[#002366]/10 text-[#002366] text-[10px] font-bold px-2 py-0.5 rounded">إعلان</span>
-                    <p className="font-bold text-slate-800">{ann.title}</p>
-                    <p className="text-slate-500">{ann.content}</p>
-                  </li>
-                ))}
+                {activeAnnouncements.map((ann) => {
+                  const cleanText = api.cleanAnnouncementContent(ann.content);
+                  return (
+                    <li key={ann.id} className="py-3.5 space-y-2">
+                      {/* Announcement Image Banner (if available) */}
+                      {ann.image_url && (
+                        <div 
+                          onClick={() => setSelectedAnnImage(ann.image_url!)}
+                          className="relative group rounded-xl overflow-hidden cursor-pointer border border-slate-200 shadow-sm bg-slate-100"
+                        >
+                          <img 
+                            src={ann.image_url} 
+                            alt={ann.title} 
+                            className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1.5 font-bold text-[11px] backdrop-blur-[1px]">
+                            <Eye className="w-4 h-4 text-[#fed65b]" />
+                            <span>تكبير الصورة</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#002366]/10 text-[#002366] text-[10px] font-bold px-2 py-0.5 rounded">إعلان</span>
+                          <p className="font-bold text-slate-800 text-sm font-tajawal">{ann.title}</p>
+                        </div>
+                        <p className="text-slate-600 text-xs leading-relaxed line-clamp-3 whitespace-pre-line">{cleanText}</p>
+                      </div>
+                    </li>
+                  );
+                })}
                 {activeAnnouncements.length === 0 && (
-                  <li className="py-3 text-slate-500 italic">لا توجد إعلانات حالية.</li>
+                  <li className="py-6 text-slate-400 text-center font-bold">لا توجد إعلانات حالية.</li>
                 )}
               </ul>
             </div>
@@ -346,6 +378,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
               سجّل بياناتك في الكنيسة
             </Link>
           </div>
+
 
         </div>
       </section>
@@ -518,6 +551,30 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
       {/* 🕊️ Interactive Church Fathers' Quotes Slider (سلايدر أقوال الآباء القديسين) */}
       <FathersQuotesSlider />
 
+      {/* Announcement Image Lightbox Zoom Modal */}
+      {selectedAnnImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setSelectedAnnImage(null)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] bg-white rounded-3xl overflow-hidden shadow-2xl p-2" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setSelectedAnnImage(null)}
+              className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-black transition-colors z-10"
+              title="إغلاق"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img 
+              src={selectedAnnImage} 
+              alt="Announcement Poster Full" 
+              className="w-full max-h-[82vh] object-contain rounded-2xl"
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
+

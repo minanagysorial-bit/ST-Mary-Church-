@@ -296,6 +296,7 @@ export interface Announcement {
   id: string;
   title: string;
   content: string;
+  image_url?: string | null;
   duration_type: 'permanent' | 'days_limit' | 'days_specific';
   duration_days: number | null;
   specific_days: string[] | null;

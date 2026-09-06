@@ -4,10 +4,13 @@ import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { api, type Announcement, type Sermon, type Profile, type ContactMessage, type PrayerRequest } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
+import { uploadAnnouncementImage } from '../../lib/fileUpload';
 import {
   Megaphone, Plus, Search, CalendarDays, Power, 
-  Trash2, Edit2, X, Check, Clock, Play, Radio, MessageSquare, Heart, Settings, RefreshCw, MailOpen
+  Trash2, Edit2, X, Check, Clock, Play, Radio, MessageSquare, Heart, Settings, RefreshCw, MailOpen,
+  Image as ImageIcon, Upload, Link2, Loader2, Eye
 } from 'lucide-react';
+
 
 type TabType = 'sermons' | 'announcements' | 'stream' | 'contacts' | 'prayers' | 'footer';
 
@@ -51,12 +54,16 @@ export const ContentManagementPage: React.FC = () => {
   const [annId, setAnnId] = useState<string | null>(null);
   const [annTitle, setAnnTitle] = useState('');
   const [annContent, setAnnContent] = useState('');
+  const [annImage, setAnnImage] = useState('');
+  const [annImageMode, setAnnImageMode] = useState<'upload' | 'url'>('upload');
+  const [annUploadingImg, setAnnUploadingImg] = useState(false);
   const [annDurationType, setAnnDurationType] = useState<'permanent' | 'days_limit' | 'days_specific'>('days_limit');
   const [annDurationDays, setAnnDurationDays] = useState<number>(7);
   const [annSpecificDays, setAnnSpecificDays] = useState<string[]>(['الجمعة', 'الأحد']);
   const [annStartDate, setAnnStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [annActive, setAnnActive] = useState(true);
   const WEEKDAYS = ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+
 
   // --- 3. Live Stream States ---
   const [streamMode, setStreamMode] = useState('manual');
@@ -268,7 +275,8 @@ export const ContentManagementPage: React.FC = () => {
     if (ann) {
       setAnnId(ann.id);
       setAnnTitle(ann.title);
-      setAnnContent(ann.content);
+      setAnnContent(api.cleanAnnouncementContent(ann.content));
+      setAnnImage(ann.image_url || '');
       setAnnDurationType(ann.duration_type);
       setAnnDurationDays(ann.duration_days || 7);
       setAnnSpecificDays(ann.specific_days || []);
@@ -278,6 +286,7 @@ export const ContentManagementPage: React.FC = () => {
       setAnnId(null);
       setAnnTitle('');
       setAnnContent('');
+      setAnnImage('');
       setAnnDurationType('days_limit');
       setAnnDurationDays(7);
       setAnnSpecificDays(['الجمعة', 'الأحد']);
@@ -285,6 +294,28 @@ export const ContentManagementPage: React.FC = () => {
       setAnnActive(true);
     }
     setShowAnnModal(true);
+  };
+
+  const handleAnnFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('يرجى اختيار ملف صورة صالح.');
+      return;
+    }
+
+    setAnnUploadingImg(true);
+    try {
+      const url = await uploadAnnouncementImage(file);
+      setAnnImage(url);
+      toast.success('تمت معالجة وتجهيز الصورة بنجاح!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error('فشل رفع الصورة: ' + err.message);
+    } finally {
+      setAnnUploadingImg(false);
+    }
   };
 
   const handleSaveAnnouncement = async (e: React.FormEvent) => {
@@ -299,6 +330,7 @@ export const ContentManagementPage: React.FC = () => {
         await api.updateAnnouncement(annId, {
           title: annTitle,
           content: annContent,
+          image_url: annImage.trim() || null,
           duration_type: annDurationType,
           duration_days: annDurationType === 'days_limit' ? annDurationDays : null,
           specific_days: annDurationType === 'days_specific' ? annSpecificDays : null,
@@ -310,6 +342,7 @@ export const ContentManagementPage: React.FC = () => {
         await api.createAnnouncement({
           title: annTitle,
           content: annContent,
+          image_url: annImage.trim() || null,
           duration_type: annDurationType,
           duration_days: annDurationType === 'days_limit' ? annDurationDays : null,
           specific_days: annDurationType === 'days_specific' ? annSpecificDays : null,
@@ -328,6 +361,7 @@ export const ContentManagementPage: React.FC = () => {
       setActionLoading(false);
     }
   };
+
 
   const handleDeleteAnn = async (id: string) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا الإعلان؟')) return;
@@ -658,49 +692,67 @@ export const ContentManagementPage: React.FC = () => {
                           <td colSpan={5} className="p-8 text-center text-xs text-slate-400">لا توجد إعلانات مطابقة لبحثك.</td>
                         </tr>
                       ) : (
-                        filteredAnnouncements.map(ann => (
-                          <tr key={ann.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="p-4 font-bold text-[#002366]">
-                              <div>{ann.title}</div>
-                              <div className="text-[10px] text-slate-400 mt-1 font-semibold truncate max-w-xs">{ann.content}</div>
-                            </td>
-                            <td className="p-4 text-slate-500 text-xs font-mono">{ann.start_date}</td>
-                            <td className="p-4 text-xs font-semibold">
-                              {ann.duration_type === 'permanent' && 'دائم النشر'}
-                              {ann.duration_type === 'days_limit' && `${ann.duration_days} أيام`}
-                              {ann.duration_type === 'days_specific' && `أيام محددة: (${ann.specific_days?.join('، ')})`}
-                            </td>
-                            <td className="p-4">
-                              <button
-                                onClick={() => handleToggleAnnActive(ann)}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] border ${
-                                  ann.is_active
-                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                                    : 'bg-rose-50 border-rose-200 text-rose-700'
-                                }`}
-                              >
-                                <span className={`w-1.5 h-1.5 rounded-full ${ann.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-                                <span>{ann.is_active ? 'نشط حالياً' : 'مغلق مؤقتاً'}</span>
-                              </button>
-                            </td>
-                            <td className="p-4 flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => handleOpenAnnModal(ann)}
-                                className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                                title="تعديل الإعلان"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAnn(ann.id)}
-                                className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors"
-                                title="حذف الإعلان"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
+                        filteredAnnouncements.map(ann => {
+                          const cleanText = api.cleanAnnouncementContent(ann.content);
+                          return (
+                            <tr key={ann.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="p-4 font-bold text-[#002366]">
+                                <div className="flex items-center gap-3">
+                                  {ann.image_url ? (
+                                    <img 
+                                      src={ann.image_url} 
+                                      alt="" 
+                                      className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0 bg-white" 
+                                    />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                                      <Megaphone className="w-5 h-5 text-slate-400" />
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <div className="truncate font-tajawal text-sm">{ann.title}</div>
+                                    <div className="text-[10px] text-slate-400 mt-0.5 font-medium truncate max-w-xs">{cleanText}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="p-4 text-slate-500 text-xs font-mono">{ann.start_date}</td>
+                              <td className="p-4 text-xs font-semibold">
+                                {ann.duration_type === 'permanent' && 'دائم النشر'}
+                                {ann.duration_type === 'days_limit' && `${ann.duration_days} أيام`}
+                                {ann.duration_type === 'days_specific' && `أيام محددة: (${ann.specific_days?.join('، ')})`}
+                              </td>
+                              <td className="p-4">
+                                <button
+                                  onClick={() => handleToggleAnnActive(ann)}
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] border ${
+                                    ann.is_active
+                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                      : 'bg-rose-50 border-rose-200 text-rose-700'
+                                  }`}
+                                >
+                                  <span className={`w-1.5 h-1.5 rounded-full ${ann.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                                  <span>{ann.is_active ? 'نشط حالياً' : 'مغلق مؤقتاً'}</span>
+                                </button>
+                              </td>
+                              <td className="p-4 flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => handleOpenAnnModal(ann)}
+                                  className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                                  title="تعديل الإعلان"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteAnn(ann.id)}
+                                  className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors"
+                                  title="حذف الإعلان"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
@@ -1173,6 +1225,94 @@ export const ContentManagementPage: React.FC = () => {
                   className="w-full bg-slate-50 border border-slate-200 focus:border-[#002366] rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none transition-colors font-bold"
                 />
               </div>
+
+              {/* Image Input Section */}
+              <div className="space-y-2.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-right">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-[#002366]" />
+                    <span>صورة الإعلان (بوستر / صورة ترويجية)</span>
+                  </label>
+                  <div className="flex bg-slate-200/80 p-0.5 rounded-lg text-[10px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setAnnImageMode('upload')}
+                      className={`px-2.5 py-0.5 rounded-md transition-all ${
+                        annImageMode === 'upload' 
+                          ? 'bg-white text-[#00174a] shadow-sm' 
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      رفع من الجهاز
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnnImageMode('url')}
+                      className={`px-2.5 py-0.5 rounded-md transition-all ${
+                        annImageMode === 'url' 
+                          ? 'bg-white text-[#00174a] shadow-sm' 
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      رابط صورة / Drive
+                    </button>
+                  </div>
+                </div>
+
+                {annImageMode === 'upload' ? (
+                  <div>
+                    <label className="border-2 border-dashed border-slate-300 hover:border-[#002366] rounded-xl p-3 flex flex-col items-center justify-center gap-1 cursor-pointer bg-white hover:bg-slate-50 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAnnFileChange}
+                        className="hidden"
+                      />
+                      {annUploadingImg ? (
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#002366]">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>جاري معالجة الصورة...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="w-5 h-5 text-slate-400" />
+                          <span className="text-[11px] font-bold text-slate-700">اضغط لاختيار صورة من جهازك</span>
+                          <span className="text-[9px] text-slate-400">JPG, PNG, WebP</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Link2 className="w-3.5 h-3.5 absolute right-3 top-3 text-slate-400" />
+                    <input
+                      type="url"
+                      placeholder="https://... أو رابط من Google Drive"
+                      value={annImage}
+                      onChange={e => setAnnImage(e.target.value)}
+                      className="w-full bg-white border border-slate-200 focus:border-[#002366] rounded-xl pr-9 pl-3 py-2 text-xs outline-none font-mono"
+                    />
+                  </div>
+                )}
+
+                {annImage && (
+                  <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-xl border border-slate-200">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <img src={annImage} alt="" className="w-12 h-12 object-cover rounded-lg border border-slate-200 shrink-0" />
+                      <span className="text-[10px] text-emerald-700 font-bold truncate">تم إرفاق الصورة</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAnnImage('')}
+                      className="text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg text-xs font-bold shrink-0 transition-colors"
+                      title="إزالة الصورة"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-700">تفاصيل ومحتوى الإعلان</label>

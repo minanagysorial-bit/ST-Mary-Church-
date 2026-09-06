@@ -114,3 +114,34 @@ export async function uploadMembershipDocument(
   onProgress?.('تم إكمال تجهيز المستند!', 100);
   return base64;
 }
+
+/**
+ * Upload an Announcement Image (with compression & base64/storage fallback)
+ */
+export async function uploadAnnouncementImage(file: File): Promise<string> {
+  const compressed = await compressImage(file, 1200, 0.75);
+  const ext = compressed.name.split('.').pop() || 'jpg';
+  const filePath = `announcements/ann_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+
+  try {
+    const { data, error } = await supabase.storage
+      .from('announcements')
+      .upload(filePath, compressed, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (!error && data) {
+      const { data: publicData } = supabase.storage
+        .from('announcements')
+        .getPublicUrl(filePath);
+      return publicData.publicUrl;
+    }
+  } catch (err) {
+    console.warn('Supabase storage upload failed, falling back to base64:', err);
+  }
+
+  // Fallback to compressed Base64
+  return await fileToBase64(compressed);
+}
+
