@@ -27,10 +27,13 @@ import {
   LayoutGrid,
   Star,
   BookmarkCheck,
-  Award
+  Award,
+  ExternalLink,
+  Download
 } from 'lucide-react';
 import { api, Liturgy } from '../../lib/api';
 import { getCopticDate } from '../../lib/copticReadings';
+import { createGoogleCalendarUrl, downloadIcsSchedule, UnifiedPriestDuty } from '../../lib/priestAgendaHelper';
 
 export const PRIEST_NAMES_LIST = [
   'ابونا مرقس ميلاد',
@@ -221,6 +224,9 @@ export const PriestLiturgiesPage: React.FC = () => {
 
   // View Mode: 'table' (الجدول المريح) vs 'cards' (الكروت)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+
+  // Priest Filter: 'all' or specific priest name
+  const [priestFilter, setPriestFilter] = useState<string>('all');
 
   // Month Switcher: 0 = current month, 1 = next month, etc.
   const [selectedMonthOffset, setSelectedMonthOffset] = useState<number>(0);
@@ -669,6 +675,14 @@ export const PriestLiturgiesPage: React.FC = () => {
     const targetKey = `week_${wIndex}`;
     return liturgies.filter(l => {
       const parsed = parseLiturgyNotes(l.notes);
+      
+      // Priest filter
+      if (priestFilter !== 'all') {
+        const matchesPriest = parsed.priests.some(p => p.includes(priestFilter) || priestFilter.includes(p));
+        const matchesSermon = parsed.hasSermon && (parsed.sermonSpeaker.includes(priestFilter) || priestFilter.includes(parsed.sermonSpeaker));
+        if (!matchesPriest && !matchesSermon) return false;
+      }
+
       return parsed.weekScope === 'all' || parsed.weekScope === targetKey;
     }).sort((a, b) => {
       const dayDiff = ALL_DAYS_ORDER.indexOf(a.liturgy_day) - ALL_DAYS_ORDER.indexOf(b.liturgy_day);
@@ -721,6 +735,21 @@ export const PriestLiturgiesPage: React.FC = () => {
           {/* Month Switcher & Actions */}
           <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
             
+            {/* Priest Filter Dropdown */}
+            <div className="bg-slate-100 p-1.5 rounded-2xl flex items-center gap-1.5 border border-slate-200 text-xs font-bold">
+              <User className="w-3.5 h-3.5 text-[#002366]" />
+              <select
+                value={priestFilter}
+                onChange={(e) => setPriestFilter(e.target.value)}
+                className="bg-transparent font-black text-[#002366] outline-none cursor-pointer"
+              >
+                <option value="all">👥 جميع الآباء الكهنة</option>
+                {PRIEST_NAMES_LIST.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+
             {/* View Mode Toggle (Table / Cards) */}
             <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1 border border-slate-200 text-xs font-bold">
               <button
@@ -981,7 +1010,7 @@ export const PriestLiturgiesPage: React.FC = () => {
                             <th className="p-3.5 font-bold border-l border-white/10 w-52">الكنيسة والمذبح</th>
                             <th className="p-3.5 font-bold border-l border-white/10">الآباء الكهنة المصلون والعظة</th>
                             <th className="p-3.5 font-bold border-l border-white/10 w-36">الحالة / التثبيت</th>
-                            <th className="p-3.5 font-bold text-center w-28">الإجراءات</th>
+                            <th className="p-3.5 font-bold text-center w-36">الإجراءات والتقويم</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
@@ -995,6 +1024,22 @@ export const PriestLiturgiesPage: React.FC = () => {
                             const matchedDay = w.days.find(d => d.dayName.includes(l.liturgy_day));
                             const exactDateText = matchedDay?.fullDateText || '';
                             const isTodayRow = matchedDay?.isToday;
+
+                            const dummyDuty: UnifiedPriestDuty = {
+                              id: l.id,
+                              sourceType: isVesper ? 'vespers' : 'liturgy',
+                              dutyType: isVesper ? 'vespers' : 'liturgy',
+                              title: l.title,
+                              priestName: parsed.priests.join(' • '),
+                              dayName: l.liturgy_day,
+                              dateObj: matchedDay?.dateObj,
+                              startTime: l.start_time,
+                              endTime: l.end_time,
+                              location: `${l.church_name} - ${l.altar_name}`,
+                              description: `الكهنة: ${parsed.priests.join(' • ')}`,
+                              isToday: !!isTodayRow
+                            };
+                            const gCalUrl = createGoogleCalendarUrl(dummyDuty);
 
                             return (
                               <React.Fragment key={l.id}>
@@ -1117,23 +1162,36 @@ export const PriestLiturgiesPage: React.FC = () => {
                                     )}
                                   </td>
 
-                                  {/* 6. الإجراءات */}
+                                  {/* 6. الإجراءات والتقويم */}
                                   <td className="p-3.5 text-center align-top">
-                                    <div className="flex items-center justify-center gap-1.5">
-                                      <button
-                                        onClick={() => openEditModal(l)}
-                                        className="p-1.5 rounded-lg text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer"
-                                        title="تعديل القداس"
+                                    <div className="flex flex-col items-center justify-center gap-1.5">
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={() => openEditModal(l)}
+                                          className="p-1.5 rounded-lg text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer"
+                                          title="تعديل القداس"
+                                        >
+                                          <Edit className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDelete(l.id)}
+                                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                                          title="حذف القداس"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </div>
+
+                                      <a
+                                        href={gCalUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[10px] bg-blue-50 hover:bg-blue-100 text-[#002366] px-2 py-0.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
+                                        title="إضافة لتقويم جوجل"
                                       >
-                                        <Edit className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDelete(l.id)}
-                                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-                                        title="حذف القداس"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </button>
+                                        <ExternalLink className="w-2.5 h-2.5" />
+                                        <span>جوجل كالندر 📅</span>
+                                      </a>
                                     </div>
                                   </td>
 
@@ -1156,6 +1214,22 @@ export const PriestLiturgiesPage: React.FC = () => {
 
                         const matchedDay = w.days.find(d => d.dayName.includes(l.liturgy_day));
                         const exactDateStr = matchedDay?.dateStr;
+
+                        const dummyDuty: UnifiedPriestDuty = {
+                          id: l.id,
+                          sourceType: isVesper ? 'vespers' : 'liturgy',
+                          dutyType: isVesper ? 'vespers' : 'liturgy',
+                          title: l.title,
+                          priestName: parsed.priests.join(' • '),
+                          dayName: l.liturgy_day,
+                          dateObj: matchedDay?.dateObj,
+                          startTime: l.start_time,
+                          endTime: l.end_time,
+                          location: `${l.church_name} - ${l.altar_name}`,
+                          description: `الكهنة: ${parsed.priests.join(' • ')}`,
+                          isToday: !!matchedDay?.isToday
+                        };
+                        const gCalUrl = createGoogleCalendarUrl(dummyDuty);
 
                         return (
                           <div
@@ -1252,13 +1326,24 @@ export const PriestLiturgiesPage: React.FC = () => {
 
                             {/* Actions */}
                             <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                              <button
-                                onClick={() => openEditModal(l)}
-                                className="text-xs text-blue-700 hover:text-blue-900 font-bold flex items-center gap-1 cursor-pointer"
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                                <span>تعديل</span>
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => openEditModal(l)}
+                                  className="text-xs text-blue-700 hover:text-blue-900 font-bold flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                  <span>تعديل</span>
+                                </button>
+                                <a
+                                  href={gCalUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-blue-800 hover:underline font-bold flex items-center gap-0.5"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  <span>جوجل كالندر 📅</span>
+                                </a>
+                              </div>
 
                               <button
                                 onClick={() => handleDelete(l.id)}

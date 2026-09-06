@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { Link } from 'react-router-dom';
 import { api, type ContactMessage, type Family, type FamilyAttendanceRecord, type Profile } from '../../lib/api';
-import type { MembershipComment, Sermon, Liturgy, PrayerRequest } from '../../lib/database.types';
+import type { MembershipComment, Sermon, Liturgy, PrayerRequest, ChurchService } from '../../lib/database.types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { getCopticDate } from '../../lib/copticReadings';
+import { PriestWeeklyAgendaCard } from '../../components/priest/PriestWeeklyAgendaCard';
 import {
   Radio,
   RefreshCw,
@@ -40,6 +41,7 @@ export const PriestDashboardPage: React.FC = () => {
   const [liturgies, setLiturgies] = useState<Liturgy[]>([]);
   const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
   const [sermons, setSermons] = useState<Sermon[]>([]);
+  const [services, setServices] = useState<ChurchService[]>([]);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [families, setFamilies] = useState<Family[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<FamilyAttendanceRecord[]>([]);
@@ -66,11 +68,12 @@ export const PriestDashboardPage: React.FC = () => {
 
   const fetchPriestDashboardData = async () => {
     try {
-      const [l, c, p, s, msg, f, att, profs, settings] = await Promise.all([
+      const [l, c, p, s, srvs, msg, f, att, profs, settings] = await Promise.all([
         api.getLiturgies(),
         api.getMembershipComments().catch(() => []),
         api.getPrayerRequests().catch(() => []),
         api.getSermons().catch(() => []),
+        api.getChurchServices().catch(() => []),
         api.getContactMessages().catch(() => []),
         api.getFamilies().catch(() => []),
         api.getAllFamilyAttendanceRecords().catch(() => []),
@@ -81,6 +84,7 @@ export const PriestDashboardPage: React.FC = () => {
       setComments(c);
       setPrayers(p);
       setSermons(s);
+      setServices(srvs);
       setContactMessages(msg);
       setFamilies(f);
       setAttendanceRecords(att);
@@ -174,7 +178,7 @@ export const PriestDashboardPage: React.FC = () => {
               </h1>
 
               <p className="text-sm text-slate-200 font-semibold max-w-2xl">
-                لوحة تحكم كنسية مبسطة ومريحة لمتابعة قداسات الكنيسة، خدمة الرعاية، الافتقاد، وإعلانات الشعب بكل سهولة ويسر.
+                لوحة تحكم كنسية شاملة لمتابعة القداسات الإلهية، مواعيد الأكاليل والمعموديات، العظات، جدولك اليومي والأسبوعي، وإضافة المواعيد لتقويم جوجل بسهولة.
               </p>
             </div>
 
@@ -194,7 +198,15 @@ export const PriestDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ── 2. QUICK HIGH-TOUCH CARDS GRID (ELDERLY-FRIENDLY PORTAL) ── */}
+        {/* ── 2. PRIEST PERSONAL WEEKLY AGENDA & GOOGLE CALENDAR CARD ── */}
+        <PriestWeeklyAgendaCard
+          liturgies={liturgies}
+          sermons={sermons}
+          services={services}
+          currentPriestName={profile?.full_name || 'ابونا مرقس ميلاد'}
+        />
+
+        {/* ── 3. QUICK HIGH-TOUCH CARDS GRID (ELDERLY-FRIENDLY PORTAL) ── */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-tajawal text-lg sm:text-xl font-black text-[#002366] flex items-center gap-2">
@@ -401,7 +413,7 @@ export const PriestDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ── 3. LIVE STREAM CONTROLLER (تحكم البث المباشر الكنسي) ── */}
+        {/* ── 4. LIVE STREAM CONTROLLER (تحكم البث المباشر الكنسي) ── */}
         <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
@@ -482,7 +494,7 @@ export const PriestDashboardPage: React.FC = () => {
           </form>
         </div>
 
-        {/* ── 4. CITIZEN MESSAGES INBOX (رسائل تواصل معنا) ── */}
+        {/* ── 5. CITIZEN MESSAGES INBOX (رسائل تواصل معنا) ── */}
         <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
@@ -576,7 +588,7 @@ export const PriestDashboardPage: React.FC = () => {
           )}
         </div>
 
-        {/* ── 5. MESSAGE DETAIL MODAL ── */}
+        {/* ── 6. MESSAGE DETAIL MODAL ── */}
         {selectedMessage && (
           <div className="fixed inset-0 bg-[#00113a]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-scaleUp my-auto">
