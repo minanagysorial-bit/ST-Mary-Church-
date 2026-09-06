@@ -41,11 +41,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ role, requiredPermissi
     return <Navigate to="/login" replace />;
   }
 
-  // Strict Role Guarding: Verify if profile matches page requirement, allowing admins access to all pages
+  // Strict Role Guarding: Verify if profile matches page requirement, allowing admins and priests access to pastoral pages
   const hasRoleAccess = 
     profile.role === role || 
     profile.role === 'super_admin' || 
-    profile.role === 'admin';
+    profile.role === 'admin' ||
+    (profile.role === 'priest' && ['membership', 'servant', 'service_leader', 'priest', 'admin'].includes(role));
 
   // Custom permission verification (if specified)
   const hasPermissionAccess = !requiredPermission || hasPermission(requiredPermission);

@@ -229,9 +229,9 @@ const AppLayout: React.FC = () => {
             <Route path="/liturgies-schedule" element={<LiturgiesSchedulePage />} />
             <Route path="/pages/*" element={<DynamicPage />} />
 
-            {/* Membership Clerk Routes */}
-            <Route path="/membership" element={<ProtectedRoute allowedRoles={['membership', 'super_admin', 'admin']}><MembershipDashboardPage /></ProtectedRoute>} />
-            <Route path="/membership/members" element={<ProtectedRoute allowedRoles={['membership', 'super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_CHURCH_MEMBERS}><ChurchMembersPage /></ProtectedRoute>} />
+            {/* Membership Clerk & Pastoral Routes */}
+            <Route path="/membership" element={<ProtectedRoute allowedRoles={['membership', 'super_admin', 'admin', 'priest']}><MembershipDashboardPage /></ProtectedRoute>} />
+            <Route path="/membership/members" element={<ProtectedRoute allowedRoles={['membership', 'super_admin', 'admin', 'priest']} requiredPermission={PERMISSIONS.MANAGE_CHURCH_MEMBERS}><ChurchMembersPage /></ProtectedRoute>} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><AdminDashboardPage /></ProtectedRoute>} />
@@ -244,7 +244,7 @@ const AppLayout: React.FC = () => {
             <Route path="/admin/albums" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><AlbumsManagementPage /></ProtectedRoute>} />
             <Route path="/admin/priests" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><PriestsManagementPage /></ProtectedRoute>} />
             <Route path="/admin/site-builder" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} requiredPermission={PERMISSIONS.MANAGE_CONTENT}><SiteBuilderPage /></ProtectedRoute>} />
-            <Route path="/admin/communications" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><CommunicationsPage /></ProtectedRoute>} />
+            <Route path="/admin/communications" element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'priest']}><CommunicationsPage /></ProtectedRoute>} />
             <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['super_admin', 'admin']}><PushNotificationsPage /></ProtectedRoute>} />
             <Route path="/admin/curriculums" element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'service_leader']}><CurriculumManagementPage /></ProtectedRoute>} />
 
@@ -269,8 +269,8 @@ const AppLayout: React.FC = () => {
             {/* Servant & Service Leader Routes */}
             <Route path="/servant" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><ServantDashboardPage /></ProtectedRoute>} />
             <Route path="/servant/families" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><FamilyManagementPage /></ProtectedRoute>} />
-            <Route path="/servant/visitations" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><VisitationPage /></ProtectedRoute>} />
-            <Route path="/servant/attendance" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><AttendancePage /></ProtectedRoute>} />
+            <Route path="/servant/visitations" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><VisitationPage /></ProtectedRoute>} />
+            <Route path="/servant/attendance" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><AttendancePage /></ProtectedRoute>} />
             <Route path="/servant/tools" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><ServantToolsPage /></ProtectedRoute>} />
             <Route path="/servant/points" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><SundaySchoolPointsPage /></ProtectedRoute>} />
             <Route path="/servant/sunday-school" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><SundaySchoolPointsPage /></ProtectedRoute>} />

@@ -133,12 +133,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'manage_priest_sermons',
         'manage_announcements',
         'view_services',
+        'manage_services',
         'monitor_servants',
         'manage_membership_comments',
         'review_membership_requests',
         'manage_church_members',
         'view_member_visitations',
-        'view_prayers_and_contact'
+        'manage_visitation',
+        'view_prayers_and_contact',
+        'manage_attendance',
+        'manage_servant_tools',
       ].includes(key);
     }
     if (profile.role === 'service_leader') {
