@@ -22,7 +22,12 @@ import {
   ChevronRight,
   ChevronLeft,
   CalendarDays,
-  CalendarRange
+  CalendarRange,
+  Table as TableIcon,
+  LayoutGrid,
+  Star,
+  BookmarkCheck,
+  Award
 } from 'lucide-react';
 import { api, Liturgy } from '../../lib/api';
 import { getCopticDate } from '../../lib/copticReadings';
@@ -90,6 +95,8 @@ export interface ParsedLiturgyInfo {
   sermonTopic?: string;
   weekScope: 'all' | 'week_1' | 'week_2' | 'week_3' | 'week_4' | 'week_5' | 'specific_date' | string;
   specificDate?: string;
+  isSpecialOccasion: boolean;
+  occasionTitle?: string;
   extraNotes: string;
 }
 
@@ -101,6 +108,8 @@ export const parseLiturgyNotes = (notes: string | null | undefined): ParsedLitur
       sermonSpeaker: '',
       sermonTopic: '',
       weekScope: 'all',
+      isSpecialOccasion: false,
+      occasionTitle: '',
       extraNotes: '',
     };
   }
@@ -110,6 +119,8 @@ export const parseLiturgyNotes = (notes: string | null | undefined): ParsedLitur
   let sermonTopic = '';
   let weekScope: ParsedLiturgyInfo['weekScope'] = 'all';
   let specificDate = '';
+  let isSpecialOccasion = false;
+  let occasionTitle = '';
 
   // Week scope parsing
   if (notes.includes('الأسبوع: الأول') || notes.includes('الأسبوع الأول')) weekScope = 'week_1';
@@ -124,6 +135,18 @@ export const parseLiturgyNotes = (notes: string | null | undefined): ParsedLitur
     specificDate = dateMatch[1];
   }
 
+  // Special Occasion / Feast Parsing
+  const occasionMatch = notes.match(/(?:مناسبة|مناسبة طقسية|عيد)[:\s]+([^|()]+)/);
+  if (occasionMatch) {
+    isSpecialOccasion = true;
+    occasionTitle = occasionMatch[1].trim();
+  } else if (notes.includes('نيروز') || notes.includes('النيروز') || notes.includes('صليب') || notes.includes('الصليب') || notes.includes('عيد')) {
+    isSpecialOccasion = true;
+    if (notes.includes('نيروز') || notes.includes('النيروز')) occasionTitle = 'عيد النيروز المجيد (رأس السنة القبطية)';
+    else if (notes.includes('صليب') || notes.includes('الصليب')) occasionTitle = 'عيد الصليب المجيد';
+    else occasionTitle = 'مناسبة طقسية خاصة';
+  }
+
   // Sermon parsing
   const sermonMatch = notes.match(/(?:العظة|ملقي العظة|واعظ القداس|واعظ العشية)[:\s]+([^|()]+)(?:\(([^)]+)\))?/);
   if (sermonMatch) {
@@ -134,21 +157,34 @@ export const parseLiturgyNotes = (notes: string | null | undefined): ParsedLitur
     }
   }
 
-  // Priests parsing
+  // Priests parsing with strict click order preservation
   const priests: string[] = [];
-  const priestSection = notes.split(/\||\b(?:العظة|ملقي العظة)/)[0];
-  for (const p of PRIEST_NAMES_LIST) {
-    if (priestSection.includes(p) && !priests.includes(p)) {
-      priests.push(p);
+  const priestMatch = notes.match(/(?:الكهنة المصلون|الكاهن المصلي|الكهنة|الكاهن)[:\s]+([^|]+)/);
+  
+  if (priestMatch) {
+    const rawNames = priestMatch[1].split(/[•،,]/).map(s => s.trim()).filter(Boolean);
+    for (const name of rawNames) {
+      if (name && !priests.includes(name)) {
+        priests.push(name);
+      }
+    }
+  } else {
+    // Fallback: look for priests by their character index in the notes string
+    const foundWithIndex: { name: string; idx: number }[] = [];
+    for (const p of PRIEST_NAMES_LIST) {
+      const idx = notes.indexOf(p);
+      if (idx !== -1) {
+        foundWithIndex.push({ name: p, idx });
+      }
+    }
+    foundWithIndex.sort((a, b) => a.idx - b.idx);
+    for (const item of foundWithIndex) {
+      if (!priests.includes(item.name)) {
+        priests.push(item.name);
+      }
     }
   }
-  if (priests.length === 0) {
-    const match = notes.match(/(?:الكهنة|الكاهن(?:\s*المصلي)?[:\s]+)?([^|]+)/);
-    if (match) {
-      const names = match[1].split(/[،,•]/).map(s => s.trim()).filter(Boolean);
-      if (names.length > 0) priests.push(...names);
-    }
-  }
+
   if (priests.length === 0) {
     priests.push('آباء الكنيسة');
   }
@@ -156,6 +192,7 @@ export const parseLiturgyNotes = (notes: string | null | undefined): ParsedLitur
   let cleanExtra = notes;
   if (sermonMatch) cleanExtra = cleanExtra.replace(sermonMatch[0], '');
   if (dateMatch) cleanExtra = cleanExtra.replace(dateMatch[0], '');
+  if (occasionMatch) cleanExtra = cleanExtra.replace(occasionMatch[0], '');
   cleanExtra = cleanExtra.replace(/الأسبوع[:\s]+[^\s|]+/g, '');
   PRIEST_NAMES_LIST.forEach(p => {
     cleanExtra = cleanExtra.replace(new RegExp(`(?:الكهنة|الكاهن(?:\\s*المصلي)?[:\\s]+)?${p}`, 'g'), '');
@@ -169,6 +206,8 @@ export const parseLiturgyNotes = (notes: string | null | undefined): ParsedLitur
     sermonTopic,
     weekScope,
     specificDate,
+    isSpecialOccasion,
+    occasionTitle,
     extraNotes: cleanExtra,
   };
 };
@@ -179,6 +218,9 @@ export const PriestLiturgiesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // View Mode: 'table' (الجدول المريح) vs 'cards' (الكروت)
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   // Month Switcher: 0 = current month, 1 = next month, etc.
   const [selectedMonthOffset, setSelectedMonthOffset] = useState<number>(0);
@@ -220,6 +262,7 @@ export const PriestLiturgiesPage: React.FC = () => {
           dateObj,
           dayName,
           dateStr: `${d} ${dateObj.toLocaleDateString('ar-EG', { month: 'long' })}`,
+          fullDateText: `${d} ${dateObj.toLocaleDateString('ar-EG', { month: 'long' })} / ${coptic.copticDay} ${coptic.copticMonthName}`,
           isToday,
           copticString: coptic.copticDateString
         });
@@ -265,7 +308,7 @@ export const PriestLiturgiesPage: React.FC = () => {
   const [customChurchName, setCustomChurchName] = useState('');
   const [customAltarName, setCustomAltarName] = useState('');
   
-  // Multi-priest selection (المصلون)
+  // Multi-priest selection with strict click-order preservation
   const [selectedPriests, setSelectedPriests] = useState<string[]>(['ابونا مرقس ميلاد']);
   const [customPriestName, setCustomPriestName] = useState('');
 
@@ -274,6 +317,10 @@ export const PriestLiturgiesPage: React.FC = () => {
   const [sermonSpeaker, setSermonSpeaker] = useState('ابونا مرقس ميلاد');
   const [customSermonSpeaker, setCustomSermonSpeaker] = useState('');
   const [sermonTopic, setSermonTopic] = useState('');
+
+  // 🌟 Special Occasion / Feast (مناسبة طقسية / عيد مثل عيد النيروز)
+  const [isSpecialOccasion, setIsSpecialOccasion] = useState(false);
+  const [occasionTitle, setOccasionTitle] = useState('عيد النيروز المجيد');
 
   // Week scope
   const [formWeekScope, setFormWeekScope] = useState<ParsedLiturgyInfo['weekScope']>('all');
@@ -319,19 +366,26 @@ export const PriestLiturgiesPage: React.FC = () => {
     return `${displayHours}:${minutesStr} ${suffix}`;
   };
 
+  // Toggle priest preserving the exact click order
   const togglePriest = (name: string) => {
     if (selectedPriests.includes(name)) {
       if (selectedPriests.length === 1 && !customPriestName.trim()) return;
       setSelectedPriests(prev => prev.filter(p => p !== name));
     } else {
+      // Append strictly at the end of the clicked order
       setSelectedPriests(prev => [...prev, name]);
     }
   };
 
-  const openAddModal = (defaultType: 'liturgy' | 'vespers' = 'liturgy', defaultDay: string = 'الجمعة', defaultWeek: ParsedLiturgyInfo['weekScope'] = 'all') => {
+  const openAddModal = (
+    defaultType: 'liturgy' | 'vespers' = 'liturgy',
+    defaultDay: string = 'الجمعة',
+    defaultWeek: ParsedLiturgyInfo['weekScope'] = 'all',
+    prefillOccasion?: { title: string; occasionName: string }
+  ) => {
     setEditingLiturgyId(null);
     setServiceType(defaultType);
-    setTitle(defaultType === 'vespers' ? 'صلاة العشية والتمجيد' : 'القداس الأول');
+    setTitle(prefillOccasion ? prefillOccasion.title : (defaultType === 'vespers' ? 'صلاة العشية والتمجيد' : 'القداس الأول'));
     setDay(defaultDay);
     setStartTime(defaultType === 'vespers' ? '18:30' : '07:00');
     setEndTime(defaultType === 'vespers' ? '20:30' : '09:00');
@@ -346,6 +400,14 @@ export const PriestLiturgiesPage: React.FC = () => {
     setSermonSpeaker('ابونا مرقس ميلاد');
     setCustomSermonSpeaker('');
     setSermonTopic('');
+
+    if (prefillOccasion) {
+      setIsSpecialOccasion(true);
+      setOccasionTitle(prefillOccasion.occasionName);
+    } else {
+      setIsSpecialOccasion(false);
+      setOccasionTitle('');
+    }
 
     setFormWeekScope(defaultWeek);
     setExtraNotes('');
@@ -383,6 +445,7 @@ export const PriestLiturgiesPage: React.FC = () => {
     const knownInList = parsed.priests.filter(p => PRIEST_NAMES_LIST.includes(p));
     const customInList = parsed.priests.filter(p => !PRIEST_NAMES_LIST.includes(p));
 
+    // Preserve the exact sequence parsed from the notes
     setSelectedPriests(knownInList.length > 0 ? knownInList : ['ابونا مرقس ميلاد']);
     setCustomPriestName(customInList.join('، '));
 
@@ -402,6 +465,9 @@ export const PriestLiturgiesPage: React.FC = () => {
       setCustomSermonSpeaker('');
       setSermonTopic('');
     }
+
+    setIsSpecialOccasion(parsed.isSpecialOccasion);
+    setOccasionTitle(parsed.occasionTitle || '');
 
     setFormWeekScope(parsed.weekScope);
     setExtraNotes(parsed.extraNotes);
@@ -444,6 +510,11 @@ export const PriestLiturgiesPage: React.FC = () => {
 
     const priestPrefix = allPriests.length > 1 ? 'الكهنة المصلون' : 'الكاهن المصلي';
     const parts: string[] = [`${priestPrefix}: ${allPriests.join(' • ')}`];
+
+    // Append Special Occasion / Feast
+    if (isSpecialOccasion && occasionTitle.trim()) {
+      parts.push(`مناسبة: ${occasionTitle.trim()}`);
+    }
 
     // Append Week Scope if specific week
     if (formWeekScope !== 'all') {
@@ -518,6 +589,40 @@ export const PriestLiturgiesPage: React.FC = () => {
     }
   };
 
+  // Convert non-fixed liturgy to fixed routine across the whole month
+  const handleConvertToFixed = async (l: Liturgy) => {
+    const parsed = parseLiturgyNotes(l.notes);
+    const priestPrefix = parsed.priests.length > 1 ? 'الكهنة المصلون' : 'الكاهن المصلي';
+    const parts: string[] = [`${priestPrefix}: ${parsed.priests.join(' • ')}`];
+
+    if (parsed.isSpecialOccasion && parsed.occasionTitle) {
+      parts.push(`مناسبة: ${parsed.occasionTitle}`);
+    }
+
+    if (parsed.hasSermon && parsed.sermonSpeaker) {
+      let sText = `العظة: ${parsed.sermonSpeaker}`;
+      if (parsed.sermonTopic) sText += ` (${parsed.sermonTopic})`;
+      parts.push(sText);
+    }
+
+    if (parsed.extraNotes) {
+      parts.push(parsed.extraNotes);
+    }
+
+    const newNotes = parts.join(' | ');
+
+    try {
+      await api.updateLiturgy(l.id, {
+        notes: newNotes
+      });
+      setSuccessMessage(`تم تثبيت قداس "${l.title}" كقداس ثابت طوال الشهر 🔒`);
+      fetchLiturgies();
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setError('فشل تثبيت القداس: ' + err.message);
+    }
+  };
+
   const handleSyncFixedWeekdays = async () => {
     if (!window.confirm('هل تريد تثبيت ومزامنة قداسات (الاثنين - الثلاثاء - الأربعاء - الخميس) بالمواعيد الرسمية؟')) return;
     setLoading(true);
@@ -572,6 +677,14 @@ export const PriestLiturgiesPage: React.FC = () => {
     });
   };
 
+  // Non-fixed liturgies aggregator across the whole month
+  const nonFixedLiturgies = useMemo(() => {
+    return liturgies.filter(l => {
+      const parsed = parseLiturgyNotes(l.notes);
+      return parsed.weekScope !== 'all' && !['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].includes(l.liturgy_day);
+    });
+  }, [liturgies]);
+
   // Weeks to display
   const displayWeeks = useMemo(() => {
     if (selectedWeekTab === 'all') {
@@ -589,7 +702,7 @@ export const PriestLiturgiesPage: React.FC = () => {
           
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
               <h1 className="font-tajawal text-xl sm:text-2xl font-black text-[#002366]">
                 جدول قداسات وعشيات شهر {monthName}
               </h1>
@@ -608,6 +721,28 @@ export const PriestLiturgiesPage: React.FC = () => {
           {/* Month Switcher & Actions */}
           <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
             
+            {/* View Mode Toggle (Table / Cards) */}
+            <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1 border border-slate-200 text-xs font-bold">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === 'table' ? 'bg-[#002366] text-[#fed65b] font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <TableIcon className="w-3.5 h-3.5" />
+                <span>عرض الجدول 📋</span>
+              </button>
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === 'cards' ? 'bg-[#002366] text-[#fed65b] font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>عرض الكروت 🗂️</span>
+              </button>
+            </div>
+
             {/* Month Switcher */}
             <div className="bg-slate-100 border border-slate-200 p-1 rounded-2xl flex items-center gap-1 text-xs font-bold">
               <button
@@ -640,13 +775,81 @@ export const PriestLiturgiesPage: React.FC = () => {
 
             <button
               onClick={() => openAddModal('liturgy', 'الجمعة', selectedWeekTab !== 'all' ? `week_${selectedWeekTab + 1}` : 'all')}
-              className="bg-[#002366] hover:bg-[#00174a] text-[#fed65b] font-black text-xs px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-md shadow-[#002366]/20 transition-all active:scale-95 cursor-pointer"
+              className="bg-[#002366] hover:bg-[#00174a] text-[#fed65b] font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md shadow-[#002366]/20 transition-all active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>➕ إضافة قداس / عشية</span>
             </button>
           </div>
         </div>
+
+        {/* ── SPECIAL FEAST QUICK ADD BANNER (e.g. عيد النيروز المجيد) ── */}
+        <div className="bg-gradient-to-r from-[#002366] via-[#003399] to-[#00174a] text-white rounded-3xl p-5 sm:p-6 border border-amber-300/30 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#fed65b] text-[#00174a] flex items-center justify-center font-black shrink-0 shadow-md text-xl">
+              🌟
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="bg-[#fed65b] text-[#00174a] px-2.5 py-0.5 rounded-lg text-[11px] font-black">
+                  مناسبة طقسية قادمة
+                </span>
+                <h3 className="font-tajawal text-base sm:text-lg font-black text-[#fed65b]">
+                  عيد النيروز المجيد (رأس السنة القبطية الشهداء)
+                </h3>
+              </div>
+              <p className="text-xs text-slate-200 font-semibold mt-1">
+                يمكنك بسهولة إضافة عشية العيد والقداس الإلهي الاحتفالي للمناسبة بضغطة زر واحدة.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => openAddModal('vespers', 'الأربعاء', 'all', { title: 'عشية عيد النيروز المجيد', occasionName: 'عيد النيروز المجيد' })}
+              className="bg-purple-700/80 hover:bg-purple-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              🕯️ إضافة عشية النيروز
+            </button>
+            <button
+              onClick={() => openAddModal('liturgy', 'الخميس', 'all', { title: 'قداس عيد النيروز المجيد', occasionName: 'عيد النيروز المجيد' })}
+              className="bg-[#fed65b] hover:bg-amber-300 text-[#00174a] font-black text-xs px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              👑 إضافة قداس النيروز
+            </button>
+          </div>
+        </div>
+
+        {/* ── NON-FIXED LITURGIES AGGREGATOR BANNER ── */}
+        {nonFixedLiturgies.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <BookmarkCheck className="w-5 h-5 text-amber-700" />
+                <h4 className="font-tajawal font-black text-[#00174a] text-sm sm:text-base">
+                  تجميع قداسات الشهر المتغيرة ({nonFixedLiturgies.length} قداس أسبوعي)
+                </h4>
+              </div>
+              <p className="text-xs text-amber-900 font-semibold">
+                هذه القداسات محددة لأسابيع معينة، يمكنك تثبيت أي منها ليصبح روتيناً ثابتاً طوال الشهر كاملاً.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {nonFixedLiturgies.slice(0, 3).map(l => (
+                <button
+                  key={l.id}
+                  onClick={() => handleConvertToFixed(l)}
+                  className="bg-white hover:bg-amber-100 text-[#00174a] border border-amber-300 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                  title="تثبيت هذا القداس لكل أسابيع الشهر"
+                >
+                  <Lock className="w-3 h-3 text-amber-700" />
+                  <span>تثبيت ({l.liturgy_day} - {l.title})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Success Alert */}
         {successMessage && (
@@ -701,7 +904,7 @@ export const PriestLiturgiesPage: React.FC = () => {
           ))}
         </div>
 
-        {/* ── 3. FULL MONTH WEEKS & CARDS DISPLAY ── */}
+        {/* ── 3. FULL MONTH TABLE / CARDS DISPLAY ── */}
         {loading ? (
           <div className="bg-white rounded-3xl p-16 text-center text-slate-400 font-bold border border-slate-200">
             جاري تحميل جدول قداسات الشهر...
@@ -716,7 +919,7 @@ export const PriestLiturgiesPage: React.FC = () => {
               const weekLiturgies = getLiturgiesForWeek(w.weekIndex);
 
               return (
-                <div key={w.weekIndex} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-5">
+                <div key={w.weekIndex} className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5">
                   
                   {/* Week Section Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -754,7 +957,7 @@ export const PriestLiturgiesPage: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Week Liturgies Grid */}
+                  {/* Empty State */}
                   {weekLiturgies.length === 0 ? (
                     <div className="py-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-2">
                       <p className="text-xs font-bold text-slate-500">لا توجد قداسات مسجلة في {w.label}</p>
@@ -765,14 +968,192 @@ export const PriestLiturgiesPage: React.FC = () => {
                         ➕ إضافة قداس لهذا الأسبوع
                       </button>
                     </div>
+                  ) : viewMode === 'table' ? (
+                    /* ══════════════════════════════════════════════════════════════
+                       TABLE VIEW (جدول شهر سبتمبر المريح)
+                    ══════════════════════════════════════════════════════════════ */
+                    <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-xs">
+                      <table className="w-full text-right border-collapse text-xs font-semibold">
+                        <thead>
+                          <tr className="bg-[#002366] text-white font-tajawal text-xs">
+                            <th className="p-3.5 font-bold border-l border-white/10 w-44">اليوم والتاريخ</th>
+                            <th className="p-3.5 font-bold border-l border-white/10 w-48">القداس / الخدمة والتوقيت</th>
+                            <th className="p-3.5 font-bold border-l border-white/10 w-52">الكنيسة والمذبح</th>
+                            <th className="p-3.5 font-bold border-l border-white/10">الآباء الكهنة المصلون والعظة</th>
+                            <th className="p-3.5 font-bold border-l border-white/10 w-36">الحالة / التثبيت</th>
+                            <th className="p-3.5 font-bold text-center w-28">الإجراءات</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {weekLiturgies.map((l, index) => {
+                            const parsed = parseLiturgyNotes(l.notes);
+                            const isVesper = l.title.includes('عشية') || l.title.includes('نهضة') || l.title.includes('تسبيحة');
+                            const isFixedWeekday = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].includes(l.liturgy_day);
+                            const isAllWeekFixed = parsed.weekScope === 'all';
+
+                            // Find exact date of this day in this specific week
+                            const matchedDay = w.days.find(d => d.dayName.includes(l.liturgy_day));
+                            const exactDateText = matchedDay?.fullDateText || '';
+                            const isTodayRow = matchedDay?.isToday;
+
+                            return (
+                              <React.Fragment key={l.id}>
+                                {/* Special Occasion Wide Rectangle Banner */}
+                                {parsed.isSpecialOccasion && (
+                                  <tr className="bg-gradient-to-r from-amber-500/20 via-blue-900/10 to-amber-500/20 border-y-2 border-[#d4af37]">
+                                    <td colSpan={6} className="p-2.5 text-center">
+                                      <div className="inline-flex items-center gap-2 text-xs font-black text-[#00174a]">
+                                        <Sparkles className="w-4 h-4 text-[#d4af37]" />
+                                        <span>🌟 [ مناسبة طقسية خاصة: {parsed.occasionTitle || l.title} - بركة صلواته معنا ] 🌟</span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+
+                                <tr className={`hover:bg-slate-50/80 transition-colors ${
+                                  isTodayRow ? 'bg-amber-50/40' : index % 2 === 1 ? 'bg-slate-50/30' : 'bg-white'
+                                }`}>
+                                  
+                                  {/* 1. اليوم والتاريخ */}
+                                  <td className="p-3.5 border-l border-slate-100 align-top">
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="bg-[#002366] text-[#fed65b] px-2.5 py-0.5 rounded-lg font-black text-xs">
+                                          {l.liturgy_day}
+                                        </span>
+                                        {isTodayRow && (
+                                          <span className="bg-amber-400 text-[#00174a] text-[10px] px-1.5 py-0.2 rounded font-black">
+                                            اليوم ☀️
+                                          </span>
+                                        )}
+                                      </div>
+                                      {exactDateText && (
+                                        <div className="text-[11px] text-slate-600 font-bold">
+                                          {exactDateText}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+
+                                  {/* 2. القداس والتوقيت */}
+                                  <td className="p-3.5 border-l border-slate-100 align-top">
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-tajawal font-black text-xs text-[#00174a]">
+                                          {l.title}
+                                        </span>
+                                        {isVesper && (
+                                          <span className="text-[10px] bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-bold">
+                                            عشية 🕯️
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1 text-[11px] text-slate-500 font-bold">
+                                        <Clock className="w-3 h-3 text-[#d4af37]" />
+                                        <span>{formatArabicTime(l.start_time)} - {formatArabicTime(l.end_time)}</span>
+                                      </div>
+                                    </div>
+                                  </td>
+
+                                  {/* 3. الكنيسة والمذبح */}
+                                  <td className="p-3.5 border-l border-slate-100 align-top">
+                                    <div className="flex items-center gap-1.5 text-xs text-[#002366] font-bold">
+                                      <MapPin className="w-3.5 h-3.5 text-[#d4af37] shrink-0" />
+                                      <div>
+                                        <div className="font-extrabold">{l.church_name}</div>
+                                        <div className="text-[11px] text-slate-500">{l.altar_name}</div>
+                                      </div>
+                                    </div>
+                                  </td>
+
+                                  {/* 4. الكهنة المصلون والعظة */}
+                                  <td className="p-3.5 border-l border-slate-100 align-top">
+                                    <div className="space-y-2">
+                                      {/* Ordered Priests Chips */}
+                                      <div className="flex flex-wrap gap-1">
+                                        {parsed.priests.map((pName, pIdx) => (
+                                          <span
+                                            key={pIdx}
+                                            className="bg-amber-50 text-amber-950 border border-amber-200/90 px-2 py-0.5 rounded-lg text-[11px] font-bold flex items-center gap-1"
+                                          >
+                                            <span className="w-4 h-4 rounded-full bg-[#002366] text-[#fed65b] text-[9px] flex items-center justify-center font-black">
+                                              {pIdx + 1}
+                                            </span>
+                                            <span>{pName}</span>
+                                          </span>
+                                        ))}
+                                      </div>
+
+                                      {/* Sermon Chip */}
+                                      {parsed.hasSermon && (
+                                        <div className="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-lg text-[11px] text-purple-900 font-bold">
+                                          <Mic className="w-3 h-3 text-purple-700 shrink-0" />
+                                          <span>العظة: <strong>{parsed.sermonSpeaker}</strong> {parsed.sermonTopic ? `(${parsed.sermonTopic})` : ''}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+
+                                  {/* 5. الحالة / التثبيت */}
+                                  <td className="p-3.5 border-l border-slate-100 align-top">
+                                    {isFixedWeekday || isAllWeekFixed ? (
+                                      <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-xl text-[10px] font-extrabold">
+                                        <Lock className="w-3 h-3 text-emerald-600" />
+                                        <span>قداس ثابت 🔒</span>
+                                      </span>
+                                    ) : (
+                                      <div className="space-y-1.5">
+                                        <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-lg text-[10px] font-bold">
+                                          <span>متغير أسبوعياً 📅</span>
+                                        </span>
+                                        <button
+                                          onClick={() => handleConvertToFixed(l)}
+                                          className="block text-[10px] bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-300 px-2 py-1 rounded-lg font-black transition-colors cursor-pointer"
+                                          title="تثبيت هذا القداس لكل أسابيع الشهر"
+                                        >
+                                          تثبيت القداس 🔒
+                                        </button>
+                                      </div>
+                                    )}
+                                  </td>
+
+                                  {/* 6. الإجراءات */}
+                                  <td className="p-3.5 text-center align-top">
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <button
+                                        onClick={() => openEditModal(l)}
+                                        className="p-1.5 rounded-lg text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer"
+                                        title="تعديل القداس"
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDelete(l.id)}
+                                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                                        title="حذف القداس"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </td>
+
+                                </tr>
+                              </React.Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   ) : (
+                    /* ══════════════════════════════════════════════════════════════
+                       CARDS VIEW (عرض الكروت)
+                    ══════════════════════════════════════════════════════════════ */
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {weekLiturgies.map(l => {
                         const parsed = parseLiturgyNotes(l.notes);
                         const isVesper = l.title.includes('عشية') || l.title.includes('نهضة') || l.title.includes('تسبيحة');
-                        const isFixed = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].includes(l.liturgy_day);
+                        const isFixed = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].includes(l.liturgy_day) || parsed.weekScope === 'all';
 
-                        // Find exact date of this day in this specific week
                         const matchedDay = w.days.find(d => d.dayName.includes(l.liturgy_day));
                         const exactDateStr = matchedDay?.dateStr;
 
@@ -780,7 +1161,9 @@ export const PriestLiturgiesPage: React.FC = () => {
                           <div
                             key={l.id}
                             className={`bg-white p-5 rounded-2xl border transition-all flex flex-col justify-between gap-4 shadow-xs hover:shadow-md ${
-                              isVesper
+                              parsed.isSpecialOccasion
+                                ? 'border-amber-300 bg-amber-50/30'
+                                : isVesper
                                 ? 'border-purple-200 bg-purple-50/20'
                                 : isFixed
                                 ? 'border-amber-200 bg-amber-50/20'
@@ -806,13 +1189,15 @@ export const PriestLiturgiesPage: React.FC = () => {
                                 </div>
 
                                 <span className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold border shrink-0 ${
-                                  isVesper
+                                  parsed.isSpecialOccasion
+                                    ? 'bg-amber-200 text-amber-950 border-amber-300'
+                                    : isVesper
                                     ? 'bg-purple-100 text-purple-900 border-purple-200'
                                     : isFixed
                                     ? 'bg-amber-100 text-amber-900 border-amber-200'
                                     : 'bg-blue-50 text-blue-900 border-blue-200'
                                 }`}>
-                                  {isVesper ? 'صلاة عشية 🕯️' : isFixed ? 'قداس ثابت 🔒' : 'قداس إلهي ⛪'}
+                                  {parsed.isSpecialOccasion ? '🌟 مناسبة خاصة' : isVesper ? 'صلاة عشية 🕯️' : isFixed ? 'قداس ثابت 🔒' : 'قداس إلهي ⛪'}
                                 </span>
                               </div>
 
@@ -831,7 +1216,7 @@ export const PriestLiturgiesPage: React.FC = () => {
                                 <span>{l.church_name} - {l.altar_name}</span>
                               </div>
 
-                              {/* Priests (المصلون) */}
+                              {/* Priests (المصلون) in strict click order */}
                               <div className="space-y-1">
                                 <span className="text-[10px] text-slate-400 font-bold block">الآباء الكهنة المصلون:</span>
                                 <div className="flex flex-wrap gap-1.5">
@@ -840,7 +1225,9 @@ export const PriestLiturgiesPage: React.FC = () => {
                                       key={pIdx}
                                       className="bg-amber-50 text-amber-950 border border-amber-200 px-2 py-0.5 rounded-lg text-xs font-bold flex items-center gap-1"
                                     >
-                                      <User className="w-3 h-3 text-[#d4af37]" />
+                                      <span className="w-4 h-4 rounded-full bg-[#002366] text-[#fed65b] text-[9px] flex items-center justify-center font-black">
+                                        {pIdx + 1}
+                                      </span>
                                       <span>{p}</span>
                                     </span>
                                   ))}
@@ -897,7 +1284,7 @@ export const PriestLiturgiesPage: React.FC = () => {
         ══════════════════════════════════════════════════════════════ */}
         {showModal && (
           <div className="fixed inset-0 bg-[#00113a]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-scaleUp my-auto">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200 animate-scaleUp my-auto">
               
               {/* Modal Header */}
               <div className="bg-[#002366] text-white p-5 flex items-center justify-between">
@@ -1071,41 +1458,95 @@ export const PriestLiturgiesPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* 6. الآباء الكهنة المصلون */}
-                <div className="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                {/* 6. الآباء الكهنة المصلون مع حفظ الترتيب الفعلي للضغط */}
+                <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
                   <div className="flex items-center justify-between">
                     <label className="text-[#00174a] font-black flex items-center gap-1 text-xs">
                       <User className="w-3.5 h-3.5 text-[#d4af37]" />
-                      <span>الآباء الكهنة المصلون *</span>
+                      <span>الآباء الكهنة المصلون (بالترتيب المطلوب) *</span>
                     </label>
-                    <span className="text-[10px] text-slate-500 font-bold">
-                      تم اختيار ({selectedPriests.length + (customPriestName.trim() ? 1 : 0)})
+                    <span className="text-[10px] bg-blue-100 text-blue-900 px-2 py-0.5 rounded-lg font-bold">
+                      تم اختيار ({selectedPriests.length}) كاهن
                     </span>
                   </div>
 
+                  <p className="text-[11px] text-slate-500 font-semibold">
+                    💡 اضغط على أسماء الآباء بالترتيب الذي ترغب في تسجيله (سيتم ترقيمهم 1، 2، 3...).
+                  </p>
+
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                     {PRIEST_NAMES_LIST.map((pName) => {
-                      const isSelected = selectedPriests.includes(pName);
+                      const selectedIndex = selectedPriests.indexOf(pName);
+                      const isSelected = selectedIndex !== -1;
                       return (
                         <button
                           key={pName}
                           type="button"
                           onClick={() => togglePriest(pName)}
-                          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border text-right flex items-center justify-between transition-all cursor-pointer ${
+                          className={`px-2.5 py-2 rounded-xl text-xs font-bold border text-right flex items-center justify-between transition-all cursor-pointer ${
                             isSelected
                               ? 'bg-[#002366] text-[#fed65b] border-[#002366] shadow-xs font-black'
                               : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                           }`}
                         >
                           <span className="truncate">{pName}</span>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-[#fed65b] shrink-0" />}
+                          {isSelected && (
+                            <span className="w-5 h-5 rounded-full bg-[#fed65b] text-[#00174a] text-[10px] flex items-center justify-center font-black shrink-0">
+                              {selectedIndex + 1}
+                            </span>
+                          )}
                         </button>
                       );
                     })}
                   </div>
+
+                  {/* Visual Click Order Preview */}
+                  {selectedPriests.length > 0 && (
+                    <div className="p-2 bg-white rounded-xl border border-slate-200 text-[11px] text-slate-700 font-bold flex flex-wrap items-center gap-1.5">
+                      <span className="text-[#002366] font-black">الترتيب المسجل:</span>
+                      {selectedPriests.map((p, idx) => (
+                        <span key={idx} className="bg-slate-100 px-2 py-0.5 rounded-md text-[#00174a]">
+                          ({idx + 1}) {p}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* 7. العظة (اختياري) */}
+                {/* 7. مناسبة طقسية / عيد كنسي (مثل عيد النيروز) */}
+                <div className="bg-amber-50/70 p-3 rounded-2xl border border-amber-200/80 space-y-2">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-amber-700" />
+                      <span className="text-[#00174a] font-black text-xs">
+                        مناسبة طقسية خاصة / عيد كنسي (مثل عيد النيروز)
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={isSpecialOccasion}
+                      onChange={(e) => setIsSpecialOccasion(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer"
+                    />
+                  </label>
+
+                  {isSpecialOccasion && (
+                    <div className="pt-2 border-t border-amber-200 space-y-1.5 animate-fadeIn">
+                      <label className="text-slate-700 font-bold block text-[11px]">
+                        اسم المناسبة أو العيد:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="مثال: عيد النيروز المجيد / عيد الصليب"
+                        value={occasionTitle}
+                        onChange={(e) => setOccasionTitle(e.target.value)}
+                        className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 outline-none font-bold text-xs"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 8. العظة (اختياري) */}
                 <div className="bg-purple-50/60 p-3 rounded-2xl border border-purple-200/70 space-y-2.5">
                   <label className="flex items-center justify-between cursor-pointer">
                     <div className="flex items-center gap-1.5">

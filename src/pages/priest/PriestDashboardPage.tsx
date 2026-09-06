@@ -3,12 +3,39 @@ import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { Link } from 'react-router-dom';
 import { api, type ContactMessage, type Family, type FamilyAttendanceRecord, type Profile } from '../../lib/api';
 import type { MembershipComment, Sermon, Liturgy, PrayerRequest } from '../../lib/database.types';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
-import { Radio, RefreshCw, Send, Trash2, MailOpen, AlertCircle, AlertTriangle, Play, Heart, MessageSquare, Clock, Users, ChevronLeft } from 'lucide-react';
-import { checkFamilyAttendanceStatus, type ServiceScheduleConfig, type AttendanceStatusResult } from '../../lib/attendanceStatusHelper';
+import { getCopticDate } from '../../lib/copticReadings';
+import {
+  Radio,
+  RefreshCw,
+  Send,
+  Trash2,
+  MailOpen,
+  AlertCircle,
+  Play,
+  Heart,
+  MessageSquare,
+  Clock,
+  Users,
+  ChevronLeft,
+  Calendar,
+  Mic,
+  MapPin,
+  Megaphone,
+  CheckCircle2,
+  Sun,
+  ShieldCheck,
+  Flame,
+  BookmarkCheck,
+  Eye,
+  Check
+} from 'lucide-react';
 
 export const PriestDashboardPage: React.FC = () => {
+  const { profile } = useAuth();
   const toast = useToast();
+
   const [comments, setComments] = useState<MembershipComment[]>([]);
   const [liturgies, setLiturgies] = useState<Liturgy[]>([]);
   const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
@@ -27,18 +54,28 @@ export const PriestDashboardPage: React.FC = () => {
   const [streamTitle, setStreamTitle] = useState('');
   const [streamDesc, setStreamDesc] = useState('');
 
+  // Selected Message for detail modal
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+
+  // Current Live Dates
+  const today = new Date();
+  const todayFormatted = {
+    gregorian: today.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+    coptic: `${getCopticDate(today).copticDay} ${getCopticDate(today).copticMonthName} ${getCopticDate(today).copticYear} ش`
+  };
+
   const fetchPriestDashboardData = async () => {
     try {
       const [l, c, p, s, msg, f, att, profs, settings] = await Promise.all([
         api.getLiturgies(),
-        api.getMembershipComments(),
-        api.getPrayerRequests(),
-        api.getSermons(),
-        api.getContactMessages(),
+        api.getMembershipComments().catch(() => []),
+        api.getPrayerRequests().catch(() => []),
+        api.getSermons().catch(() => []),
+        api.getContactMessages().catch(() => []),
         api.getFamilies().catch(() => []),
         api.getAllFamilyAttendanceRecords().catch(() => []),
         api.getProfiles().catch(() => []),
-        api.getSiteSettings(),
+        api.getSiteSettings().catch(() => ({} as Record<string, string>)),
       ]);
       setLiturgies(l);
       setComments(c);
@@ -48,12 +85,14 @@ export const PriestDashboardPage: React.FC = () => {
       setFamilies(f);
       setAttendanceRecords(att);
       setProfiles(profs);
-      setSiteSettings(settings);
+      
+      const safeSettings = (settings || {}) as Record<string, string>;
+      setSiteSettings(safeSettings);
 
-      setStreamActive(settings.live_stream_active || 'false');
-      setStreamUrl(settings.live_stream_youtube_url || '');
-      setStreamTitle(settings.live_stream_title || '');
-      setStreamDesc(settings.live_stream_description || '');
+      setStreamActive(safeSettings['live_stream_active'] || 'false');
+      setStreamUrl(safeSettings['live_stream_youtube_url'] || '');
+      setStreamTitle(safeSettings['live_stream_title'] || '');
+      setStreamDesc(safeSettings['live_stream_description'] || '');
     } catch (err) {
       console.error(err);
     } finally {
@@ -69,7 +108,7 @@ export const PriestDashboardPage: React.FC = () => {
     e.preventDefault();
     setSubmittingStream(true);
     try {
-      const updatedSettings = {
+      const updatedSettings: Record<string, string> = {
         ...siteSettings,
         live_stream_active: streamActive,
         live_stream_youtube_url: streamUrl,
@@ -91,6 +130,9 @@ export const PriestDashboardPage: React.FC = () => {
       await api.updateContactMessageStatus(id, newStatus);
       toast.success('تم تحديث حالة الرسالة بنجاح');
       setContactMessages(prev => prev.map(m => m.id === id ? { ...m, status: newStatus } : m));
+      if (selectedMessage && selectedMessage.id === id) {
+        setSelectedMessage(prev => prev ? { ...prev, status: newStatus } : null);
+      }
     } catch (err: any) {
       toast.error('فشل تحديث الحالة: ' + err.message);
     }
@@ -102,529 +144,504 @@ export const PriestDashboardPage: React.FC = () => {
       await api.deleteContactMessage(id);
       toast.success('تم مسح الرسالة بنجاح');
       setContactMessages(prev => prev.filter(m => m.id !== id));
+      if (selectedMessage && selectedMessage.id === id) {
+        setSelectedMessage(null);
+      }
     } catch (err: any) {
       toast.error('فشل حذف الرسالة: ' + err.message);
     }
   };
 
   const pendingCommentsCount = comments.filter(c => c.status === 'قيد المراجعة').length;
-  const thisMonthSermons = sermons.filter(s => {
-    const d = new Date(s.sermon_date || s.created_at);
-    const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).length;
-
-  // Calculate Overdue Sunday School families
-  const sundaySchoolFamilies = families.filter(f => f.family_type === 'sunday_school');
-  const serviceConfigs: Record<string, ServiceScheduleConfig> = {};
-  Object.keys(siteSettings).forEach(key => {
-    if (key.startsWith('service_assignment_')) {
-      const cat = key.replace('service_assignment_', '');
-      try {
-        serviceConfigs[cat] = JSON.parse(siteSettings[key]);
-      } catch {}
-    }
-  });
-
-  const overdueFamilies = sundaySchoolFamilies.filter(fam => {
-    const matchedCategory = ['ابتدائي بنين', 'ابتدائي بنات', 'فتيان إعدادي', 'فتيات إعدادي', 'شباب ثانوي', 'شابات ثانوي', 'خدمة شباب جامعة', 'خدمة شابات جامعة', 'خريجين'].find(c => (fam.stage && fam.stage.includes(c)) || (fam.area && fam.area.includes(c))) || 'ابتدائي بنين';
-    const config = serviceConfigs[matchedCategory];
-    const recordedDates = attendanceRecords.filter(r => r.family_id === fam.id).map(r => r.date);
-    const res = checkFamilyAttendanceStatus(fam.id, fam.head_name, matchedCategory, config, recordedDates);
-    return res.status === 'OVERDUE';
-  });
-
-  // Activity log (dynamic + static fallback)
-  const latestPrayer = prayers[0];
-  const latestComment = comments[0];
+  const unreadMessagesCount = contactMessages.filter(m => m.status === 'unread').length;
 
   return (
-    <DashboardLayout role="priest">
-      <div className="space-y-8 font-cairo" dir="rtl">
+    <DashboardLayout role={profile?.role as any || 'priest'}>
+      <div className="space-y-7 font-cairo text-right" dir="rtl">
+        
+        {/* ── 1. WARM FATHERLY GREETING & HEADER BANNER ── */}
+        <div className="bg-gradient-to-r from-[#002366] via-[#001f5c] to-[#00174a] text-white rounded-3xl p-6 sm:p-8 border border-[#fed65b]/30 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-[#fed65b]/5 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 bg-[#fed65b]/20 border border-[#fed65b]/40 text-[#fed65b] px-3.5 py-1 rounded-full text-xs font-bold">
+                <span>🕊️ بوابة الآباء الكهنة الموقرين</span>
+              </div>
 
-        {/* 🔴 RED OVERDUE ATTENDANCE PASTORAL ALERT */}
-        {overdueFamilies.length > 0 && (
-          <div className="bg-rose-50 border-2 border-rose-500/40 rounded-3xl p-6 shadow-lg space-y-3 animate-scale-in">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-md animate-pulse shrink-0">
-                  <AlertTriangle className="w-7 h-7" />
+              <h1 className="font-tajawal text-2xl sm:text-3xl font-black text-white leading-tight">
+                أهلاً بك يا قدس أبونا {profile?.full_name ? `«${profile.full_name}»` : ''} .. بركة صلواتك معنا
+              </h1>
+
+              <p className="text-sm text-slate-200 font-semibold max-w-2xl">
+                لوحة تحكم كنسية مبسطة ومريحة لمتابعة قداسات الكنيسة، خدمة الرعاية، الافتقاد، وإعلانات الشعب بكل سهولة ويسر.
+              </p>
+            </div>
+
+            {/* Live Today Badge */}
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl space-y-1.5 shrink-0">
+              <div className="flex items-center gap-2 text-xs text-[#fed65b] font-bold">
+                <Sun className="w-4 h-4 text-[#fed65b]" />
+                <span>اليوم في كنيسة السيدة العذراء:</span>
+              </div>
+              <div className="font-black text-sm text-white">
+                {todayFormatted.gregorian}
+              </div>
+              <div className="text-xs text-amber-300 font-extrabold">
+                {todayFormatted.coptic}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── 2. QUICK HIGH-TOUCH CARDS GRID (ELDERLY-FRIENDLY PORTAL) ── */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-tajawal text-lg sm:text-xl font-black text-[#002366] flex items-center gap-2">
+              <span>🌟 الأقسام والخدمات الرئيسية</span>
+            </h2>
+            <span className="text-xs text-slate-500 font-bold">اضغط على أي قسم للانتقال المباشر</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            
+            {/* Card 1: جدول القداسات والعشيات */}
+            <Link
+              to="/priest/liturgies"
+              className="bg-white hover:bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 hover:border-[#002366] shadow-sm hover:shadow-md transition-all group flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-[#002366] text-[#fed65b] flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+                  <Calendar className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="font-tajawal text-base sm:text-lg font-extrabold text-rose-950 flex items-center gap-2">
-                    <span>🔴 تنبيه رعوي: يوجد {overdueFamilies.length} فصول لم يتم تسجيل الحضور والغياب لها بعد انقضاء موعد الخدمة!</span>
+                  <h3 className="font-tajawal text-lg font-black text-[#002366] group-hover:text-blue-900 transition-colors">
+                    جدول القداسات والعشيات
                   </h3>
-                  <p className="text-xs text-rose-800 font-semibold mt-0.5">
-                    الرجاء متابعة أمين الخدمة والخدام المشرفين على هذه الأسر لتسجيل الحضور وتفقد المخدومين.
+                  <p className="text-xs text-slate-500 font-semibold mt-1">
+                    عرض وتعديل جدول الشهر، توزيع مواعيد الكهنة، والعظات.
                   </p>
                 </div>
               </div>
-              <Link
-                to="/priest/services"
-                className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2.5 rounded-2xl shadow-md transition-all shrink-0 hidden sm:inline-flex items-center gap-1"
-              >
-                <span>متابعة الفصول</span>
-                <ChevronLeft className="w-4 h-4" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2">
-              {overdueFamilies.map(f => (
-                <div key={f.id} className="p-3 bg-white border border-rose-200 rounded-xl text-xs flex items-center justify-between shadow-xs">
-                  <span className="font-bold text-rose-950">{f.head_name}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">{f.area || 'خدمة'}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Greeting Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <h3 className="font-tajawal text-2xl sm:text-3xl font-extrabold text-[#00113a] mb-1">
-              سلام ونعمة، أبونا مينا
-            </h3>
-            <p className="text-sm text-[#444650] font-semibold">
-              إليك ملخص شامل لأنشطة الكنيسة لهذا الأسبوع.
-            </p>
-          </div>
-          <Link
-            to="/priest/sermons"
-            className="bg-[#00113a] text-white px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 font-semibold hover:opacity-90 transition-all active:scale-95 shadow-sm text-sm"
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            <span>إضافة عظة جديدة</span>
-          </Link>
-        </div>
-
-        {/* 4 Summary Cards (Bento Grid) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total Liturgies */}
-          <div className="bg-white p-6 rounded-xl border border-[#c5c6d2]/30 transition-all duration-200 shadow-sm relative overflow-hidden">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-[#00113a]/5 rounded-lg">
-                <span className="material-symbols-outlined text-[#00113a]">church</span>
+              <div className="flex items-center justify-between text-xs font-black text-[#002366] pt-3 border-t border-slate-100">
+                <span>إجمالي القداسات ({liturgies.length})</span>
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               </div>
-            </div>
-            <p className="text-[#444650] text-xs font-semibold mb-1">القداسات الإلهية</p>
-            <h4 className="font-tajawal text-3xl font-extrabold text-[#00113a]">
-              {loading ? '...' : liturgies.length.toLocaleString('ar-EG')}
-            </h4>
-          </div>
+            </Link>
 
-          {/* Prayer Requests */}
-          <div className="bg-white p-6 rounded-xl border border-[#c5c6d2]/30 transition-all duration-200 shadow-sm relative overflow-hidden">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-[#735c00]/5 rounded-lg">
-                <span className="material-symbols-outlined text-[#735c00]">favorite</span>
-              </div>
-              <span className="text-[#735c00] bg-[#fed65b]/20 px-2 py-1 rounded text-[10px] font-bold">طلبات الصلاة</span>
-            </div>
-            <p className="text-[#444650] text-xs font-semibold mb-1">طلبات الصلاة</p>
-            <h4 className="font-tajawal text-3xl font-extrabold text-[#00113a]">
-              {loading ? '...' : prayers.length.toLocaleString('ar-EG')}
-            </h4>
-          </div>
-
-          {/* Monthly Sermons */}
-          <div className="bg-white p-6 rounded-xl border border-[#c5c6d2]/30 transition-all duration-200 shadow-sm relative overflow-hidden">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-[#501300]/5 rounded-lg">
-                <span className="material-symbols-outlined text-[#d37758]">podcasts</span>
-              </div>
-            </div>
-            <p className="text-[#444650] text-xs font-semibold mb-1">عظات الشهر</p>
-            <h4 className="font-tajawal text-3xl font-extrabold text-[#00113a]">
-              {loading ? '...' : thisMonthSermons.toLocaleString('ar-EG')}
-            </h4>
-          </div>
-
-          {/* Contact Messages */}
-          <div className="bg-white p-6 rounded-xl border border-[#c5c6d2]/30 transition-all duration-200 shadow-sm relative overflow-hidden">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-[#ba1a1a]/5 rounded-lg">
-                <span className="material-symbols-outlined text-[#ba1a1a]">mail</span>
-              </div>
-              <div className="w-2 h-2 bg-[#ba1a1a] rounded-full animate-pulse" />
-            </div>
-            <p className="text-[#444650] text-xs font-semibold mb-1">رسائل الشعب</p>
-            <h4 className="font-tajawal text-3xl font-extrabold text-[#00113a]">
-              {loading ? '...' : contactMessages.length.toLocaleString('ar-EG')}
-            </h4>
-          </div>
-        </div>
-
-        {/* Main Grid: Activities & Quick Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Activity Feed */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
-              <h5 className="text-lg font-bold text-[#00113a] font-tajawal">آخر التحديثات والنشاطات</h5>
-              <Link to="/priest/services" className="text-[#00113a] hover:underline font-semibold flex items-center gap-1 text-sm">
-                عرض الكل <span className="material-symbols-outlined text-sm">chevron_left</span>
-              </Link>
-            </div>
-            <div className="bg-white rounded-xl border border-[#c5c6d2]/30 shadow-sm overflow-hidden divide-y divide-[#c5c6d2]/20">
-              
-              {/* Activity 1: New Prayer Request */}
-              <div className="p-5 flex gap-4 hover:bg-[#fbf9f8] transition-colors">
-                <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-[#735c00]/10 flex items-center justify-center text-[#735c00] border border-[#735c00]/20">
-                    <span className="material-symbols-outlined text-[20px]">favorite</span>
-                  </div>
-                  <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#735c00] rounded-full border-2 border-white flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[10px] text-white">add</span>
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-bold text-[#1b1c1c]">طلب صلاة جديد</p>
-                    <span className="text-xs text-[#444650]">مستجد</span>
-                  </div>
-                  <p className="text-sm text-[#444650]">
-                    {latestPrayer ? `تم تلقي طلب صلاة جديد من: "${latestPrayer.requester_name || 'فاعل خير'}".` : 'لا توجد طلبات صلاة جديدة اليوم.'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Activity 2: Liturgies */}
-              <div className="p-5 flex gap-4 hover:bg-[#fbf9f8] transition-colors">
-                <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-[#00113a]/10 flex items-center justify-center text-[#00113a]">
-                    <span className="material-symbols-outlined">church</span>
-                  </div>
-                  <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#00113a] rounded-full border-2 border-white flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[10px] text-white">update</span>
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-bold text-[#1b1c1c]">تحديث مواعيد القداسات</p>
-                    <span className="text-xs text-[#444650]">منذ ساعتين</span>
-                  </div>
-                  <p className="text-sm text-[#444650]">تم تعديل موعد قداس الأربعاء ليبدأ في تمام الساعة ٦:٠٠ صباحاً بدلاً من ٧:٠٠.</p>
-                </div>
-              </div>
-
-              {/* Activity 3: Comment */}
-              <div className="p-5 flex gap-4 hover:bg-[#fbf9f8] transition-colors">
-                <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-[#f5f3f3] flex items-center justify-center overflow-hidden border border-[#c5c6d2]/50">
-                    <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdlI8NMRg17shngWBBtzX_VRh9H-O5QJF-GFGVPOa4KmUjOL3KBGxNrkEhCM6E1vZlUf7kRSbQ2-2cosv72W_CaD39HZAen8IFwFgS4mbBeY486f2VZSdxvvIJx48snssYq44r2zCqT81RLX2WkpenbjC9FP5WmfgZGOs_X-ozscYTlZpwYYRgPLdPNoYIh252UQbeInu3JV478__GVqlBAs3_4hwO0Fo5GCRuzG9CK6PepX8bxA0QwqltoyoJstEYr7Qs2VA2zLqd" alt="User" />
-                  </div>
-                  <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#ba1a1a] rounded-full border-2 border-white flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[10px] text-white">comment</span>
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-bold text-[#1b1c1c]">تعليق جديد على عظة</p>
-                    <span className="text-xs text-[#444650]">منذ ٥ ساعات</span>
-                  </div>
-                  <p className="text-sm text-[#444650]">
-                    {latestComment 
-                      ? `طلب العضوية من "${latestComment.applicant_name}" للخدمة: "${latestComment.requested_service}"`
-                      : 'علق "أستاذ هاني" على عظة الأحد الماضي: "كلمات معزية جداً يا أبونا.."'
-                    }
-                  </p>
-                </div>
-              </div>
-
-              {/* Activity 4: Announcement */}
-              <div className="p-5 flex gap-4 hover:bg-[#fbf9f8] transition-colors">
-                <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-[#ffdbd0]/20 flex items-center justify-center text-[#d37758]">
-                    <span className="material-symbols-outlined">campaign</span>
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-bold text-[#1b1c1c]">تنويه هام للشباب</p>
-                    <span className="text-xs text-[#444650]">أمس</span>
-                  </div>
-                  <p className="text-sm text-[#444650]">تم نشر تنويه بخصوص مؤتمر الشباب القادم في بيت القديس أنطونيوس.</p>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Quick Schedule & Static Stats */}
-          <div className="space-y-8">
-            {/* Quick Schedule */}
-            <div>
-              <h5 className="text-base font-bold text-[#00113a] mb-5 font-tajawal">جدول الخدمة اليوم</h5>
-              <div className="bg-white rounded-xl border border-[#c5c6d2]/30 shadow-sm p-6 space-y-4">
-                
-                <div className="flex items-center gap-4 border-r-4 border-[#735c00] pr-4 py-2 bg-[#735c00]/5 rounded-l-lg">
-                  <div className="text-center min-w-[50px] shrink-0">
-                    <p className="text-sm font-bold text-[#735c00]">٠٨:٠٠</p>
-                    <p className="text-[10px] text-[#444650]">صباحاً</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#00113a]">قداس يومي</p>
-                    <p className="text-xs text-[#444650]">المذبح الرئيسي</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 border-r-4 border-[#c5c6d2] pr-4 py-2">
-                  <div className="text-center min-w-[50px] shrink-0">
-                    <p className="text-sm font-bold text-[#444650]">١٠:٣٠</p>
-                    <p className="text-[10px] text-[#444650]">صباحاً</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#1b1c1c]">افتقاد منزلي</p>
-                    <p className="text-xs text-[#444650]">منطقة سويتر</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 border-r-4 border-[#c5c6d2] pr-4 py-2">
-                  <div className="text-center min-w-[50px] shrink-0">
-                    <p className="text-sm font-bold text-[#444650]">٠٦:٠٠</p>
-                    <p className="text-[10px] text-[#444650]">مساءً</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#1b1c1c]">اجتماع الخدام</p>
-                    <p className="text-xs text-[#444650]">قاعة الدور الثالث</p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Statistics snapshot card */}
-            <div className="bg-[#00113a] p-6 rounded-xl text-white relative overflow-hidden shadow-sm">
-              <div className="absolute -right-10 -bottom-10 opacity-10">
-                <span className="material-symbols-outlined text-9xl">auto_graph</span>
-              </div>
-              <h6 className="font-tajawal text-base font-bold mb-4">أداء المحتوى</h6>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>مشاهدات العظات</span>
-                    <span>٨٥٪</span>
-                  </div>
-                  <div className="w-full bg-white/20 h-1.5 rounded-full">
-                    <div className="bg-[#fed65b] h-full rounded-full" style={{ width: '85%' }}></div>
-                  </div>
+            {/* Card 2: الإعلانات والتنبيهات */}
+            <Link
+              to="/priest/announcements"
+              className="bg-white hover:bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 hover:border-amber-500 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+                  <Megaphone className="w-7 h-7" />
                 </div>
                 <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>تفاعل الأعضاء</span>
-                    <span>٦٢٪</span>
-                  </div>
-                  <div className="w-full bg-white/20 h-1.5 rounded-full">
-                    <div className="bg-[#fed65b] h-full rounded-full" style={{ width: '62%' }}></div>
-                  </div>
+                  <h3 className="font-tajawal text-lg font-black text-[#002366] group-hover:text-amber-800 transition-colors">
+                    الإعلانات والتنبيهات
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold mt-1">
+                    نشر وتحديث إعلانات الكنيسة، النهضات، والمناسبات.
+                  </p>
                 </div>
               </div>
-              <p className="text-[10px] mt-6 text-white/60">تحليل البيانات يعتمد على آخر ٣٠ يوم عمل.</p>
-            </div>
+              <div className="flex items-center justify-between text-xs font-black text-amber-700 pt-3 border-t border-slate-100">
+                <span>نشر إعلان جديد 📢</span>
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* Card 3: سجل الشعب والأسر */}
+            <Link
+              to="/membership/members"
+              className="bg-white hover:bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 hover:border-emerald-600 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+                  <Users className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-tajawal text-lg font-black text-[#002366] group-hover:text-emerald-800 transition-colors">
+                    سجل الشعب والعائلات
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold mt-1">
+                    البحث في بيانات شعب الكنيسة، كشوفات العائلات، والخدام.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs font-black text-emerald-700 pt-3 border-t border-slate-100">
+                <span>إجمالي العائلات ({families.length})</span>
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* Card 4: الخريطة الذكية للافتقاد */}
+            <Link
+              to="/servant/visitation-map"
+              className="bg-white hover:bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 hover:border-purple-600 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-purple-700 text-white flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+                  <MapPin className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-tajawal text-lg font-black text-[#002366] group-hover:text-purple-800 transition-colors">
+                    خريطة الافتقاد الذكية
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold mt-1">
+                    استعراض وتوزيع افتقاد الأسر جغرافياً حسب المناطق والشوارع.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs font-black text-purple-700 pt-3 border-t border-slate-100">
+                <span>فتح خريطة الافتقاد 🗺️</span>
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* Card 5: العظات والكلمات الروحية */}
+            <Link
+              to="/priest/sermons"
+              className="bg-white hover:bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 hover:border-indigo-600 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+                  <Mic className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-tajawal text-lg font-black text-[#002366] group-hover:text-indigo-800 transition-colors">
+                    العظات والكلمات الروحية
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold mt-1">
+                    تسجيل ومتابعة عظات الآباء الكهنة وروابط اليوتيوب.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs font-black text-indigo-700 pt-3 border-t border-slate-100">
+                <span>إجمالي العظات ({sermons.length})</span>
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* Card 6: تعليقات وملاحظات الأسر */}
+            <Link
+              to="/priest/comments"
+              className="bg-white hover:bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 hover:border-rose-500 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+                  <MessageSquare className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-tajawal text-lg font-black text-[#002366] group-hover:text-rose-800 transition-colors">
+                    ملاحظات وتعليقات الأسر
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold mt-1">
+                    مراجعة طلبات وتحديثات أفراد شعب الكنيسة.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs font-black text-rose-700 pt-3 border-t border-slate-100">
+                <span>قيد المراجعة ({pendingCommentsCount})</span>
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* Card 7: خدمات ومجموعات الكنيسة */}
+            <Link
+              to="/priest/services-families"
+              className="bg-white hover:bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 hover:border-cyan-600 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-cyan-600 text-white flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+                  <BookmarkCheck className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-tajawal text-lg font-black text-[#002366] group-hover:text-cyan-800 transition-colors">
+                    اجتماعات وخدمات الكنيسة
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold mt-1">
+                    متابعة مدارس الأحد، الشباب، واجتماعات الخريجين.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs font-black text-cyan-700 pt-3 border-t border-slate-100">
+                <span>عرض أسر الخدمات</span>
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* Card 8: موقع الكنيسة والجدول العام */}
+            <Link
+              to="/schedule"
+              target="_blank"
+              className="bg-white hover:bg-slate-50 p-6 rounded-3xl border-2 border-slate-200 hover:border-amber-600 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-[#00174a] text-[#fed65b] flex items-center justify-center font-black shadow-md group-hover:scale-105 transition-transform">
+                  <Eye className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="font-tajawal text-lg font-black text-[#002366] group-hover:text-amber-700 transition-colors">
+                    عرض الجدول العام للشعب
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold mt-1">
+                    معاينة الصفحة العامة لجدول القداسات كما يراها الشعب.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs font-black text-[#002366] pt-3 border-t border-slate-100">
+                <span>فتح الصفحة العامة 🌐</span>
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
           </div>
         </div>
 
-        {/* Database Integrations: Prayer Requests list */}
-        <div className="bg-white rounded-xl p-6 border border-[#c5c6d2]/30 shadow-sm transition-all duration-200">
-          <div className="flex items-center justify-between border-b border-[#c5c6d2]/20 pb-3 mb-5">
-            <h5 className="font-tajawal text-base font-bold text-[#00113a] flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#fed65b]">favorite</span>
-              متابعة طلبات الصلاة الواردة
-            </h5>
-            <span className="text-xs bg-[#f5f3f3] text-[#444650] px-3 py-1 rounded-full font-bold">
-              {prayers.length.toLocaleString('ar-EG')} طلب صلاة
+        {/* ── 3. LIVE STREAM CONTROLLER (تحكم البث المباشر الكنسي) ── */}
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-black shrink-0">
+                <Radio className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-tajawal text-lg font-black text-[#002366]">
+                  إدارة البث المباشر للصلوات والقداسات 🔴
+                </h3>
+                <p className="text-xs text-slate-500 font-semibold">
+                  تحكم مباشر في تشغيل أو إيقاف البث المباشر لكنيسة السيدة العذراء على الموقع العام.
+                </p>
+              </div>
+            </div>
+
+            <span className={`px-3.5 py-1.5 rounded-xl text-xs font-black self-start sm:self-auto ${
+              streamActive === 'true'
+                ? 'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse'
+                : 'bg-slate-100 text-slate-600'
+            }`}>
+              {streamActive === 'true' ? '🔴 البث يعمل حالياً ومتاح للشعب' : '⚪ البث مغلق حالياً'}
             </span>
           </div>
 
-          <div className="space-y-3 font-semibold text-xs sm:text-sm">
-            {loading ? (
-              <p className="text-[#444650] text-[#1b1c1c]/70 text-center py-4 text-sm font-bold">جاري تحميل البيانات...</p>
-            ) : prayers.length === 0 ? (
-              <p className="text-[#444650] text-[#1b1c1c]/70 text-center py-4 text-sm font-bold">لا توجد طلبات صلاة مسجلة حالياً.</p>
-            ) : (
-              prayers.slice(0, 5).map(p => (
-                <div key={p.id} className="p-4 bg-[#f5f3f3]/50 rounded-xl border border-[#c5c6d2]/20 flex items-center justify-between hover:bg-[#f5f3f3] transition-colors">
-                  <div className="flex-1 min-w-0 pr-2">
-                    <h6 className="font-bold text-[#00113a] text-sm">طالب الصلاة: {p.requester_name || 'فاعل خير'}</h6>
-                    <p className="text-xs text-[#444650] mt-1 line-clamp-2">{p.request_text}</p>
-                  </div>
-                  <span className={`font-bold px-3.5 py-1.5 rounded-full text-[10px] whitespace-nowrap shrink-0 ${
-                    p.is_read
-                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
-                      : 'bg-amber-50 text-amber-800 border border-[#fed65b]/50'
-                  }`}>
-                    {p.is_read ? 'تمت قراءتها' : 'جديدة قيد الصلاة'}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Priest Live Stream & Inbound Contact Messages Restructure */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* 1. Live Stream Controller (5 Cols) */}
-          <div className="lg:col-span-5 bg-white rounded-xl p-6 border border-[#c5c6d2]/30 shadow-sm text-right flex flex-col justify-between">
-            <div>
-              <h5 className="font-tajawal text-base font-bold text-[#00113a] border-b border-[#c5c6d2]/20 pb-3 mb-5 flex items-center gap-2">
-                <Radio className="w-5 h-5 text-[#d4af37]" />
-                <span>التحكم في البث المباشر</span>
-              </h5>
+          <form onSubmit={handleUpdateLiveStream} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               
-              <form onSubmit={handleUpdateLiveStream} className="space-y-4">
-                <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-150">
-                  <span className="text-[11px] font-bold text-slate-700">البث المباشر نشط الآن:</span>
-                  <select
-                    value={streamActive}
-                    onChange={e => setStreamActive(e.target.value)}
-                    className="bg-white border border-slate-200 rounded px-2.5 py-1 text-xs outline-none focus:border-[#002366] font-bold"
-                  >
-                    <option value="false">مغلق</option>
-                    <option value="true">مفتوح (نشط)</option>
-                  </select>
-                </div>
+              {/* حالة البث */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">حالة البث المباشر *</label>
+                <select
+                  value={streamActive}
+                  onChange={(e) => setStreamActive(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#002366] outline-none focus:border-[#002366]"
+                >
+                  <option value="false">⚪ مغلق (لا يوجد بث الآن)</option>
+                  <option value="true">🔴 نشط الآن (عرض البث في الصفحة الرئيسية)</option>
+                </select>
+              </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500 font-bold">رابط فيديو البث (يوتيوب)</label>
-                  <input
-                    type="text"
-                    value={streamUrl}
-                    onChange={e => setStreamUrl(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#002366] font-mono"
-                  />
-                </div>
+              {/* رابط يوتيوب */}
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-bold text-slate-700 block">رابط البث على يوتيوب (YouTube Live URL) *</label>
+                <input
+                  type="text"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={streamUrl}
+                  onChange={(e) => setStreamUrl(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold outline-none focus:border-[#002366]"
+                />
+              </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500 font-bold">عنوان البث</label>
-                  <input
-                    type="text"
-                    value={streamTitle}
-                    onChange={e => setStreamTitle(e.target.value)}
-                    placeholder="القداس الإلهي..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#002366] font-semibold"
-                  />
-                </div>
+              {/* عنوان البث */}
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-bold text-slate-700 block">عنوان البث (مثال: بث مباشر للقداس الإلهي) *</label>
+                <input
+                  type="text"
+                  placeholder="بث مباشر للقداس الإلهي - كنيسة السيدة العذراء مريم"
+                  value={streamTitle}
+                  onChange={(e) => setStreamTitle(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold outline-none focus:border-[#002366]"
+                />
+              </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500 font-bold">وصف وتفاصيل البث</label>
-                  <textarea
-                    value={streamDesc}
-                    onChange={e => setStreamDesc(e.target.value)}
-                    placeholder="اكتب تفاصيل البث هنا..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#002366] h-16 resize-none"
-                  />
-                </div>
-
+              {/* زر الحفظ */}
+              <div className="flex items-end">
                 <button
                   type="submit"
                   disabled={submittingStream}
-                  className="w-full bg-[#00113a] hover:bg-[#002366] text-[#fed65b] font-bold text-xs py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="w-full bg-[#002366] hover:bg-[#00174a] text-[#fed65b] font-black text-xs py-3 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                 >
-                  <RefreshCw className={`w-4 h-4 ${submittingStream ? 'animate-spin' : ''}`} />
-                  <span>{submittingStream ? 'جاري التحديث والحفظ...' : 'تحديث وحفظ البث'}</span>
+                  {submittingStream ? 'جاري الحفظ...' : '💾 حفظ وتحديث حالة البث'}
                 </button>
-              </form>
+              </div>
+
             </div>
-          </div>
+          </form>
+        </div>
 
-          {/* 2. Inbound Contact Messages (7 Cols) */}
-          <div className="lg:col-span-7 bg-white rounded-xl p-6 border border-[#c5c6d2]/30 shadow-sm text-right flex flex-col justify-between">
-            <div>
-              <h5 className="font-tajawal text-base font-bold text-[#00113a] border-b border-[#c5c6d2]/20 pb-3 mb-5 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-[#d4af37]" />
-                <span>رسائل نموذج تواصل معنا ({contactMessages.length})</span>
-              </h5>
-
-              <div className="space-y-3.5 max-h-[360px] overflow-y-auto pr-1">
-                {loading ? (
-                  <p className="text-center text-slate-400 text-xs py-10 font-bold">جاري تحميل الرسائل...</p>
-                ) : contactMessages.length === 0 ? (
-                  <p className="text-center text-slate-400 text-xs py-10 font-bold">لا توجد رسائل واردة حالياً.</p>
-                ) : (
-                  contactMessages.map(msg => (
-                    <div 
-                      key={msg.id} 
-                      className={`p-4 rounded-2xl border transition-all text-xs font-semibold relative ${
-                        msg.status === 'unread' 
-                          ? 'bg-amber-50/50 border-amber-200/60 shadow-sm' 
-                          : 'bg-slate-50 border-slate-200/70'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="font-bold text-sm text-[#002366]">{msg.name}</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">تليفون: <span className="font-mono">{msg.phone}</span> — {new Date(msg.created_at).toLocaleDateString('ar-EG')}</p>
-                        </div>
-                        
-                        <div className="flex items-center gap-1">
-                          {msg.status === 'unread' && (
-                            <button
-                              onClick={() => handleMessageStatus(msg.id, 'read')}
-                              className="bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold"
-                              title="تحديد كمقروءة"
-                            >
-                              غير مقروءة
-                            </button>
-                          )}
-                          {msg.status !== 'unread' && (
-                            <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-[10px] font-bold select-none">
-                              تمت قراءتها
-                            </span>
-                          )}
-                          <button
-                            onClick={() => handleDeleteMessage(msg.id)}
-                            className="p-1 text-rose-500 hover:bg-rose-50 rounded"
-                            title="مسح الرسالة"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <p className="text-slate-650 leading-relaxed bg-white/70 p-2.5 rounded-lg border border-slate-100">
-                        {msg.message}
-                      </p>
-                    </div>
-                  ))
-                )}
+        {/* ── 4. CITIZEN MESSAGES INBOX (رسائل تواصل معنا) ── */}
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-black shrink-0">
+                <MailOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-tajawal text-lg font-black text-[#002366]">
+                  رسائل واستفسارات الشعب (تواصل معنا) ✉️
+                </h3>
+                <p className="text-xs text-slate-500 font-semibold">
+                  قراءة والرد على الرسائل والطلبات الواردة من أبناء الكنيسة.
+                </p>
               </div>
             </div>
+
+            {unreadMessagesCount > 0 && (
+              <span className="bg-rose-100 text-rose-800 border border-rose-200 px-3 py-1 rounded-xl text-xs font-black">
+                ({unreadMessagesCount}) رسائل غير مقروءة 🔔
+              </span>
+            )}
           </div>
 
+          {contactMessages.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <MailOpen className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-xs font-bold text-slate-500">لا توجد رسائل واردة حالياً من الشعب</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-right border-collapse text-xs font-semibold">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                    <th className="p-3.5 font-bold">الاسم ورقم الهاتف</th>
+                    <th className="p-3.5 font-bold">الرسالة</th>
+                    <th className="p-3.5 font-bold">التاريخ</th>
+                    <th className="p-3.5 font-bold">الحالة</th>
+                    <th className="p-3.5 font-bold text-center">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {contactMessages.slice(0, 10).map((msg) => (
+                    <tr key={msg.id} className={`hover:bg-slate-50/80 transition-colors ${msg.status === 'unread' ? 'bg-blue-50/30 font-bold' : ''}`}>
+                      <td className="p-3.5">
+                        <div className="font-bold text-[#00174a]">{msg.name}</div>
+                        {msg.phone && <div className="text-[11px] text-slate-500">{msg.phone}</div>}
+                      </td>
+                      <td className="p-3.5 max-w-xs truncate text-slate-600">{msg.message}</td>
+                      <td className="p-3.5 text-slate-500 text-[11px]">
+                        {new Date(msg.created_at).toLocaleDateString('ar-EG')}
+                      </td>
+                      <td className="p-3.5">
+                        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold ${
+                          msg.status === 'unread'
+                            ? 'bg-rose-100 text-rose-800'
+                            : msg.status === 'replied'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {msg.status === 'unread' ? 'جديدة' : msg.status === 'replied' ? 'تم الرد' : 'تمت القراءة'}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => {
+                              setSelectedMessage(msg);
+                              if (msg.status === 'unread') {
+                                handleMessageStatus(msg.id, 'read');
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer"
+                            title="قراءة الرسالة"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="حذف الرسالة"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
-        {/* Database Integrations: Content Performance summary counts */}
-        <div className="bg-white rounded-xl p-6 border border-[#c5c6d2]/30 shadow-sm transition-all duration-200">
-          <h5 className="font-tajawal text-base font-bold text-[#00113a] border-b border-[#c5c6d2]/20 pb-3 mb-5 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#fed65b]">bar_chart</span>
-            مؤشرات الأداء العامة
-          </h5>
-          <p className="text-xs text-[#444650] mb-4">تحليل إحصائي مباشر للأشهر السابقة.</p>
-          <div className="grid grid-cols-3 gap-6">
-            <div className="bg-[#00113a]/5 rounded-xl p-4 text-center">
-              <h4 className="font-tajawal text-2xl font-extrabold text-[#00113a]">
-                {loading ? '...' : sermons.length.toLocaleString('ar-EG')}
-              </h4>
-              <p className="text-[10px] text-[#444650] font-bold mt-1">إجمالي العظات</p>
-            </div>
-            <div className="bg-emerald-50 rounded-xl p-4 text-center">
-              <h4 className="font-tajawal text-2xl font-extrabold text-emerald-700">
-                {loading ? '...' : prayers.length.toLocaleString('ar-EG')}
-              </h4>
-              <p className="text-[10px] text-slate-500 font-bold mt-1">طلبات الصلاة</p>
-            </div>
-            <div className="bg-[#fed65b]/10 rounded-xl p-4 text-center">
-              <h4 className="font-tajawal text-2xl font-extrabold text-[#735c00]">
-                {loading ? '...' : comments.length.toLocaleString('ar-EG')}
-              </h4>
-              <p className="text-[10px] text-slate-500 font-bold mt-1">التعليقات</p>
+        {/* ── 5. MESSAGE DETAIL MODAL ── */}
+        {selectedMessage && (
+          <div className="fixed inset-0 bg-[#00113a]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-scaleUp my-auto">
+              
+              <div className="bg-[#002366] text-white p-5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MailOpen className="w-5 h-5 text-[#fed65b]" />
+                  <h3 className="font-tajawal text-base font-black text-[#fed65b]">
+                    تفاصيل رسالة من: {selectedMessage.name}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedMessage(null)}
+                  className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4 text-xs font-semibold">
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">الاسم:</span>
+                    <span className="text-[#00174a] font-bold">{selectedMessage.name}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">رقم الهاتف:</span>
+                    <span className="text-[#00174a] font-bold">{selectedMessage.phone || 'غير مسجل'}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-slate-500 font-bold block">نص الرسالة:</label>
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 leading-relaxed whitespace-pre-wrap">
+                    {selectedMessage.message}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleMessageStatus(selectedMessage.id, 'replied')}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>تم الرد على الشعب</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedMessage(null)}
+                    className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors cursor-pointer"
+                  >
+                    إغلاق
+                  </button>
+                </div>
+
+              </div>
+
             </div>
           </div>
-        </div>
+        )}
 
       </div>
     </DashboardLayout>
   );
 };
+export default PriestDashboardPage;
