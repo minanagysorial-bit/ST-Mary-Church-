@@ -41,8 +41,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
   const [loadingVerse, setLoadingVerse] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeAnnouncements, setActiveAnnouncements] = useState<Announcement[]>([]);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [selectedAnnImage, setSelectedAnnImage] = useState<string | null>(null);
+  const [copiedAnn, setCopiedAnn] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
 
   const [notificationStatus, setNotificationStatus] = useState<NotificationPermission>(getNotificationPermission());
   const [installSuccess, setInstallSuccess] = useState(false);
@@ -329,46 +332,58 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
                 <span>إعلانات ومناسبات الكنيسة</span>
               </h2>
 
-              <ul className="divide-y divide-slate-100 text-xs">
+              <div className="space-y-3">
                 {activeAnnouncements.map((ann) => {
                   const cleanText = api.cleanAnnouncementContent(ann.content);
                   return (
-                    <li key={ann.id} className="py-3.5 space-y-2">
+                    <div 
+                      key={ann.id} 
+                      onClick={() => setSelectedAnnouncement(ann)}
+                      className="p-3.5 rounded-2xl border border-slate-100 hover:border-[#002366]/30 bg-slate-50/60 hover:bg-white transition-all shadow-sm hover:shadow-md cursor-pointer group space-y-2.5"
+                    >
                       {/* Announcement Image Banner (if available) */}
                       {ann.image_url && (
-                        <div 
-                          onClick={() => setSelectedAnnImage(ann.image_url!)}
-                          className="relative group rounded-xl overflow-hidden cursor-pointer border border-slate-200 shadow-sm bg-slate-100"
-                        >
+                        <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100 h-36">
                           <img 
                             src={ann.image_url} 
                             alt={ann.title} 
-                            className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = 'none';
-                            }}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
                           />
-                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1.5 font-bold text-[11px] backdrop-blur-[1px]">
+                          <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1.5 font-bold text-[11px] backdrop-blur-[1px]">
                             <Eye className="w-4 h-4 text-[#fed65b]" />
-                            <span>تكبير الصورة</span>
+                            <span>عرض الإعلان والبوستر</span>
                           </div>
                         </div>
                       )}
                       
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#002366]/10 text-[#002366] text-[10px] font-bold px-2 py-0.5 rounded">إعلان</span>
-                          <p className="font-bold text-slate-800 text-sm font-tajawal">{ann.title}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="bg-[#002366] text-[#fed65b] text-[10px] font-bold px-2 py-0.5 rounded-md">إعلان</span>
+                            <h3 className="font-bold text-slate-900 text-sm font-tajawal group-hover:text-[#002366] transition-colors">{ann.title}</h3>
+                          </div>
                         </div>
-                        <p className="text-slate-600 text-xs leading-relaxed line-clamp-3 whitespace-pre-line">{cleanText}</p>
+                        <p className="text-slate-600 text-xs leading-relaxed line-clamp-2">{cleanText}</p>
                       </div>
-                    </li>
+
+                      <div className="pt-1 flex items-center justify-between text-[11px] font-bold text-[#002366]">
+                        <span className="text-slate-400 font-mono text-[10px]">{ann.start_date}</span>
+                        <span className="group-hover:translate-x-[-2px] transition-transform flex items-center gap-1">
+                          <span>قراءة كامل التفاصيل</span>
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                        </span>
+                      </div>
+                    </div>
                   );
                 })}
                 {activeAnnouncements.length === 0 && (
-                  <li className="py-6 text-slate-400 text-center font-bold">لا توجد إعلانات حالية.</li>
+                  <div className="py-8 text-slate-400 text-center font-bold text-xs space-y-1">
+                    <p>لا توجد إعلانات حالية منشورة.</p>
+                  </div>
                 )}
-              </ul>
+              </div>
+
             </div>
 
             <Link
@@ -551,13 +566,110 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
       {/* 🕊️ Interactive Church Fathers' Quotes Slider (سلايدر أقوال الآباء القديسين) */}
       <FathersQuotesSlider />
 
+      {/* 📢 Full Announcement Details Modal (عرض تفاصيل الإعلان والبوستر) */}
+      {selectedAnnouncement && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn overflow-y-auto"
+          onClick={() => setSelectedAnnouncement(null)}
+        >
+          <div 
+            className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl my-8 text-right font-cairo"
+            onClick={e => e.stopPropagation()}
+            dir="rtl"
+          >
+            {/* Header bar */}
+            <div className="bg-[#00174a] text-white p-5 flex items-center justify-between border-b-2 border-[#fed65b]">
+              <div className="flex items-center gap-2">
+                <span className="bg-[#fed65b] text-[#00174a] text-xs font-extrabold px-2.5 py-0.5 rounded-md">إعلان كنسي</span>
+                <h3 className="font-tajawal font-bold text-lg text-[#fed65b] truncate max-w-md">{selectedAnnouncement.title}</h3>
+              </div>
+              <button
+                onClick={() => setSelectedAnnouncement(null)}
+                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-xl transition-colors shrink-0"
+                title="إغلاق"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Poster / Image (if available) */}
+            {selectedAnnouncement.image_url && (
+              <div className="relative bg-slate-950/5 max-h-[55vh] overflow-hidden flex items-center justify-center border-b border-slate-100">
+                <img 
+                  src={selectedAnnouncement.image_url} 
+                  alt={selectedAnnouncement.title} 
+                  className="w-full h-auto max-h-[55vh] object-contain cursor-zoom-in"
+                  onClick={() => setSelectedAnnImage(selectedAnnouncement.image_url!)}
+                  title="اضغط للتكبير بملء الشاشة"
+                />
+              </div>
+            )}
+
+            {/* Announcement Details & Actions */}
+            <div className="p-6 space-y-5">
+              <div className="space-y-2">
+                <h2 className="font-tajawal font-bold text-xl text-[#00174a] leading-snug">
+                  {selectedAnnouncement.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
+                  <span className="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-lg">
+                    <Clock className="w-3.5 h-3.5 text-[#002366]" />
+                    <span>تاريخ النشر: {selectedAnnouncement.start_date}</span>
+                  </span>
+                  <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200">
+                    إعلان نشط
+                  </span>
+                </div>
+              </div>
+
+              {/* Full Content */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-slate-800 text-sm leading-relaxed whitespace-pre-line font-medium max-h-60 overflow-y-auto">
+                {api.cleanAnnouncementContent(selectedAnnouncement.content)}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  onClick={() => {
+                    const text = `📢 *${selectedAnnouncement.title}*\n\n${api.cleanAnnouncementContent(selectedAnnouncement.content)}\n\n⛪ كنيسة السيدة العذراء مريم بمحرم بك\nhttps://www.tibarthenos.com/`;
+                    navigator.clipboard.writeText(text);
+                    setCopiedAnn(true);
+                    setTimeout(() => setCopiedAnn(false), 2500);
+                  }}
+                  className="w-full sm:flex-1 bg-[#00174a] hover:bg-[#002366] text-[#fed65b] font-bold text-xs py-3 rounded-xl transition-all shadow flex items-center justify-center gap-2 active:scale-95"
+                >
+                  {copiedAnn ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span className="text-emerald-400">تم نسخ تفاصيل الإعلان!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4" />
+                      <span>مشاركة / نسخ تفاصيل الإعلان</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setSelectedAnnouncement(null)}
+                  className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-6 py-3 rounded-xl transition-colors"
+                >
+                  إغلاق
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Announcement Image Lightbox Zoom Modal */}
       {selectedAnnImage && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn"
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn"
           onClick={() => setSelectedAnnImage(null)}
         >
-          <div className="relative max-w-3xl max-h-[90vh] bg-white rounded-3xl overflow-hidden shadow-2xl p-2" onClick={e => e.stopPropagation()}>
+          <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-3xl overflow-hidden shadow-2xl p-2" onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setSelectedAnnImage(null)}
               className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-black transition-colors z-10"
@@ -567,7 +679,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
             </button>
             <img 
               src={selectedAnnImage} 
-              alt="Announcement Poster Full" 
+              alt="Announcement Full" 
               className="w-full max-h-[82vh] object-contain rounded-2xl"
             />
           </div>
@@ -577,4 +689,5 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
     </div>
   );
 };
+
 

@@ -1218,15 +1218,15 @@ export const api = {
       return (data || []).map((ann: any) => {
         let finalImg = ann.image_url || null;
         if (!finalImg && ann.content) {
-          const m = ann.content.match(/\[IMG:(https?:\/\/[^\]]+)\]/);
-          if (m) finalImg = m[1];
+          const m = ann.content.match(/\[IMG:(.+?)\]/);
+          if (m) finalImg = m[1].trim();
         }
         return {
           ...ann,
           image_url: finalImg ? convertDriveUrl(finalImg) : null
         };
       }) as Announcement[];
-    }, 60_000);
+    }, 15_000);
   },
 
   getActiveAnnouncements: async (): Promise<Announcement[]> => {
@@ -1238,17 +1238,19 @@ export const api = {
         .order('created_at', { ascending: false });
       if (error) throw error;
       
-      // Filter out announcements that have expired or don't match specific days
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // normalize time
-      const dayName = today.toLocaleDateString('ar-EG', { weekday: 'long' });
+      const now = new Date();
+      const todayYear = now.getFullYear();
+      const todayMonth = now.getMonth();
+      const todayDate = now.getDate();
+      const todayStr = `${todayYear}-${String(todayMonth + 1).padStart(2, '0')}-${String(todayDate).padStart(2, '0')}`;
+      const dayName = now.toLocaleDateString('ar-EG', { weekday: 'long' });
 
       return (data || [])
         .map((ann: any) => {
           let finalImg = ann.image_url || null;
           if (!finalImg && ann.content) {
-            const m = ann.content.match(/\[IMG:(https?:\/\/[^\]]+)\]/);
-            if (m) finalImg = m[1];
+            const m = ann.content.match(/\[IMG:(.+?)\]/);
+            if (m) finalImg = m[1].trim();
           }
           return {
             ...ann,
@@ -1256,31 +1258,32 @@ export const api = {
           };
         })
         .filter(ann => {
-          const startDate = new Date(ann.start_date);
-          startDate.setHours(0, 0, 0, 0);
-
-          // if start date is in the future, it's not active yet
-          if (startDate > today) return false;
+          if (!ann.start_date) return true;
+          
+          // If start date is strictly in the future (e.g. tomorrow), don't show yet
+          if (ann.start_date > todayStr) return false;
 
           if (ann.duration_type === 'permanent') return true;
           
           if (ann.duration_type === 'days_limit' && ann.duration_days) {
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + ann.duration_days);
-            return today <= endDate;
+            const [sy, sm, sd] = ann.start_date.split('-').map(Number);
+            const endDay = new Date(sy, sm - 1, sd + Number(ann.duration_days));
+            const currentDay = new Date(todayYear, todayMonth, todayDate);
+            return currentDay <= endDay;
           }
           
-          if (ann.duration_type === 'days_specific' && ann.specific_days) {
-            // e.g. "الجمعة", "الأحد"
+          if (ann.duration_type === 'days_specific' && ann.specific_days && ann.specific_days.length > 0) {
             return ann.specific_days.includes(dayName);
           }
 
-          return false;
+          return true;
         }) as Announcement[];
-    }, 60_000);
+    }, 15_000);
   },
 
   createAnnouncement: async (ann: AnnouncementInsert): Promise<Announcement> => {
+    fastCache.invalidate('announcements_all');
+    fastCache.invalidate('announcements_active');
     fastCache.invalidate('announcements');
     let contentToSave = ann.content;
     if (ann.image_url && !contentToSave.includes(`[IMG:${ann.image_url}]`)) {
@@ -1325,6 +1328,8 @@ export const api = {
   },
 
   updateAnnouncement: async (id: string, updates: Partial<Announcement>): Promise<Announcement> => {
+    fastCache.invalidate('announcements_all');
+    fastCache.invalidate('announcements_active');
     fastCache.invalidate('announcements');
     let contentToSave = updates.content;
     if (contentToSave !== undefined) {
@@ -1375,6 +1380,8 @@ export const api = {
   },
 
   deleteAnnouncement: async (id: string): Promise<void> => {
+    fastCache.invalidate('announcements_all');
+    fastCache.invalidate('announcements_active');
     fastCache.invalidate('announcements');
     const { error } = await supabase
       .from('announcements')
@@ -1384,6 +1391,8 @@ export const api = {
   },
 
   toggleAnnouncementActive: async (id: string, isActive: boolean): Promise<void> => {
+    fastCache.invalidate('announcements_all');
+    fastCache.invalidate('announcements_active');
     fastCache.invalidate('announcements');
     const { error } = await supabase
       .from('announcements')
@@ -1391,6 +1400,7 @@ export const api = {
       .eq('id', id);
     if (error) throw error;
   },
+
 
   cleanAnnouncementContent: (content: string | null | undefined): string => {
     return cleanAnnouncementContent(content);
