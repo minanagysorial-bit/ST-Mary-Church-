@@ -251,15 +251,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
             {/* Button 1: طلب افتقاد */}
             <button
               onClick={() => setIsVisitationModalOpen(true)}
-              className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] hover:from-[#c5a030] hover:to-[#eec54f] text-[#00174a] font-black text-xs sm:text-sm px-7 sm:px-8 py-4 rounded-2xl transition-all shadow-xl hover:shadow-2xl btn-bounce flex items-center justify-center gap-2.5 text-center cursor-pointer border border-amber-300 active:scale-95"
+              className="w-full sm:w-auto min-w-[210px] bg-gradient-to-r from-[#d4af37] to-[#fed65b] hover:from-[#c5a030] hover:to-[#eec54f] text-[#00174a] font-black text-xs sm:text-sm px-7 py-4 rounded-2xl transition-all shadow-xl hover:shadow-2xl btn-bounce flex items-center justify-center gap-2.5 text-center cursor-pointer border border-amber-300 active:scale-95"
             >
+              <UserCheck className="w-5 h-5 text-[#00174a] shrink-0" />
               <span>طلب افتقاد</span>
             </button>
 
             {/* Button 2: اطلب صلاة على المذبح */}
             <button
               onClick={onOpenPrayerModal}
-              className="bg-white/10 hover:bg-white/20 text-white border-2 border-[#fed65b]/60 font-black text-xs sm:text-sm px-7 sm:px-8 py-4 rounded-2xl transition-all backdrop-blur-md btn-bounce flex items-center justify-center gap-2.5 text-center cursor-pointer active:scale-95"
+              className="w-full sm:w-auto min-w-[210px] bg-white/10 hover:bg-white/20 text-white border-2 border-[#fed65b]/60 font-black text-xs sm:text-sm px-7 py-4 rounded-2xl transition-all backdrop-blur-md btn-bounce flex items-center justify-center gap-2.5 text-center cursor-pointer active:scale-95"
             >
               <HeartHandshake className="w-5 h-5 text-[#fed65b] shrink-0" />
               <span>اطلب صلاة على المذبح 🕊️</span>
@@ -268,23 +269,53 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         </div>
       </section>
 
-      {/* ── 2. VERSE OF THE DAY CARD ── */}
+      {/* ── 2. QUICK ACCESS SERVICES BAR (شريط الوصول السريع) ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-br from-[#002366] via-[#001d54] to-[#00174a] text-white p-6 sm:p-8 md:p-10 rounded-3xl border-2 border-[#d4af37]/40 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[220px] interactive-card">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { title: 'قداسات وخدمات', icon: Calendar, link: '/liturgies-schedule', color: 'from-amber-500/20 to-amber-600/10 text-amber-900 border-amber-300' },
+            { title: 'بث مباشر للصلوات', icon: Radio, link: '/live-stream', color: 'from-rose-500/20 to-rose-600/10 text-rose-900 border-rose-300' },
+            { title: 'مكتبة العظات', icon: BookOpen, link: '/sermons', color: 'from-blue-500/20 to-blue-600/10 text-blue-900 border-blue-300' },
+            { title: 'سنكسار وقراءات', icon: Quote, link: '/readings', color: 'from-indigo-500/20 to-indigo-600/10 text-indigo-900 border-indigo-300' },
+            { title: 'تسجيل العضوية', icon: UserCheck, link: '/membership/register', color: 'from-emerald-500/20 to-emerald-600/10 text-emerald-900 border-emerald-300' },
+            { title: 'تواصل وموقعنا', icon: MapPin, link: '/contact-us', color: 'from-slate-500/20 to-slate-600/10 text-slate-900 border-slate-300' },
+          ].map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={idx}
+                to={item.link}
+                className="bg-white hover:bg-slate-50 border-2 border-slate-200/90 hover:border-[#d4af37] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center transition-all shadow-xs hover:shadow-md group active:scale-95"
+              >
+                <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${item.color} border flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="font-tajawal font-bold text-xs text-[#00174a] group-hover:text-[#002366]">
+                  {item.title}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── 3. VERSE OF THE DAY CARD ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-gradient-to-br from-[#002366] via-[#001d54] to-[#00174a] text-white p-6 sm:p-8 md:p-10 rounded-3xl border-2 border-[#d4af37]/40 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[240px] interactive-card">
           <div className="absolute -left-10 -bottom-10 opacity-10 pointer-events-none">
-            <Cross className="w-64 h-64 text-[#fed65b]" />
+            <Cross className="w-72 h-72 text-[#fed65b]" />
           </div>
 
           <div className="space-y-4 relative z-10">
             <div className="flex items-center justify-between">
-              <span className="bg-[#fed65b] text-[#00174a] text-xs font-black px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
-                <Sparkles className="w-3.5 h-3.5" />
+              <span className="bg-[#fed65b] text-[#00174a] text-xs font-black px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm font-tajawal">
+                <Sparkles className="w-4 h-4" />
                 <span>آية اليوم المباركة</span>
               </span>
               <div className="flex items-center gap-2 text-slate-300">
                 <button
                   onClick={handleShare}
-                  className="p-2 hover:text-[#fed65b] hover:bg-white/10 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold font-tajawal cursor-pointer"
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[#fed65b] border border-[#fed65b]/30 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold font-tajawal cursor-pointer"
                   title="مشاركة الآية"
                 >
                   {copied ? (
@@ -303,43 +334,44 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
             </div>
 
             {loadingVerse ? (
-              <div className="py-6 text-slate-300 text-xs font-bold font-cairo">جاري سحب آية مباركة...</div>
+              <div className="py-8 text-slate-300 text-xs font-bold font-cairo">جاري سحب آية مباركة...</div>
             ) : (
-              <>
-                <blockquote className="font-tajawal text-base sm:text-xl lg:text-2xl font-extrabold text-[#fed65b] leading-relaxed pt-2">
-                  {verse ? verse.text : defaultVerseText}
+              <div className="py-2 space-y-3">
+                <blockquote className="font-tajawal text-lg sm:text-2xl lg:text-3xl font-extrabold text-[#fed65b] leading-relaxed sm:leading-loose tracking-wide">
+                  "{verse ? verse.text : defaultVerseText}"
                 </blockquote>
 
-                <p className="text-xs sm:text-sm text-slate-300 font-bold font-tajawal">
-                  — {verse ? verse.reference : defaultVerseRef}
-                </p>
-              </>
+                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xs px-3.5 py-1 rounded-full border border-white/15 text-xs sm:text-sm text-slate-200 font-bold font-tajawal">
+                  <span>🕊️</span>
+                  <span>{verse ? verse.reference : defaultVerseRef}</span>
+                </div>
+              </div>
             )}
           </div>
 
-          <div className="pt-5 border-t border-[#d4af37]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-300 relative z-10 mt-4">
-            <span>قراءة يومية مباركة لشعب الكنيسة</span>
-            <Link to="/readings" className="text-[#fed65b] hover:underline font-bold flex items-center gap-1 font-tajawal">
-              <span>تصفح السنكسار وقراءات اليوم</span>
+          <div className="pt-5 border-t border-[#d4af37]/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-300 relative z-10 mt-4">
+            <span className="font-semibold text-slate-300">غذاء روحي يومي لشعب ورعية الكنيسة</span>
+            <Link to="/readings" className="text-[#fed65b] hover:text-white font-bold flex items-center gap-1 font-tajawal transition-colors">
+              <span>تصفح السنكسار وقراءات اليوم الكاملة</span>
               <ChevronLeft className="w-4 h-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── 3. AUTOMATIC CHURCH NEWS & ANNOUNCEMENTS SLIDER (سلايدر أخبار الكنيسة) ── */}
+      {/* ── 4. AUTOMATIC CHURCH NEWS & ANNOUNCEMENTS SLIDER (سلايدر أخبار الكنيسة) ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ChurchNewsSlider onSelectAnnouncement={(ann) => setSelectedAnnouncement(ann)} />
       </section>
 
-      {/* ── 4. DAILY KATAMAROS & SYNAXARIUM SECTION ── */}
+      {/* ── 5. DAILY KATAMAROS & SYNAXARIUM SECTION ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <DailyReadingsCard />
       </section>
 
-      {/* ── 5. APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX ── */}
+      {/* ── 6. APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white text-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-slate-200/80 hover:border-[#d4af37]/40 relative overflow-hidden font-cairo transition-all">
+        <div className="bg-gradient-to-br from-white via-slate-50 to-amber-50/20 text-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-[#d4af37]/40 relative overflow-hidden font-cairo transition-all">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
             
             {/* Right: Info & Features */}
@@ -347,60 +379,62 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
               
               {/* Header Badges */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 bg-[#002366]/5 border border-[#002366]/15 text-[#002366] text-xs font-extrabold px-3 py-1 rounded-full">
-                  <Smartphone className="w-3.5 h-3.5 text-[#d4af37]" />
-                  <span>تطبيق الهاتف المحمول</span>
+                <span className="inline-flex items-center gap-1.5 bg-[#002366] text-[#fed65b] text-xs font-black px-3.5 py-1 rounded-full shadow-xs">
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>تطبيق الهاتف الذكي الرسمي</span>
                 </span>
 
-                <span className="bg-amber-50 text-amber-900 border border-amber-200/60 text-xs font-bold px-3 py-1 rounded-full">
-                  ⚡ إصدار خفيف وسريع مجاناً
+                <span className="bg-amber-100/80 text-amber-900 border border-amber-300 text-xs font-black px-3 py-1 rounded-full">
+                  ⚡ خفيف وسريع ويعمل أوفلاين
                 </span>
               </div>
 
               {/* Headline */}
-              <h2 className="font-tajawal text-xl sm:text-2xl font-extrabold text-[#00174a] leading-snug">
-                تطبيق كنيسة السيدة العذراء محرم بك على هاتفك 📱
+              <h2 className="font-tajawal text-xl sm:text-2xl font-black text-[#00174a] leading-snug">
+                ثبّت تطبيق كنيسة العذراء محرم بك على هاتفك 📱
               </h2>
 
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-semibold">
-                تابع البث المباشر للقداسات، استقبل آية اليوم والتنبيهات الكنسية فورياً، وتصفح السنكسار وقراءات اليوم بدون اتصال بالإنترنت.
+                تابع البث المباشر للصلوات، استقبل آية اليوم وتنبيهات القداسات لحظياً، وتصفح السنكسار وقراءات اليوم بدون اتصال بالإنترنت.
               </p>
 
               {/* Feature Badges */}
               <div className="flex flex-wrap items-center gap-2 pt-1">
-                <div className="bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                <div className="bg-white border border-slate-200/90 shadow-2xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
                   <Bell className="w-3.5 h-3.5 text-[#d4af37]" />
-                  <span>إشعارات فورية</span>
+                  <span>إشعارات وتنبيهات فورية</span>
                 </div>
-                <div className="bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                <div className="bg-white border border-slate-200/90 shadow-2xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
                   <Radio className="w-3.5 h-3.5 text-red-600" />
                   <span>بث مباشر للصلوات</span>
                 </div>
-                <div className="bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                <div className="bg-white border border-slate-200/90 shadow-2xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
                   <WifiOff className="w-3.5 h-3.5 text-[#002366]" />
-                  <span>يعمل بدون إنترنت</span>
+                  <span>يعمل بدون اتصال بالإنترنت</span>
                 </div>
               </div>
             </div>
 
             {/* Left: Icon & CTA Buttons */}
-            <div className="shrink-0 w-full md:w-auto flex flex-col sm:flex-row md:flex-col items-center gap-3 pt-2 md:pt-0">
+            <div className="shrink-0 w-full md:w-auto flex flex-col sm:flex-row md:flex-col items-center gap-3.5 pt-2 md:pt-0">
               <div className="flex items-center gap-3 w-full justify-center">
-                <img
-                  src="/app-icon-192.png"
-                  alt="Church App Icon"
-                  className="w-14 h-14 rounded-2xl object-cover shadow-md border border-slate-200 shrink-0"
-                />
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-0.5 shadow-lg shrink-0">
+                  <img
+                    src="/app-icon-192.png"
+                    alt="Church App Icon"
+                    className="w-full h-full rounded-2xl object-cover"
+                  />
+                </div>
                 <div className="text-right sm:hidden md:block">
-                  <p className="font-tajawal text-xs font-bold text-[#00174a]">العذراء محرم بك</p>
-                  <p className="text-[10px] text-slate-400 font-semibold">تطبيق رسمي</p>
+                  <p className="font-tajawal text-sm font-black text-[#00174a]">العذراء محرم بك</p>
+                  <p className="text-[11px] text-amber-700 font-bold">التطبيق الرقمي الرسمي</p>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row md:flex-col gap-2 w-full">
                 <button
                   onClick={handleInstallApp}
-                  className="w-full bg-[#002366] hover:bg-[#00174a] text-white hover:text-[#fed65b] px-5 py-2.5 rounded-xl font-tajawal font-extrabold text-xs transition-all shadow-md flex items-center justify-center gap-2 group active:scale-95 cursor-pointer"
+                  className="w-full bg-[#002366] hover:bg-[#00174a] text-[#fed65b] px-6 py-3 rounded-xl font-tajawal font-black text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 group active:scale-95 cursor-pointer border border-[#d4af37]/40"
                 >
                   <Download className="w-4 h-4 text-[#fed65b]" />
                   <span>{installSuccess ? 'تم التثبيت بنجاح!' : 'تثبيت التطبيق على هاتفك 📲'}</span>
@@ -409,15 +443,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
                 {notificationStatus !== 'granted' ? (
                   <button
                     onClick={handleEnableNotifications}
-                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <Bell className="w-3.5 h-3.5 text-[#d4af37]" />
-                    <span>تفعيل الإشعارات 🔔</span>
+                    <span>تفعيل الإشعارات والتنبيهات 🔔</span>
                   </button>
                 ) : (
-                  <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-[11px] px-3 py-1.5 rounded-xl flex items-center justify-center gap-1">
+                  <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-[11px] px-3 py-2 rounded-xl flex items-center justify-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>الإشعارات مفعلة ✅</span>
+                    <span>الإشعارات مفعلة بنجاح ✅</span>
                   </span>
                 )}
               </div>
