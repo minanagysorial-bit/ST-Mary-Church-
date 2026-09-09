@@ -46,38 +46,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
     }
   };
 
-  const [tickerAnnouncements, setTickerAnnouncements] = useState<string[]>([]);
   const [isLiveActive, setIsLiveActive] = useState<boolean>(false);
 
   useEffect(() => {
-    api.getActiveAnnouncements()
-      .then(async data => {
-        let items = data;
-        if (!items || items.length === 0) {
-          try {
-            const all = await api.getAnnouncements();
-            const activeOnly = all.filter(a => a.is_active);
-            items = activeOnly.length > 0 ? activeOnly : all;
-          } catch (e) {
-            items = [];
-          }
-        }
-
-        const texts = (items || []).map(a => {
-          const clean = api.cleanAnnouncementContent(a.content);
-          return `${a.title}${clean ? ` — ${clean}` : ''}`;
-        });
-
-        if (texts.length === 0) {
-          setTickerAnnouncements(['مرحباً بكم في المنصة الرقمية الموحدة لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية']);
-        } else {
-          setTickerAnnouncements(texts);
-        }
-      })
-      .catch(() => {
-        setTickerAnnouncements(['مرحباً بكم في المنصة الرقمية الموحدة لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية']);
-      });
-
     // Check Live Stream Status with dynamic live detection
     const checkLiveStatus = async () => {
       try {
@@ -390,41 +361,27 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
       )}
     </header>
 
-    {/* Moving Announcements Ticker Bar */}
+    {/* Decorative White Header Ribbon Bar */}
     {location.pathname === '/' && (
-      <div className="w-full bg-[#ffffff] border-b-2 border-[#d4af37]/40 text-[#00174a] py-2 relative z-30 overflow-hidden flex items-center shadow-md select-none" dir="rtl">
-        {/* News Label Badge */}
-        <div className="bg-[#002366] text-white px-3 py-1 mr-3 rounded-xl text-xs font-black flex items-center gap-1.5 shrink-0 z-10 shadow-sm border border-[#d4af37]/40 font-tajawal">
-          <span className="w-2 h-2 rounded-full bg-[#fed65b] animate-pulse shrink-0" />
-          <span>إعلانات الكنيسة 📢</span>
-        </div>
-        
-        {/* Marquee Content */}
-        <div className="flex-1 overflow-hidden relative mr-2 flex items-center">
-          <style dangerouslySetInnerHTML={{__html: `
-            @keyframes churchMarqueeRTL {
-              0% { transform: translate3d(0%, 0, 0); }
-              100% { transform: translate3d(50%, 0, 0); }
-            }
-            .animate-church-marquee {
-              display: inline-flex;
-              align-items: center;
-              white-space: nowrap;
-              animation: churchMarqueeRTL 35s linear infinite;
-              will-change: transform;
-            }
-            .animate-church-marquee:hover {
-              animation-play-state: paused;
-              cursor: pointer;
-            }
-          `}} />
-          <div className="animate-church-marquee whitespace-nowrap text-xs sm:text-sm font-extrabold font-cairo text-[#00174a] tracking-wide">
-            {[...tickerAnnouncements, ...tickerAnnouncements, ...tickerAnnouncements].map((txt, idx) => (
-              <span key={idx} className="inline-flex items-center gap-3 px-6">
-                <span>{txt}</span>
-                <span className="text-[#d4af37] font-black text-sm">✦</span>
-              </span>
-            ))}
+      <div className="w-full bg-white border-b-2 border-[#d4af37]/40 text-[#00174a] py-2 relative z-30 shadow-xs select-none" dir="rtl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-[#d4af37] to-[#fed65b] shadow-xs" />
+            <span className="font-tajawal font-black text-xs sm:text-sm text-[#00174a]">
+              كنيسة السيدة العذراء مريم بمحرم بك — الإسكندرية
+            </span>
+          </div>
+          
+          <div className="hidden sm:flex items-center gap-3 text-slate-500 font-bold text-xs">
+            <span className="text-[#d4af37] font-black">✦</span>
+            <span>«بَيْتِي بَيْتَ الصَّلاَةِ يُدْعَى»</span>
+            <span className="text-[#d4af37] font-black">✦</span>
+            <span>بيت البركة والسلام</span>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-black text-[#002366] bg-[#fed65b]/25 border border-[#d4af37]/40 px-3 py-0.5 rounded-full shadow-xs font-tajawal">
+            <span>مرحباً بكم</span>
+            <span>🕊️</span>
           </div>
         </div>
       </div>

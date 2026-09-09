@@ -248,13 +248,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
           {/* ── 2 HERO ACTION BUTTONS: طلب افتقاد + اطلب صلاة ── */}
           <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto w-full">
             
-            {/* Button 1: طلب افتقاد كنسي */}
+            {/* Button 1: طلب افتقاد */}
             <button
               onClick={() => setIsVisitationModalOpen(true)}
               className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] hover:from-[#c5a030] hover:to-[#eec54f] text-[#00174a] font-black text-xs sm:text-sm px-7 sm:px-8 py-4 rounded-2xl transition-all shadow-xl hover:shadow-2xl btn-bounce flex items-center justify-center gap-2.5 text-center cursor-pointer border border-amber-300 active:scale-95"
             >
-              <Home className="w-5 h-5 shrink-0 text-[#00174a]" />
-              <span>طلب افتقاد كنسي 🏠</span>
+              <span>طلب افتقاد</span>
             </button>
 
             {/* Button 2: اطلب صلاة على المذبح */}

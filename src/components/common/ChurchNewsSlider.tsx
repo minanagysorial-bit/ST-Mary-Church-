@@ -150,28 +150,33 @@ export const ChurchNewsSlider: React.FC<ChurchNewsSliderProps> = ({
         </div>
       </div>
 
-      {/* Main Slider Card Container */}
+      {/* Main Slider Card Container with Unified Fixed Dimensions */}
       <div 
         className="relative bg-white rounded-3xl border-2 border-slate-200/90 shadow-xl overflow-hidden group hover:border-[#d4af37]/60 transition-all cursor-pointer"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onClick={() => onSelectAnnouncement(activeAnn)}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[340px] sm:min-h-[380px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 lg:h-[410px]">
           
-          {/* Right/Hero Banner Area (5 or 6 cols) */}
-          <div className="lg:col-span-6 relative bg-gradient-to-br from-[#00113a] via-[#001f5c] to-[#002366] flex items-center justify-center overflow-hidden min-h-[240px] sm:min-h-[320px]">
+          {/* Right Banner Area (Fixed unified height on all screens) */}
+          <div className="lg:col-span-6 relative bg-gradient-to-br from-[#00113a] via-[#001f5c] to-[#002366] flex items-center justify-center overflow-hidden h-[240px] sm:h-[280px] lg:h-full w-full">
             {activeAnn.image_url ? (
-              <div className="relative w-full h-full min-h-[240px] sm:min-h-[320px] overflow-hidden">
+              <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-[#00113a]">
+                {/* Blurred backdrop for image aspect-ratio harmony */}
+                <div 
+                  className="absolute inset-0 bg-cover bg-center filter blur-md opacity-40 scale-110"
+                  style={{ backgroundImage: `url('${activeAnn.image_url}')` }}
+                />
                 <img
                   src={activeAnn.image_url}
                   alt={activeAnn.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  className="relative z-10 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#00113a]/90 via-transparent to-black/20" />
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#00113a]/80 via-transparent to-black/20 pointer-events-none" />
                 
                 {/* Hover overlay hint */}
-                <div className="absolute inset-0 bg-[#00174a]/30 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px] flex items-center justify-center text-white gap-2 font-black text-sm">
+                <div className="absolute inset-0 z-20 bg-[#00174a]/40 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px] flex items-center justify-center text-white gap-2 font-black text-sm">
                   <Eye className="w-5 h-5 text-[#fed65b]" />
                   <span>اضغط لعرض البوستر كاملاً</span>
                 </div>
@@ -207,12 +212,12 @@ export const ChurchNewsSlider: React.FC<ChurchNewsSliderProps> = ({
             </div>
           </div>
 
-          {/* Left/Text Content Area (6 cols) */}
-          <div className="lg:col-span-6 p-6 sm:p-8 flex flex-col justify-between space-y-4">
+          {/* Left/Text Content Area (Unified height and line-clamped content) */}
+          <div className="lg:col-span-6 p-5 sm:p-7 flex flex-col justify-between h-full space-y-3">
             
             <div className="space-y-3">
               {/* Badges */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
                 <span className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] text-[#00174a] font-black text-xs px-3 py-1 rounded-xl shadow-xs">
                   ✨ إعلان كنسي
                 </span>
@@ -221,25 +226,25 @@ export const ChurchNewsSlider: React.FC<ChurchNewsSliderProps> = ({
                 </span>
               </div>
 
-              {/* Title */}
-              <h3 className="font-tajawal text-xl sm:text-2xl font-black text-[#00174a] leading-snug group-hover:text-[#002366] transition-colors">
+              {/* Title (Fixed height container for 2 lines) */}
+              <h3 className="font-tajawal text-xl sm:text-2xl font-black text-[#00174a] leading-snug line-clamp-2 h-[58px] flex items-center group-hover:text-[#002366] transition-colors">
                 {activeAnn.title}
               </h3>
 
-              {/* Excerpt */}
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-semibold line-clamp-4 bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
+              {/* Excerpt (Fixed height container) */}
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-semibold line-clamp-3 sm:line-clamp-4 h-[84px] sm:h-[96px] bg-slate-50/90 p-3.5 rounded-2xl border border-slate-100 overflow-hidden">
                 {cleanContent || 'اضغط لقراءة تفاصيل هذا الإعلان والاطلاع على المواعيد والبوستر الرسمي.'}
               </p>
             </div>
 
-            {/* Bottom Actions */}
-            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {/* Bottom Actions (Anchored at bottom) */}
+            <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectAnnouncement(activeAnn);
                 }}
-                className="bg-[#002366] hover:bg-[#00174a] text-[#fed65b] font-black text-xs sm:text-sm px-5 py-3 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 group-hover:scale-102"
+                className="flex-1 bg-[#002366] hover:bg-[#00174a] text-[#fed65b] font-black text-xs sm:text-sm py-3 px-4 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 group-hover:scale-102 cursor-pointer"
               >
                 <span>قراءة كامل التفاصيل والبوستر</span>
                 <ArrowLeft className="w-4 h-4" />
@@ -247,7 +252,7 @@ export const ChurchNewsSlider: React.FC<ChurchNewsSliderProps> = ({
 
               <button
                 onClick={(e) => handleShare(activeAnn, e)}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-3 rounded-2xl transition-all flex items-center justify-center gap-1.5"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-3 rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 title="نسخ ومشاركة هذا الإعلان"
               >
                 {copiedId === activeAnn.id ? (

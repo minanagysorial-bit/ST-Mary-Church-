@@ -26,7 +26,6 @@ export const VisitationRequestModal: React.FC<VisitationRequestModalProps> = ({ 
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [landmark, setLandmark] = useState('');
-  const [reason, setReason] = useState('افتقاد دوري للأسرة 🏠');
   const [preferredTime, setPreferredTime] = useState('مساءً (5 م - 9 م) 🌙');
   const [notes, setNotes] = useState('');
 
@@ -81,7 +80,6 @@ export const VisitationRequestModal: React.FC<VisitationRequestModalProps> = ({ 
         phone: cleanPhone,
         address: address.trim(),
         landmark: landmark.trim(),
-        reason,
         preferredTime,
         notes: notes.trim()
       });
@@ -105,7 +103,6 @@ export const VisitationRequestModal: React.FC<VisitationRequestModalProps> = ({ 
     setPhone('');
     setAddress('');
     setLandmark('');
-    setReason('افتقاد دوري للأسرة 🏠');
     setPreferredTime('مساءً (5 م - 9 م) 🌙');
     setNotes('');
     setPhoneTouched(false);
@@ -121,12 +118,12 @@ export const VisitationRequestModal: React.FC<VisitationRequestModalProps> = ({ 
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#fed65b] p-0.5 shadow-md shrink-0">
               <div className="w-full h-full rounded-2xl bg-[#00174a] flex items-center justify-center border border-[#d4af37]/50">
-                <Home className="w-6 h-6 text-[#fed65b]" />
+                <HeartHandshake className="w-6 h-6 text-[#fed65b]" />
               </div>
             </div>
             <div>
               <h3 className="font-tajawal font-black text-lg sm:text-xl text-[#fed65b]">
-                طلب افتقاد كنسي وزيارة راعي
+                طلب افتقاد
               </h3>
               <p className="text-xs text-slate-200 font-semibold mt-0.5">
                 كنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية
@@ -135,7 +132,7 @@ export const VisitationRequestModal: React.FC<VisitationRequestModalProps> = ({ 
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0"
+            className="w-9 h-9 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer"
             title="إغلاق"
           >
             <X className="w-5 h-5" />
@@ -252,37 +249,7 @@ export const VisitationRequestModal: React.FC<VisitationRequestModalProps> = ({ 
                 />
               </div>
 
-              {/* 5. Reason for Visitation Presets */}
-              <div className="space-y-1.5">
-                <label className="text-xs sm:text-sm font-black text-slate-800 block">
-                  سبب أو نوع الافتقاد:
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {[
-                    'افتقاد دوري للأسرة 🏠',
-                    'مريض ويحتاج صلاة وقنديل 🌿',
-                    'بركة منزل جديد ✝️',
-                    'تعزية ومساندة 🕊️',
-                    'جلسة إرشاد واعتراف 📖',
-                    'طلب خاص / أخرى'
-                  ].map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setReason(item)}
-                      className={`p-2.5 rounded-xl text-xs font-black border-2 transition-all cursor-pointer text-center ${
-                        reason === item
-                          ? 'bg-[#002366] text-[#fed65b] border-[#d4af37] shadow-sm'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 6. Preferred Time */}
+              {/* Preferred Time */}
               <div className="space-y-1.5">
                 <label className="text-xs sm:text-sm font-black text-slate-800 block flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-[#d4af37]" />
