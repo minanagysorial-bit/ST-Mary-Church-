@@ -269,37 +269,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         </div>
       </section>
 
-      {/* ── 2. QUICK ACCESS SERVICES BAR (شريط الوصول السريع) ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { title: 'قداسات وخدمات', icon: Calendar, link: '/liturgies-schedule', color: 'from-amber-500/20 to-amber-600/10 text-amber-900 border-amber-300' },
-            { title: 'بث مباشر للصلوات', icon: Radio, link: '/live-stream', color: 'from-rose-500/20 to-rose-600/10 text-rose-900 border-rose-300' },
-            { title: 'مكتبة العظات', icon: BookOpen, link: '/sermons', color: 'from-blue-500/20 to-blue-600/10 text-blue-900 border-blue-300' },
-            { title: 'سنكسار وقراءات', icon: Quote, link: '/readings', color: 'from-indigo-500/20 to-indigo-600/10 text-indigo-900 border-indigo-300' },
-            { title: 'تسجيل العضوية', icon: UserCheck, link: '/membership/register', color: 'from-emerald-500/20 to-emerald-600/10 text-emerald-900 border-emerald-300' },
-            { title: 'تواصل وموقعنا', icon: MapPin, link: '/contact-us', color: 'from-slate-500/20 to-slate-600/10 text-slate-900 border-slate-300' },
-          ].map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={idx}
-                to={item.link}
-                className="bg-white hover:bg-slate-50 border-2 border-slate-200/90 hover:border-[#d4af37] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center transition-all shadow-xs hover:shadow-md group active:scale-95"
-              >
-                <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${item.color} border flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <span className="font-tajawal font-bold text-xs text-[#00174a] group-hover:text-[#002366]">
-                  {item.title}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ── 3. VERSE OF THE DAY CARD ── */}
+      {/* ── 2. VERSE OF THE DAY CARD ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-br from-[#002366] via-[#001d54] to-[#00174a] text-white p-6 sm:p-8 md:p-10 rounded-3xl border-2 border-[#d4af37]/40 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[240px] interactive-card">
           <div className="absolute -left-10 -bottom-10 opacity-10 pointer-events-none">
@@ -359,17 +329,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         </div>
       </section>
 
-      {/* ── 4. AUTOMATIC CHURCH NEWS & ANNOUNCEMENTS SLIDER (سلايدر أخبار الكنيسة) ── */}
+      {/* ── 3. AUTOMATIC CHURCH NEWS & ANNOUNCEMENTS SLIDER (سلايدر أخبار الكنيسة) ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ChurchNewsSlider onSelectAnnouncement={(ann) => setSelectedAnnouncement(ann)} />
       </section>
 
-      {/* ── 5. DAILY KATAMAROS & SYNAXARIUM SECTION ── */}
+      {/* ── 4. DAILY KATAMAROS & SYNAXARIUM SECTION ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <DailyReadingsCard />
       </section>
 
-      {/* ── 6. APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX ── */}
+      {/* ── 5. APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-br from-white via-slate-50 to-amber-50/20 text-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-[#d4af37]/40 relative overflow-hidden font-cairo transition-all">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
