@@ -1766,6 +1766,35 @@ export const api = {
     if (error) throw error;
   },
 
+  submitVisitationRequest: async (params: {
+    name: string;
+    phone: string;
+    address: string;
+    landmark: string;
+    reason?: string;
+    preferredTime?: string;
+    notes?: string;
+  }): Promise<void> => {
+    const formattedMessage = [
+      `🏠 [طلب افتقاد كنسي وزيارة راعي]`,
+      `📍 العنوان بالتفصيل: ${params.address}`,
+      `🏛️ العلامة المميزة: ${params.landmark}`,
+      params.reason ? `🎯 سبب الزيارة / الحالة: ${params.reason}` : '',
+      params.preferredTime ? `⏰ الموعد المفضل: ${params.preferredTime}` : '',
+      params.notes ? `📝 ملاحظات خاصة: ${params.notes}` : '',
+    ].filter(Boolean).join('\n');
+
+    const { error } = await supabase
+      .from('contact_messages')
+      .insert({
+        name: params.name,
+        phone: params.phone,
+        message: formattedMessage,
+        status: 'unread'
+      });
+    if (error) throw error;
+  },
+
   updateContactMessageStatus: async (id: string, status: 'unread' | 'read' | 'replied' | 'archived'): Promise<void> => {
     const { error } = await supabase
       .from('contact_messages')

@@ -24,11 +24,14 @@ import {
   Radio,
   WifiOff,
   X,
-  Eye
+  Eye,
+  Home
 } from 'lucide-react';
 import { api, Verse, Announcement } from '../lib/api';
 import { DailyReadingsCard } from '../components/common/DailyReadingsCard';
 import { FathersQuotesSlider } from '../components/common/FathersQuotesSlider';
+import { ChurchNewsSlider } from '../components/common/ChurchNewsSlider';
+import { VisitationRequestModal } from '../components/common/VisitationRequestModal';
 import { requestNotificationPermission, getNotificationPermission } from '../lib/pushNotifications';
 import { getDailyAutoVerse } from '../lib/comfortVerses';
 
@@ -45,7 +48,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
   const [selectedAnnImage, setSelectedAnnImage] = useState<string | null>(null);
   const [copiedAnn, setCopiedAnn] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
+  const [isVisitationModalOpen, setIsVisitationModalOpen] = useState(false);
 
   const [notificationStatus, setNotificationStatus] = useState<NotificationPermission>(getNotificationPermission());
   const [installSuccess, setInstallSuccess] = useState(false);
@@ -94,7 +97,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
   };
 
   const handleEnableNotifications = async () => {
-    // Clear old flags so we always re-register fresh
     localStorage.removeItem('church_notifications_enabled');
     localStorage.removeItem('church_push_sub');
 
@@ -202,11 +204,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
     <div className="space-y-12 sm:space-y-16 pb-16 font-cairo text-right" dir="rtl">
       <Helmet>
         <title>كنيسة السيدة العذراء مريم محرم بك - اسكندرية - الموقع الرسمي</title>
-        <meta name="description" content="الموقع الرسمي لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية. مواعيد القداسات، عظات الآباء الكهنة، البث المباشر، السنكسار والقراءات اليومية، وتاريخ الكنيسة." />
+        <meta name="description" content="الموقع الرسمي لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية. مواعيد القداسات، طلبات الافتقاد، صلوات المذبح، عظات الآباء الكهنة، البث المباشر، السنكسار والقراءات اليومية، وتاريخ الكنيسة." />
         <link rel="canonical" href="https://www.tibarthenos.com/" />
       </Helmet>
 
-      {/* Hero Section */}
+      {/* ── 1. HERO SECTION ── */}
       <section className="relative min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center bg-[#00113a] overflow-hidden text-white border-b-4 border-[#d4af37]">
         {/* Background Image with opacity */}
         <div 
@@ -243,167 +245,100 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
             {heroContent.description}
           </p>
 
+          {/* ── 2 HERO ACTION BUTTONS: طلب افتقاد + اطلب صلاة ── */}
           <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto w-full">
-            <Link
-              to="/sermons"
-              className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] text-[#00174a] font-bold text-xs sm:text-sm px-6 sm:px-7 py-3.5 rounded-2xl transition-all shadow-xl hover:shadow-2xl btn-bounce flex items-center justify-center gap-2 text-center"
+            
+            {/* Button 1: طلب افتقاد كنسي */}
+            <button
+              onClick={() => setIsVisitationModalOpen(true)}
+              className="bg-gradient-to-r from-[#d4af37] to-[#fed65b] hover:from-[#c5a030] hover:to-[#eec54f] text-[#00174a] font-black text-xs sm:text-sm px-7 sm:px-8 py-4 rounded-2xl transition-all shadow-xl hover:shadow-2xl btn-bounce flex items-center justify-center gap-2.5 text-center cursor-pointer border border-amber-300 active:scale-95"
             >
-              <BookOpen className="w-5 h-5 shrink-0" />
-              <span>مكتبة العظات والكلمات الروحية</span>
-            </Link>
+              <Home className="w-5 h-5 shrink-0 text-[#00174a]" />
+              <span>طلب افتقاد كنسي 🏠</span>
+            </button>
 
+            {/* Button 2: اطلب صلاة على المذبح */}
             <button
               onClick={onOpenPrayerModal}
-              className="bg-white/10 hover:bg-white/20 text-white border border-[#fed65b]/50 font-bold text-xs sm:text-sm px-6 sm:px-7 py-3.5 rounded-2xl transition-all backdrop-blur-md btn-bounce flex items-center justify-center gap-2 text-center"
+              className="bg-white/10 hover:bg-white/20 text-white border-2 border-[#fed65b]/60 font-black text-xs sm:text-sm px-7 sm:px-8 py-4 rounded-2xl transition-all backdrop-blur-md btn-bounce flex items-center justify-center gap-2.5 text-center cursor-pointer active:scale-95"
             >
               <HeartHandshake className="w-5 h-5 text-[#fed65b] shrink-0" />
-              <span>اطلب صلاة على المذبح</span>
+              <span>اطلب صلاة على المذبح 🕊️</span>
             </button>
           </div>
         </div>
       </section>
 
-      {/* Bento Grid: Verse of the Day & Announcements */}
+      {/* ── 2. VERSE OF THE DAY CARD ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Verse of the day card */}
-          <div className="lg:col-span-2 bg-gradient-to-br from-[#002366] to-[#00174a] text-white p-5 sm:p-8 rounded-3xl border border-[#d4af37]/40 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[220px] interactive-card">
-            <div className="absolute -left-10 -bottom-10 opacity-10 pointer-events-none">
-              <Cross className="w-64 h-64 text-[#fed65b]" />
-            </div>
-
-            <div className="space-y-4 relative z-10">
-              <div className="flex items-center justify-between">
-                <span className="bg-[#fed65b] text-[#00174a] text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>آية اليوم</span>
-                </span>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <button
-                    onClick={handleShare}
-                    className="p-1.5 hover:text-[#fed65b] hover:bg-white/5 rounded-lg transition-all flex items-center gap-1 text-[11px] font-tajawal"
-                    title="مشاركة الآية"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-4 h-4 text-emerald-400" />
-                        <span className="text-emerald-400 font-bold">تم نسخ الآية!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Share2 className="w-4 h-4" />
-                        <span>نسخ ومشاركة</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {loadingVerse ? (
-                <div className="py-6 text-slate-300 text-xs font-bold font-cairo">جاري سحب آية مباركة...</div>
-              ) : (
-                <>
-                  <blockquote className="font-tajawal text-base sm:text-xl lg:text-2xl font-extrabold text-[#fed65b] leading-relaxed pt-2">
-                    {verse ? verse.text : defaultVerseText}
-                  </blockquote>
-
-                  <p className="text-xs sm:text-sm text-slate-300 font-semibold font-tajawal">
-                    — {verse ? verse.reference : defaultVerseRef}
-                  </p>
-                </>
-              )}
-            </div>
-
-            <div className="pt-5 border-t border-[#d4af37]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-300 relative z-10 mt-4">
-              <span>قراءة يومية مباركة لشعب الكنيسة</span>
-              <Link to="/sermons" className="text-[#fed65b] hover:underline font-bold flex items-center gap-1 font-tajawal">
-                <span>استمع للكلمة الكاملة</span>
-                <ChevronLeft className="w-4 h-4" />
-              </Link>
-            </div>
+        <div className="bg-gradient-to-br from-[#002366] via-[#001d54] to-[#00174a] text-white p-6 sm:p-8 md:p-10 rounded-3xl border-2 border-[#d4af37]/40 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[220px] interactive-card">
+          <div className="absolute -left-10 -bottom-10 opacity-10 pointer-events-none">
+            <Cross className="w-64 h-64 text-[#fed65b]" />
           </div>
 
-          {/* Announcements Card */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-md space-y-4 flex flex-col justify-between">
-            <div>
-              <h2 className="font-tajawal text-lg font-bold text-[#00174a] border-b border-slate-100 pb-3 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-[#d4af37]" />
-                <span>إعلانات ومناسبات الكنيسة</span>
-              </h2>
-
-              <div className="space-y-3">
-                {activeAnnouncements.map((ann) => {
-                  const cleanText = api.cleanAnnouncementContent(ann.content);
-                  return (
-                    <div 
-                      key={ann.id} 
-                      onClick={() => setSelectedAnnouncement(ann)}
-                      className="p-3.5 rounded-2xl border border-slate-100 hover:border-[#002366]/30 bg-slate-50/60 hover:bg-white transition-all shadow-sm hover:shadow-md cursor-pointer group space-y-2.5"
-                    >
-                      {/* Announcement Image Banner (if available) */}
-                      {ann.image_url && (
-                        <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100 h-36">
-                          <img 
-                            src={ann.image_url} 
-                            alt={ann.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1.5 font-bold text-[11px] backdrop-blur-[1px]">
-                            <Eye className="w-4 h-4 text-[#fed65b]" />
-                            <span>عرض الإعلان والبوستر</span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
-                            <span className="bg-[#002366] text-[#fed65b] text-[10px] font-bold px-2 py-0.5 rounded-md">إعلان</span>
-                            <h3 className="font-bold text-slate-900 text-sm font-tajawal group-hover:text-[#002366] transition-colors">{ann.title}</h3>
-                          </div>
-                        </div>
-                        <p className="text-slate-600 text-xs leading-relaxed line-clamp-2">{cleanText}</p>
-                      </div>
-
-                      <div className="pt-1 flex items-center justify-between text-[11px] font-bold text-[#002366]">
-                        <span className="text-slate-400 font-mono text-[10px]">{ann.start_date}</span>
-                        <span className="group-hover:translate-x-[-2px] transition-transform flex items-center gap-1">
-                          <span>قراءة كامل التفاصيل</span>
-                          <ChevronLeft className="w-3.5 h-3.5" />
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-                {activeAnnouncements.length === 0 && (
-                  <div className="py-8 text-slate-400 text-center font-bold text-xs space-y-1">
-                    <p>لا توجد إعلانات حالية منشورة.</p>
-                  </div>
-                )}
+          <div className="space-y-4 relative z-10">
+            <div className="flex items-center justify-between">
+              <span className="bg-[#fed65b] text-[#00174a] text-xs font-black px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>آية اليوم المباركة</span>
+              </span>
+              <div className="flex items-center gap-2 text-slate-300">
+                <button
+                  onClick={handleShare}
+                  className="p-2 hover:text-[#fed65b] hover:bg-white/10 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold font-tajawal cursor-pointer"
+                  title="مشاركة الآية"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span className="text-emerald-400 font-bold">تم نسخ الآية!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4" />
+                      <span>نسخ ومشاركة</span>
+                    </>
+                  )}
+                </button>
               </div>
-
             </div>
 
-            <Link
-              to="/membership/register"
-              className="w-full text-center bg-[#00174a] hover:bg-[#00113a] text-white font-bold text-xs py-2.5 rounded-xl transition-colors shadow"
-            >
-              سجّل بياناتك في الكنيسة
+            {loadingVerse ? (
+              <div className="py-6 text-slate-300 text-xs font-bold font-cairo">جاري سحب آية مباركة...</div>
+            ) : (
+              <>
+                <blockquote className="font-tajawal text-base sm:text-xl lg:text-2xl font-extrabold text-[#fed65b] leading-relaxed pt-2">
+                  {verse ? verse.text : defaultVerseText}
+                </blockquote>
+
+                <p className="text-xs sm:text-sm text-slate-300 font-bold font-tajawal">
+                  — {verse ? verse.reference : defaultVerseRef}
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="pt-5 border-t border-[#d4af37]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-300 relative z-10 mt-4">
+            <span>قراءة يومية مباركة لشعب الكنيسة</span>
+            <Link to="/readings" className="text-[#fed65b] hover:underline font-bold flex items-center gap-1 font-tajawal">
+              <span>تصفح السنكسار وقراءات اليوم</span>
+              <ChevronLeft className="w-4 h-4" />
             </Link>
           </div>
-
-
         </div>
       </section>
 
-      {/* Daily Katamaros & Synaxarium Section */}
+      {/* ── 3. AUTOMATIC CHURCH NEWS & ANNOUNCEMENTS SLIDER (سلايدر أخبار الكنيسة) ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ChurchNewsSlider onSelectAnnouncement={(ann) => setSelectedAnnouncement(ann)} />
+      </section>
+
+      {/* ── 4. DAILY KATAMAROS & SYNAXARIUM SECTION ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <DailyReadingsCard />
       </section>
 
-      {/* ── APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX (WHITE COMPACT CARD) ── */}
+      {/* ── 5. APP DOWNLOAD & NOTIFICATION PROMPT HERO BOX ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white text-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-slate-200/80 hover:border-[#d4af37]/40 relative overflow-hidden font-cairo transition-all">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
@@ -466,7 +401,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
               <div className="flex flex-col sm:flex-row md:flex-col gap-2 w-full">
                 <button
                   onClick={handleInstallApp}
-                  className="w-full bg-[#002366] hover:bg-[#00174a] text-white hover:text-[#fed65b] px-5 py-2.5 rounded-xl font-tajawal font-extrabold text-xs transition-all shadow-md flex items-center justify-center gap-2 group active:scale-95"
+                  className="w-full bg-[#002366] hover:bg-[#00174a] text-white hover:text-[#fed65b] px-5 py-2.5 rounded-xl font-tajawal font-extrabold text-xs transition-all shadow-md flex items-center justify-center gap-2 group active:scale-95 cursor-pointer"
                 >
                   <Download className="w-4 h-4 text-[#fed65b]" />
                   <span>{installSuccess ? 'تم التثبيت بنجاح!' : 'تثبيت التطبيق على هاتفك 📲'}</span>
@@ -475,7 +410,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
                 {notificationStatus !== 'granted' ? (
                   <button
                     onClick={handleEnableNotifications}
-                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <Bell className="w-3.5 h-3.5 text-[#d4af37]" />
                     <span>تفعيل الإشعارات 🔔</span>
@@ -493,87 +428,23 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         </div>
       </section>
 
-      {/* Digital Services Cards Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center space-y-2 max-w-xl mx-auto">
-          <h2 className="font-tajawal text-2xl sm:text-3xl font-extrabold text-[#00174a]">
-            الخدمات الرقمية المتوفرة
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-600">
-            تسهيل التواصل والخدمة الروحية والإدارية لكافة شعب الكنيسة
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Service 1 */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg hover:shadow-xl transition-shadow space-y-4 group">
-            <div className="w-14 h-14 rounded-2xl bg-[#002366] text-[#fed65b] flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform">
-              <BookOpen className="w-7 h-7" />
-            </div>
-            <h3 className="font-tajawal text-xl font-bold text-[#00174a]">مكتبة العظات والدروس</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              استمع للمقاطع الصوتية والعظات المرئية لآباء الكنيسة الأجلاء، مع إمكانية التحميل وقراءة الآيات المقتبسة.
-            </p>
-            <Link
-              to="/sermons"
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#002366] hover:text-[#d4af37] pt-2"
-            >
-              <span>تصفح المكتبة</span>
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {/* Service 2 */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg hover:shadow-xl transition-shadow space-y-4 group">
-            <div className="w-14 h-14 rounded-2xl bg-[#d4af37] text-[#00174a] flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform">
-              <UserCheck className="w-7 h-7" />
-            </div>
-            <h3 className="font-tajawal text-xl font-bold text-[#00174a]">بوابة تسجيل الأسر</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              تحديث وافتقاد بيانات الأسر والمخدومين لتسهيل التواصل والخدمة والتثبيت في الكنيسة بكل سهولة.
-            </p>
-            <Link
-              to="/membership/register"
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#002366] hover:text-[#d4af37] pt-2"
-            >
-              <span>البدء في التسجيل (3 خطوات)</span>
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {/* Service 3 */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg hover:shadow-xl transition-shadow space-y-4 group">
-            <div className="w-14 h-14 rounded-2xl bg-[#00174a] text-white flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform">
-              <HeartHandshake className="w-7 h-7 text-[#fed65b]" />
-            </div>
-            <h3 className="font-tajawal text-xl font-bold text-[#00174a]">طلبات الصلوات والإرشاد</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              تقديم طلبات الصلاة وافتقاد الآباء الكهنة بكل سرية واهتمام لبناء النفوس ورعايتها روحياً.
-            </p>
-            <button
-              onClick={onOpenPrayerModal}
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#002366] hover:text-[#d4af37] pt-2"
-            >
-              <span>تقديم طلب صلاة</span>
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-          </div>
-
-        </div>
-      </section>
-
-      {/* 🕊️ Interactive Church Fathers' Quotes Slider (سلايدر أقوال الآباء القديسين) */}
+      {/* ── 6. INTERACTIVE CHURCH FATHERS' QUOTES SLIDER ── */}
       <FathersQuotesSlider />
 
-      {/* 📢 Full Announcement Details Modal (عرض تفاصيل الإعلان والبوستر) */}
+      {/* ── 7. VISITATION REQUEST MODAL (نموذج طلب افتقاد) ── */}
+      <VisitationRequestModal
+        isOpen={isVisitationModalOpen}
+        onClose={() => setIsVisitationModalOpen(false)}
+      />
+
+      {/* ── 8. FULL ANNOUNCEMENT DETAILS MODAL ── */}
       {selectedAnnouncement && (
         <div 
           className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn overflow-y-auto"
           onClick={() => setSelectedAnnouncement(null)}
         >
           <div 
-            className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl my-8 text-right font-cairo"
+            className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl my-8 text-right font-cairo border-2 border-[#d4af37]/40 animate-scaleUp"
             onClick={e => e.stopPropagation()}
             dir="rtl"
           >
@@ -585,7 +456,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
               </div>
               <button
                 onClick={() => setSelectedAnnouncement(null)}
-                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-xl transition-colors shrink-0"
+                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-xl transition-colors shrink-0 cursor-pointer"
                 title="إغلاق"
               >
                 <X className="w-5 h-5" />
@@ -636,7 +507,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
                     setCopiedAnn(true);
                     setTimeout(() => setCopiedAnn(false), 2500);
                   }}
-                  className="w-full sm:flex-1 bg-[#00174a] hover:bg-[#002366] text-[#fed65b] font-bold text-xs py-3 rounded-xl transition-all shadow flex items-center justify-center gap-2 active:scale-95"
+                  className="w-full sm:flex-1 bg-[#00174a] hover:bg-[#002366] text-[#fed65b] font-bold text-xs py-3 rounded-xl transition-all shadow flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
                 >
                   {copiedAnn ? (
                     <>
@@ -653,7 +524,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
 
                 <button
                   onClick={() => setSelectedAnnouncement(null)}
-                  className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-6 py-3 rounded-xl transition-colors"
+                  className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-6 py-3 rounded-xl transition-colors cursor-pointer"
                 >
                   إغلاق
                 </button>
@@ -663,7 +534,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
         </div>
       )}
 
-      {/* Announcement Image Lightbox Zoom Modal */}
+      {/* ── 9. ANNOUNCEMENT IMAGE LIGHTBOX ZOOM MODAL ── */}
       {selectedAnnImage && (
         <div 
           className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn"
@@ -672,7 +543,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
           <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-3xl overflow-hidden shadow-2xl p-2" onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setSelectedAnnImage(null)}
-              className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-black transition-colors z-10"
+              className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-black transition-colors z-10 cursor-pointer"
               title="إغلاق"
             >
               <X className="w-5 h-5" />
@@ -689,5 +560,4 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenPrayerModal }) => {
     </div>
   );
 };
-
-
+export default HomePage;

@@ -51,8 +51,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
 
   useEffect(() => {
     api.getActiveAnnouncements()
-      .then(data => {
-        const texts = data.map(a => a.title + (a.content ? `: ${a.content}` : ''));
+      .then(async data => {
+        let items = data;
+        if (!items || items.length === 0) {
+          try {
+            const all = await api.getAnnouncements();
+            const activeOnly = all.filter(a => a.is_active);
+            items = activeOnly.length > 0 ? activeOnly : all;
+          } catch (e) {
+            items = [];
+          }
+        }
+
+        const texts = (items || []).map(a => {
+          const clean = api.cleanAnnouncementContent(a.content);
+          return `${a.title}${clean ? ` — ${clean}` : ''}`;
+        });
+
         if (texts.length === 0) {
           setTickerAnnouncements(['مرحباً بكم في المنصة الرقمية الموحدة لكنيسة السيدة العذراء مريم بمحرم بك بالإسكندرية']);
         } else {
@@ -377,31 +392,39 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
 
     {/* Moving Announcements Ticker Bar */}
     {location.pathname === '/' && (
-      <div className="w-full bg-[#ffffff] border-b border-[#d4af37]/35 text-[#00174a] py-2.5 relative z-30 overflow-hidden flex items-center shadow-md select-none" dir="rtl">
+      <div className="w-full bg-[#ffffff] border-b-2 border-[#d4af37]/40 text-[#00174a] py-2 relative z-30 overflow-hidden flex items-center shadow-md select-none" dir="rtl">
         {/* News Label Badge */}
-        <div className="bg-[#002366] text-white px-3.5 py-1 mr-4 rounded-xl text-[10px] font-extrabold flex items-center gap-1.5 shrink-0 z-10 shadow-sm border border-[#d4af37]/35 font-tajawal">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#fed65b] animate-pulse shrink-0" />
-          <span>إعلانات الكنيسة</span>
+        <div className="bg-[#002366] text-white px-3 py-1 mr-3 rounded-xl text-xs font-black flex items-center gap-1.5 shrink-0 z-10 shadow-sm border border-[#d4af37]/40 font-tajawal">
+          <span className="w-2 h-2 rounded-full bg-[#fed65b] animate-pulse shrink-0" />
+          <span>إعلانات الكنيسة 📢</span>
         </div>
         
         {/* Marquee Content */}
-        <div className="flex-1 overflow-hidden relative mr-2">
+        <div className="flex-1 overflow-hidden relative mr-2 flex items-center">
           <style dangerouslySetInnerHTML={{__html: `
-            @keyframes marquee-ltr {
-              0% { transform: translate3d(-100%, 0, 0); }
-              100% { transform: translate3d(100vw, 0, 0); }
+            @keyframes churchMarqueeRTL {
+              0% { transform: translate3d(0%, 0, 0); }
+              100% { transform: translate3d(50%, 0, 0); }
             }
-            .animate-marquee-ltr {
-              display: inline-block;
-              animation: marquee-ltr 80s linear infinite;
+            .animate-church-marquee {
+              display: inline-flex;
+              align-items: center;
+              white-space: nowrap;
+              animation: churchMarqueeRTL 35s linear infinite;
+              will-change: transform;
             }
-            .animate-marquee-ltr:hover {
+            .animate-church-marquee:hover {
               animation-play-state: paused;
               cursor: pointer;
             }
           `}} />
-          <div className="animate-marquee-ltr whitespace-nowrap pl-6 text-sm sm:text-base font-extrabold font-cairo text-[#00113a] tracking-wide">
-            {tickerAnnouncements.join('\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0✦\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0')}
+          <div className="animate-church-marquee whitespace-nowrap text-xs sm:text-sm font-extrabold font-cairo text-[#00174a] tracking-wide">
+            {[...tickerAnnouncements, ...tickerAnnouncements, ...tickerAnnouncements].map((txt, idx) => (
+              <span key={idx} className="inline-flex items-center gap-3 px-6">
+                <span>{txt}</span>
+                <span className="text-[#d4af37] font-black text-sm">✦</span>
+              </span>
+            ))}
           </div>
         </div>
       </div>
