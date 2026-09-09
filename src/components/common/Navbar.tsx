@@ -361,30 +361,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
       )}
     </header>
 
-    {/* Decorative White Header Ribbon Bar */}
+    {/* Decorative White Accent Bar */}
     {location.pathname === '/' && (
-      <div className="w-full bg-white border-b-2 border-[#d4af37]/40 text-[#00174a] py-2 relative z-30 shadow-xs select-none" dir="rtl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-[#d4af37] to-[#fed65b] shadow-xs" />
-            <span className="font-tajawal font-black text-xs sm:text-sm text-[#00174a]">
-              كنيسة السيدة العذراء مريم بمحرم بك — الإسكندرية
-            </span>
-          </div>
-          
-          <div className="hidden sm:flex items-center gap-3 text-slate-500 font-bold text-xs">
-            <span className="text-[#d4af37] font-black">✦</span>
-            <span>«بَيْتِي بَيْتَ الصَّلاَةِ يُدْعَى»</span>
-            <span className="text-[#d4af37] font-black">✦</span>
-            <span>بيت البركة والسلام</span>
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-black text-[#002366] bg-[#fed65b]/25 border border-[#d4af37]/40 px-3 py-0.5 rounded-full shadow-xs font-tajawal">
-            <span>مرحباً بكم</span>
-            <span>🕊️</span>
-          </div>
-        </div>
-      </div>
+      <div className="w-full bg-white h-2 sm:h-2.5 border-b-2 border-[#d4af37]/40 relative z-30 shadow-xs" />
     )}
     </>
   );
