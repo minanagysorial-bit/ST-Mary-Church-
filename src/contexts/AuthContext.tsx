@@ -125,7 +125,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Default role permissions
     if (profile.role === 'admin') {
-      return ['manage_liturgies', 'manage_verses', 'manage_notifications', 'manage_announcements'].includes(key);
+      return [
+        'manage_permissions',
+        'manage_members',
+        'manage_content',
+        'manage_sermons',
+        'manage_liturgies',
+        'manage_verses',
+        'manage_notifications',
+        'manage_announcements',
+        'manage_services',
+        'create_families',
+        'assign_servants',
+        'manage_families',
+        'manage_visitation',
+        'manage_attendance',
+        'manage_servant_tools',
+        'manage_quizzes',
+        'manage_church_members',
+        'review_membership_requests',
+        'view_prayers_and_contact',
+        'view_member_visitations',
+        'manage_membership_comments',
+        'view_services',
+        'monitor_servants',
+        'manage_priest_sermons'
+      ].includes(key);
     }
     if (profile.role === 'priest') {
       return [
