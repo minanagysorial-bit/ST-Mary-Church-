@@ -159,7 +159,26 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
     return matchesSearch && matchesTopic;
   });
 
-  const featuredSermon = sermons.length > 0 ? sermons[0] : null;
+  // Select the latest actual SERMON / SPIRITUAL TALK (excluding pure liturgy recordings and ritual stream parts)
+  const isPureLiturgyVideo = (s: Sermon) => {
+    const title = (s.title || '').toLowerCase();
+    const topic = (s.topic || '').toLowerCase();
+    
+    // Explicitly sermon / talk keywords take highest priority
+    const hasSermonKeyword = title.includes('عظة') || title.includes('عظه') || title.includes('كلمة') || 
+                             title.includes('كلمه') || title.includes('تأمل') || title.includes('درس') || 
+                             title.includes('تفسير') || title.includes('اجتماع') || title.includes('شبان') || 
+                             title.includes('شباب') || title.includes('نهضة') || title.includes('محاضرة') ||
+                             topic.includes('عظة') || topic.includes('كتاب مقدس') || topic.includes('اجتماعات الشباب');
+    if (hasSermonKeyword) return false;
+
+    // Pure liturgy / prayers keywords
+    return title.includes('قداس') || title.includes('تكملة القداس') || title.includes('صلاة القداس') || 
+           title.includes('عشية') || title.includes('تسبحة') || title.includes('بث مباشر') || 
+           topic === 'قداسات إلهية' || topic === 'عشيات وتسابيح';
+  };
+
+  const featuredSermon = sermons.find(s => !isPureLiturgyVideo(s)) || (sermons.length > 0 ? sermons[0] : null);
 
   const extractVideoId = (url: string | null): string | null => {
     if (!url) return null;
@@ -452,7 +471,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                 <div className="flex items-center gap-2">
                   <span className="bg-[#fed65b] text-[#00174a] text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>أحدث فيديو نزل على القناة</span>
+                    <span>أحدث عظة وكلمة روحية</span>
                   </span>
                   <span className="bg-white/10 text-white text-xs font-bold px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1">
                     <FolderOpen className="w-3 h-3 text-[#fed65b]" />

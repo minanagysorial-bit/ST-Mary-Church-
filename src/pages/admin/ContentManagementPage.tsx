@@ -5,6 +5,7 @@ import { api, type Announcement, type Sermon, type Profile, type ContactMessage,
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { uploadAnnouncementImage } from '../../lib/fileUpload';
+import { broadcastChurchNotification } from '../../lib/pushNotifications';
 import {
   Megaphone, Plus, Search, CalendarDays, Power, 
   Trash2, Edit2, X, Check, Clock, Play, Radio, MessageSquare, Heart, Settings, RefreshCw, MailOpen,
@@ -350,7 +351,16 @@ export const ContentManagementPage: React.FC = () => {
           is_active: annActive,
           created_by: profile?.id || null
         });
-        toast.success('تمت إضافة الإعلان بنجاح.');
+        toast.success('تمت إضافة الإعلان بنجاح وإرسال إشعار فوري للشعب ✨');
+
+        // Automatically send push notification to all church subscribers
+        broadcastChurchNotification({
+          title: `📢 إعلان كنسي جديد: ${annTitle}`,
+          body: annContent.length > 100 ? `${annContent.slice(0, 100)}...` : annContent,
+          url: '/#announcements',
+          image: annImage.trim() || undefined,
+          icon: '/app-icon-192.png'
+        }).catch(err => console.warn('Push broadcast error:', err));
       }
       setShowAnnModal(false);
       const data = await api.getAnnouncements();
@@ -408,6 +418,15 @@ export const ContentManagementPage: React.FC = () => {
       await api.updateSiteSettings(updated);
       setSiteSettings(updated);
       toast.success('تم تحديث إعدادات البث المباشر بنجاح.');
+
+      if (streamActive === 'true' && siteSettings.live_stream_active !== 'true') {
+        broadcastChurchNotification({
+          title: '🔴 بدأ الآن البث المباشر',
+          body: streamTitle || 'نرحب بكم للمشاركة معنا في الصلوات والقداسات الإلهية المنقولة مباشرة من كنيسة العذراء بمحرم بك.',
+          url: '/live',
+          icon: '/app-icon-192.png'
+        }).catch(err => console.warn('Stream push broadcast error:', err));
+      }
     } catch (err: any) {
       toast.error('فشل حفظ إعدادات البث: ' + err.message);
     } finally {

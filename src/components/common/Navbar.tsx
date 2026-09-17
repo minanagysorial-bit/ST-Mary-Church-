@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Cross, Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { triggerLocalNotification } from '../../lib/pushNotifications';
 
 interface NavbarProps {
   onOpenPrayerModal: () => void;
@@ -61,7 +62,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenPrayerModal }) => {
             const checkRes = await fetch(`/api/check-live?channelId=${channelId}`);
             if (checkRes.ok) {
               const liveData = await checkRes.json();
-              setIsLiveActive(Boolean(liveData.isLive));
+              const isLive = Boolean(liveData.isLive);
+              setIsLiveActive(isLive);
+
+              // If live detected, notify user once per broadcast
+              if (isLive && liveData.videoId) {
+                const liveNotifKey = `church_live_notified_${liveData.videoId}`;
+                if (!sessionStorage.getItem(liveNotifKey)) {
+                  sessionStorage.setItem(liveNotifKey, 'true');
+                  triggerLocalNotification({
+                    title: '🔴 بدأ الآن البث المباشر',
+                    body: liveData.title || 'انضم لمتابعة البث المباشر للصلوات والقداسات الآن من كنيسة العذراء بمحرم بك.',
+                    url: '/live',
+                    icon: '/app-icon-192.png'
+                  }).catch(console.error);
+                }
+              }
               return;
             }
           } catch (e) {

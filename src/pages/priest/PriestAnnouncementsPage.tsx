@@ -3,6 +3,7 @@ import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { api, type Announcement } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { uploadAnnouncementImage } from '../../lib/fileUpload';
+import { broadcastChurchNotification } from '../../lib/pushNotifications';
 import {
   Megaphone, Plus, Search, CalendarDays, Power, 
   Trash2, Edit2, X, CheckCircle2, AlertCircle, Clock,
@@ -142,7 +143,16 @@ export const PriestAnnouncementsPage: React.FC = () => {
           is_active: isActive,
           created_by: profile?.id || null
         });
-        setSuccessMsg('تم إضافة الإعلان بنجاح.');
+        setSuccessMsg('تم إضافة الإعلان بنجاح وإرسال إشعار فوري للشعب ✨');
+
+        // Automatically broadcast push notification to all subscribers
+        broadcastChurchNotification({
+          title: `📢 إعلان كنسي جديد: ${title}`,
+          body: content.length > 100 ? `${content.slice(0, 100)}...` : content,
+          url: '/#announcements',
+          image: imageUrl.trim() || undefined,
+          icon: '/app-icon-192.png'
+        }).catch(err => console.warn('Priest push broadcast error:', err));
       }
       setShowModal(false);
       fetchAnnouncements();
