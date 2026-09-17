@@ -44,6 +44,8 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           { label: 'إعدادات وصلاحيات المستخدمين', path: '/admin/permissions', icon: 'admin_panel_settings', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'تعيين كهنة وأمناء الخدمات', path: '/admin/services', icon: 'shield_person', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'إدارة الأعضاء والخدام', path: '/admin/members', icon: 'badge', permission: PERMISSIONS.MANAGE_MEMBERS },
+          { label: 'حضور ونقاط الخدام ⭐', path: '/service-leader/servants-points', icon: 'military_tech' },
+          { label: 'المعرض ومتجر الكوبونات 🎁', path: '/servant/expo', icon: 'shopping_bag' },
           { label: 'شعب الكنيسة', path: '/membership/members', icon: 'group', permission: PERMISSIONS.MANAGE_CHURCH_MEMBERS },
           { label: 'طلبات العضوية', path: '/priest/membership-requests', icon: 'app_registration', permission: PERMISSIONS.REVIEW_MEMBERSHIP_REQUESTS },
           { label: 'فصول وأسر الخدمات', path: '/service-leader/families', icon: 'family_restroom', permission: PERMISSIONS.MANAGE_SERVICES },
@@ -67,6 +69,8 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           { label: 'إعدادات وصلاحيات المستخدمين', path: '/admin/permissions', icon: 'admin_panel_settings', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'تعيين كهنة وأمناء الخدمات', path: '/admin/services', icon: 'shield_person', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'إدارة الأعضاء والخدام', path: '/admin/members', icon: 'badge', permission: PERMISSIONS.MANAGE_MEMBERS },
+          { label: 'حضور ونقاط الخدام ⭐', path: '/service-leader/servants-points', icon: 'military_tech' },
+          { label: 'المعرض ومتجر الكوبونات 🎁', path: '/servant/expo', icon: 'shopping_bag' },
           { label: 'جدول القداسات', path: '/priest/liturgies', icon: 'calendar_month', permission: PERMISSIONS.MANAGE_LITURGIES },
           { label: 'إدارة الآيات اليومية', path: '/admin/verses', icon: 'menu_book', permission: PERMISSIONS.MANAGE_VERSES },
           { label: 'الإشعارات الفورية', path: '/admin/notifications', icon: 'notifications_active', permission: PERMISSIONS.MANAGE_NOTIFICATIONS },
@@ -80,6 +84,8 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'priest':
         return [
           { label: 'لوحة التحكم الرعوية', path: '/priest', icon: 'dashboard' },
+          { label: 'حضور ونقاط الخدام ⭐', path: '/service-leader/servants-points', icon: 'military_tech' },
+          { label: 'المعرض ومتجر الكوبونات 🎁', path: '/servant/expo', icon: 'shopping_bag' },
           { label: 'طلبات الصلاة والرسائل', path: '/admin/communications', icon: 'chat', permission: PERMISSIONS.VIEW_PRAYERS_AND_CONTACT },
           { label: 'متابعة الخدمات وفصول الأسر', path: '/priest/services', icon: 'diversity_3', permission: PERMISSIONS.VIEW_SERVICES },
           { label: 'تفقد الحضور والغياب', path: '/servant/attendance', icon: 'checklist', permission: PERMISSIONS.MANAGE_ATTENDANCE },
@@ -96,6 +102,8 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'service_leader':
         return [
           { label: 'لوحة أمين الخدمة', path: '/service-leader', icon: 'dashboard' },
+          { label: 'حضور ونقاط الخدام ⭐', path: '/service-leader/servants-points', icon: 'military_tech' },
+          { label: 'المعرض ومتجر الكوبونات 🎁', path: '/servant/expo', icon: 'shopping_bag' },
           { label: 'فصول وأسر التربية الكنسية', path: '/service-leader/families', icon: 'family_restroom', permission: PERMISSIONS.CREATE_FAMILIES },
           { label: 'تعيين وتوزيع الخدام', path: '/service-leader/servants', icon: 'badge', permission: PERMISSIONS.ASSIGN_SERVANTS },
           { label: 'تفقد الحضور والغياب', path: '/servant/attendance', icon: 'checklist', permission: PERMISSIONS.MANAGE_ATTENDANCE },
@@ -112,6 +120,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'servant':
         return [
           { label: 'نظرة عامة', path: '/servant', icon: 'dashboard' },
+          { label: 'المعرض ومتجر الكوبونات 🎁', path: '/servant/expo', icon: 'shopping_bag' },
           { label: 'أسرتي وفصلي ومخدومي', path: '/servant/families', icon: 'family_restroom', permission: PERMISSIONS.MANAGE_FAMILIES },
           { label: 'بنك تحضير الدروس 📖', path: '/servant/lesson-bank', icon: 'menu_book' },
           { label: 'نقاط مدارس الأحد 🌟', path: '/servant/points', icon: 'stars' },

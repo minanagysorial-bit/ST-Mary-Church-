@@ -91,6 +91,13 @@ const QuizPlayerPage = lazy(() => import('./pages/quiz/QuizPlayerPage').then(m =
 // Honor Board / Leaderboard (Lazy Loaded)
 const HonorBoardPage = lazy(() => import('./pages/public/HonorBoardPage').then(m => ({ default: m.HonorBoardPage })));
 
+// Kids Store & Expo (Lazy Loaded)
+const KidsStorePage = lazy(() => import('./pages/public/KidsStorePage').then(m => ({ default: m.KidsStorePage })));
+const ExpoManagementPage = lazy(() => import('./pages/servant/ExpoManagementPage').then(m => ({ default: m.ExpoManagementPage })));
+
+// Servants Attendance & Points (Lazy Loaded)
+const ServantsAttendancePointsPage = lazy(() => import('./pages/service-leader/ServantsAttendancePointsPage').then(m => ({ default: m.ServantsAttendancePointsPage })));
+
 interface ProtectedRouteProps {
   children: React.ReactElement;
   allowedRoles: UserRole[];
@@ -200,6 +207,9 @@ const AppLayout: React.FC = () => {
   const isStandaloneApp =
     location.pathname.startsWith('/leaderboard') ||
     location.pathname.startsWith('/honor-board') ||
+    location.pathname.startsWith('/store') ||
+    location.pathname.startsWith('/expo') ||
+    location.pathname.startsWith('/rewards-store') ||
     location.pathname.startsWith('/quiz/play');
 
   return (
@@ -265,6 +275,8 @@ const AppLayout: React.FC = () => {
             <Route path="/service-leader" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServiceLeaderDashboardPage /></ProtectedRoute>} />
             <Route path="/service-leader/families" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServiceFamiliesManagementPage /></ProtectedRoute>} />
             <Route path="/service-leader/servants" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServiceFamiliesManagementPage /></ProtectedRoute>} />
+            <Route path="/service-leader/servants-points" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServantsAttendancePointsPage /></ProtectedRoute>} />
+            <Route path="/service-leader/servants-attendance" element={<ProtectedRoute allowedRoles={['service_leader', 'super_admin', 'admin', 'priest']}><ServantsAttendancePointsPage /></ProtectedRoute>} />
 
             {/* Servant & Service Leader Routes */}
             <Route path="/servant" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><ServantDashboardPage /></ProtectedRoute>} />
@@ -274,6 +286,8 @@ const AppLayout: React.FC = () => {
             <Route path="/servant/tools" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><ServantToolsPage /></ProtectedRoute>} />
             <Route path="/servant/points" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><SundaySchoolPointsPage /></ProtectedRoute>} />
             <Route path="/servant/sunday-school" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader']}><SundaySchoolPointsPage /></ProtectedRoute>} />
+            <Route path="/servant/expo" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><ExpoManagementPage /></ProtectedRoute>} />
+            <Route path="/servant/store" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><ExpoManagementPage /></ProtectedRoute>} />
             <Route path="/servant/visitation-map" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><SmartVisitationMapPage /></ProtectedRoute>} />
             <Route path="/servant/map" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><SmartVisitationMapPage /></ProtectedRoute>} />
             <Route path="/servant/lesson-bank" element={<ProtectedRoute allowedRoles={['servant', 'super_admin', 'admin', 'service_leader', 'priest']}><LessonBankPage /></ProtectedRoute>} />
@@ -285,9 +299,12 @@ const AppLayout: React.FC = () => {
             <Route path="/board/plans" element={<ProtectedRoute allowedRoles={['board', 'super_admin', 'admin']}><ImplementationPlansPage /></ProtectedRoute>} />
             <Route path="/board/agenda" element={<ProtectedRoute allowedRoles={['board', 'super_admin', 'admin']}><MeetingAgendaPage /></ProtectedRoute>} />
 
-            {/* Public Honor Board & Leaderboard */}
+            {/* Public Honor Board, Leaderboard & Kids Expo Store */}
             <Route path="/leaderboard" element={<HonorBoardPage />} />
             <Route path="/honor-board" element={<HonorBoardPage />} />
+            <Route path="/store" element={<KidsStorePage />} />
+            <Route path="/expo" element={<KidsStorePage />} />
+            <Route path="/rewards-store" element={<KidsStorePage />} />
 
             {/* Kahoot Quizzes */}
             <Route path="/quiz" element={<QuizListPage />} />

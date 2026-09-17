@@ -48,6 +48,64 @@ export interface AdminActivityLog {
   timestamp: string;
 }
 
+export interface ExpoProduct {
+  id: string;
+  title: string;
+  description?: string;
+  image_url: string;
+  coupon_price: number;
+  stock_quantity: number;
+  category: string;
+  stage?: string;
+  is_active: boolean;
+  created_at: string;
+  created_by?: string;
+}
+
+export interface ExpoOrderItem {
+  product_id: string;
+  title: string;
+  coupon_price: number;
+  quantity: number;
+  image_url?: string;
+}
+
+export interface ExpoOrder {
+  id: string;
+  student_id: string;
+  student_name: string;
+  student_phone?: string;
+  stage?: string;
+  family_name?: string;
+  items: ExpoOrderItem[];
+  total_coupons: number;
+  status: 'pending' | 'delivered' | 'cancelled';
+  created_at: string;
+  delivered_at?: string;
+  notes?: string;
+}
+
+export interface ServantAttendanceRecord {
+  id: string;
+  servant_id: string;
+  servant_name: string;
+  service_name: string;
+  date: string;
+  status: 'present_early' | 'present' | 'late' | 'excused' | 'absent';
+  notes?: string;
+  updated_at: string;
+}
+
+export interface ServantPointTransaction {
+  id: string;
+  servant_id: string;
+  servant_name: string;
+  points: number;
+  reason: string;
+  date: string;
+  created_by?: string;
+}
+
 // ===================================================================
 // IMAGE TRANSFORMS & DRIVE URL HELPERS
 // ===================================================================
@@ -2102,6 +2160,322 @@ export const api = {
       localStorage.removeItem('church_admin_activity_logs');
       await this.updateSiteSettings({ admin_activity_logs_store: '[]' });
     } catch (e) {}
+  },
+
+  // ── Expo / Gifts Store Methods ──
+  async getExpoProducts(): Promise<ExpoProduct[]> {
+    try {
+      const settings = await this.getSiteSettings();
+      const raw = settings['church_expo_products'];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          localStorage.setItem('church_expo_products', raw);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const local = localStorage.getItem('church_expo_products');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+
+    // Default seed products
+    const defaultProducts: ExpoProduct[] = [
+      {
+        id: 'exp_1',
+        title: 'كتاب مقدس مصور وملون للأطفال',
+        description: 'نسخة ورقية فاخرة تحتوي على قصص الكتاب المقدس مع رسومات ملونة جذابة.',
+        image_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=600',
+        coupon_price: 120,
+        stock_quantity: 15,
+        category: 'كتب وقصص',
+        stage: 'الكل',
+        is_active: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'exp_2',
+        title: 'صليب خشب زيتون أصلي للرقبة',
+        description: 'صليب محفور يدوياً من خشب الزيتون المبارك مع حبل متين.',
+        image_url: 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&q=80&w=600',
+        coupon_price: 80,
+        stock_quantity: 25,
+        category: 'بركات كنسية',
+        stage: 'الكل',
+        is_active: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'exp_3',
+        title: 'طقم ألوان خشب + كشكول رسم بشعار الكنيسة',
+        description: 'طقم فاخر 24 لون مع كشكول رسم كنسي للتلوين في الأنشطة.',
+        image_url: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&q=80&w=600',
+        coupon_price: 50,
+        stock_quantity: 40,
+        category: 'أدوات مدرسية',
+        stage: 'الكل',
+        is_active: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'exp_4',
+        title: 'مجسم بازل قبطي تفاعلي (سفينة نوح)',
+        description: 'لعبة بازل ثلاثية الأبعاد ممتعة للأطفال لتنمية مهارات التفكير.',
+        image_url: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&q=80&w=600',
+        coupon_price: 100,
+        stock_quantity: 10,
+        category: 'ألعاب وهدايا',
+        stage: 'الكل',
+        is_active: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'exp_5',
+        title: 'ميدالية وأيقونة ذهبية للسيدة العذراء مريم',
+        description: 'ميدالية مفاتيح معدنية أنيقة محفور عليها أيقونة العذراء محرم بك.',
+        image_url: 'https://images.unsplash.com/photo-1601342630310-85f0962453c9?auto=format&fit=crop&q=80&w=600',
+        coupon_price: 40,
+        stock_quantity: 50,
+        category: 'بركات كنسية',
+        stage: 'الكل',
+        is_active: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'exp_6',
+        title: 'درع ووسام بطل الفصل المتميز 🏆',
+        description: 'تكريم خاص جداً يمنح للولد الأكثر التزاماً في الحضور والأنشطة.',
+        image_url: 'https://images.unsplash.com/photo-1578269174936-2709b6aeb913?auto=format&fit=crop&q=80&w=600',
+        coupon_price: 200,
+        stock_quantity: 5,
+        category: 'تكريم وجوائز',
+        stage: 'الكل',
+        is_active: true,
+        created_at: new Date().toISOString()
+      }
+    ];
+
+    try {
+      localStorage.setItem('church_expo_products', JSON.stringify(defaultProducts));
+      this.updateSiteSettings({ church_expo_products: JSON.stringify(defaultProducts) }).catch(() => {});
+    } catch (e) {}
+
+    return defaultProducts;
+  },
+
+  async saveExpoProduct(product: ExpoProduct): Promise<void> {
+    const products = await this.getExpoProducts();
+    const index = products.findIndex(p => p.id === product.id);
+    let updated: ExpoProduct[];
+    if (index >= 0) {
+      updated = [...products];
+      updated[index] = product;
+    } else {
+      updated = [product, ...products];
+    }
+
+    const raw = JSON.stringify(updated);
+    localStorage.setItem('church_expo_products', raw);
+    await this.updateSiteSettings({ church_expo_products: raw });
+  },
+
+  async deleteExpoProduct(id: string): Promise<void> {
+    const products = await this.getExpoProducts();
+    const updated = products.filter(p => p.id !== id);
+    const raw = JSON.stringify(updated);
+    localStorage.setItem('church_expo_products', raw);
+    await this.updateSiteSettings({ church_expo_products: raw });
+  },
+
+  async getExpoOrders(): Promise<ExpoOrder[]> {
+    try {
+      const settings = await this.getSiteSettings();
+      const raw = settings['church_expo_orders'];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          localStorage.setItem('church_expo_orders', raw);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const local = localStorage.getItem('church_expo_orders');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+
+    return [];
+  },
+
+  async createExpoOrder(order: ExpoOrder): Promise<void> {
+    const orders = await this.getExpoOrders();
+    const updated = [order, ...orders];
+    const raw = JSON.stringify(updated);
+    localStorage.setItem('church_expo_orders', raw);
+    await this.updateSiteSettings({ church_expo_orders: raw });
+
+    // Decrement stock for ordered products
+    try {
+      const products = await this.getExpoProducts();
+      let changed = false;
+      const updatedProducts = products.map(p => {
+        const item = order.items.find(i => i.product_id === p.id);
+        if (item) {
+          changed = true;
+          return {
+            ...p,
+            stock_quantity: Math.max(0, (p.stock_quantity || 0) - item.quantity)
+          };
+        }
+        return p;
+      });
+
+      if (changed) {
+        const pRaw = JSON.stringify(updatedProducts);
+        localStorage.setItem('church_expo_products', pRaw);
+        await this.updateSiteSettings({ church_expo_products: pRaw });
+      }
+    } catch (err) {
+      console.warn('Could not auto-decrement stock:', err);
+    }
+  },
+
+  async updateExpoOrderStatus(orderId: string, status: 'pending' | 'delivered' | 'cancelled'): Promise<void> {
+    const orders = await this.getExpoOrders();
+    const updated = orders.map(o => {
+      if (o.id === orderId) {
+        return {
+          ...o,
+          status,
+          delivered_at: status === 'delivered' ? new Date().toISOString() : o.delivered_at
+        };
+      }
+      return o;
+    });
+
+    const raw = JSON.stringify(updated);
+    localStorage.setItem('church_expo_orders', raw);
+    await this.updateSiteSettings({ church_expo_orders: raw });
+  },
+
+  // ── Servants Attendance & Points Methods ──
+  async getServantAttendanceRecords(): Promise<ServantAttendanceRecord[]> {
+    try {
+      const settings = await this.getSiteSettings();
+      const raw = settings['church_servant_attendance_records'];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          localStorage.setItem('church_servant_attendance_records', raw);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const local = localStorage.getItem('church_servant_attendance_records');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+
+    return [];
+  },
+
+  async saveServantAttendanceRecords(newRecords: ServantAttendanceRecord[]): Promise<void> {
+    const existing = await this.getServantAttendanceRecords();
+    const map = new Map<string, ServantAttendanceRecord>();
+
+    existing.forEach(r => {
+      map.set(`${r.servant_id}_${r.date}_${r.service_name}`, r);
+    });
+
+    newRecords.forEach(r => {
+      map.set(`${r.servant_id}_${r.date}_${r.service_name}`, r);
+    });
+
+    const updated = Array.from(map.values());
+    const raw = JSON.stringify(updated);
+    localStorage.setItem('church_servant_attendance_records', raw);
+    await this.updateSiteSettings({ church_servant_attendance_records: raw });
+  },
+
+  async getServantsPoints(): Promise<Record<string, number>> {
+    try {
+      const settings = await this.getSiteSettings();
+      const raw = settings['church_servants_points_map'];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed === 'object' && parsed !== null) {
+          localStorage.setItem('church_servants_points_map', raw);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const local = localStorage.getItem('church_servants_points_map');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (typeof parsed === 'object' && parsed !== null) return parsed;
+      }
+    } catch (e) {}
+
+    return {};
+  },
+
+  async saveServantsPoints(pointsMap: Record<string, number>): Promise<void> {
+    const raw = JSON.stringify(pointsMap);
+    localStorage.setItem('church_servants_points_map', raw);
+    await this.updateSiteSettings({ church_servants_points_map: raw });
+  },
+
+  async getServantPointTransactions(): Promise<ServantPointTransaction[]> {
+    try {
+      const settings = await this.getSiteSettings();
+      const raw = settings['church_servant_points_transactions'];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          localStorage.setItem('church_servant_points_transactions', raw);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const local = localStorage.getItem('church_servant_points_transactions');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+
+    return [];
+  },
+
+  async addServantPointTransaction(tx: ServantPointTransaction): Promise<void> {
+    const existing = await this.getServantPointTransactions();
+    const updated = [tx, ...existing];
+    const raw = JSON.stringify(updated);
+    localStorage.setItem('church_servant_points_transactions', raw);
+    await this.updateSiteSettings({ church_servant_points_transactions: raw });
+
+    // Also update servant total in points map
+    const pointsMap = await this.getServantsPoints();
+    const current = pointsMap[tx.servant_id] || 0;
+    pointsMap[tx.servant_id] = Math.max(0, current + tx.points);
+    await this.saveServantsPoints(pointsMap);
   }
 };
 
