@@ -34,6 +34,20 @@ export type {
   PrayerRequest, CommunityMemory, CommunityMemoryCategory
 };
 
+export interface AdminActivityLog {
+  id: string;
+  admin_id: string;
+  admin_name: string;
+  admin_email: string;
+  action_type: 'create_user' | 'update_role' | 'update_permissions' | 'delete_user' | 'update_profile' | 'assign_services' | 'reset_password';
+  target_user_id?: string;
+  target_user_name?: string;
+  target_user_email?: string;
+  description: string;
+  details?: Record<string, any>;
+  timestamp: string;
+}
+
 // ===================================================================
 // IMAGE TRANSFORMS & DRIVE URL HELPERS
 // ===================================================================
@@ -1985,6 +1999,109 @@ export const api = {
       await (supabase.rpc as any)('increment_memory_likes', { memory_id: id });
     } catch (e) {}
     return newLikes;
+  },
+
+  // ==========================================
+  // ADMIN ACTIVITY LOGS & AUDIT TRAIL
+  // ==========================================
+  async logAdminActivity(activity: Omit<AdminActivityLog, 'id' | 'timestamp'>): Promise<void> {
+    const newLog: AdminActivityLog = {
+      ...activity,
+      id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      timestamp: new Date().toISOString()
+    };
+
+    // 1. Try DB table if exists
+    try {
+      await supabase.from('admin_activity_logs').insert({
+        admin_id: newLog.admin_id,
+        admin_name: newLog.admin_name,
+        admin_email: newLog.admin_email,
+        action_type: newLog.action_type,
+        target_user_id: newLog.target_user_id || null,
+        target_user_name: newLog.target_user_name || null,
+        target_user_email: newLog.target_user_email || null,
+        description: newLog.description,
+        details: newLog.details || {},
+        created_at: newLog.timestamp
+      });
+    } catch (dbErr) {
+      // Ignore if table doesn't exist yet, fallback to site_settings
+    }
+
+    // 2. Always persist to site_settings and local storage for 100% resilience
+    try {
+      const existingLogs = await this.getAdminActivityLogs();
+      const updated = [newLog, ...existingLogs.filter(l => l.id !== newLog.id)].slice(0, 500);
+      localStorage.setItem('church_admin_activity_logs', JSON.stringify(updated));
+      await this.updateSiteSettings({
+        admin_activity_logs_store: JSON.stringify(updated)
+      }).catch(() => {});
+    } catch (err) {
+      console.warn('Local/Settings log fallback notice:', err);
+    }
+  },
+
+  async getAdminActivityLogs(): Promise<AdminActivityLog[]> {
+    // 1. Try DB table
+    try {
+      const { data, error } = await supabase
+        .from('admin_activity_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(300);
+
+      if (!error && data && data.length > 0) {
+        return data.map((d: any) => ({
+          id: d.id || 'log_' + (d.created_at || Date.now()),
+          admin_id: d.admin_id || '',
+          admin_name: d.admin_name || 'مسؤول النظام',
+          admin_email: d.admin_email || '',
+          action_type: d.action_type || 'update_profile',
+          target_user_id: d.target_user_id || '',
+          target_user_name: d.target_user_name || '',
+          target_user_email: d.target_user_email || '',
+          description: d.description || '',
+          details: d.details || {},
+          timestamp: d.created_at || d.timestamp || new Date().toISOString()
+        })) as AdminActivityLog[];
+      }
+    } catch (e) {
+      // Fallback
+    }
+
+    // 2. Try site_settings
+    try {
+      const settings = await this.getSiteSettings();
+      const raw = settings['admin_activity_logs_store'];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          localStorage.setItem('church_admin_activity_logs', raw);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    // 3. Try localStorage
+    try {
+      const local = localStorage.getItem('church_admin_activity_logs');
+      if (local) {
+        return JSON.parse(local);
+      }
+    } catch (e) {}
+
+    return [];
+  },
+
+  async clearAdminActivityLogs(): Promise<void> {
+    try {
+      await supabase.from('admin_activity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    } catch (e) {}
+    try {
+      localStorage.removeItem('church_admin_activity_logs');
+      await this.updateSiteSettings({ admin_activity_logs_store: '[]' });
+    } catch (e) {}
   }
 };
 
