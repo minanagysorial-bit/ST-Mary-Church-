@@ -17,7 +17,8 @@ import type {
   MemoryAlbum, MemoryAlbumInsert,
   CustomPage, CustomPageInsert, PageSection, PageSectionInsert,
   Priest, PriestInsert, ContactMessage, ContactMessageInsert,
-  CommunityMemory, CommunityMemoryCategory
+  CommunityMemory, CommunityMemoryCategory,
+  WhatsAppSession, WhatsAppBroadcastRecipient, WhatsAppBroadcastJob, WhatsAppBroadcastJobInsert
 } from './database.types';
 
 // Re-export types for backward compatibility
@@ -31,7 +32,8 @@ export type {
   MembershipRequest, ChurchMember, MemberVisitation, MemoryAlbum, MemoryAlbumInsert,
   CustomPage, CustomPageInsert, PageSection, PageSectionInsert,
   Priest, PriestInsert, ContactMessage, ContactMessageInsert,
-  PrayerRequest, CommunityMemory, CommunityMemoryCategory
+  PrayerRequest, CommunityMemory, CommunityMemoryCategory,
+  WhatsAppSession, WhatsAppBroadcastRecipient, WhatsAppBroadcastJob, WhatsAppBroadcastJobInsert
 };
 
 export interface AdminActivityLog {
@@ -711,6 +713,15 @@ export const api = {
       .order('created_at', { ascending: true });
     if (error) throw error;
     return data as FamilyMember[];
+  },
+
+  getAllFamilyMembers: async (): Promise<FamilyMember[]> => {
+    const { data, error } = await supabase
+      .from('family_members')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return (data || []) as FamilyMember[];
   },
 
   createFamilyMember: async (member: FamilyMemberInsert): Promise<FamilyMember> => {
@@ -2476,6 +2487,247 @@ export const api = {
     const current = pointsMap[tx.servant_id] || 0;
     pointsMap[tx.servant_id] = Math.max(0, current + tx.points);
     await this.saveServantsPoints(pointsMap);
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // WhatsApp Automation & Bulk Broadcast Methods (100% Free)
+  // ══════════════════════════════════════════════════════════════
+
+  async getWhatsAppSession(): Promise<WhatsAppSession> {
+    try {
+      // First check local backend proxy if running
+      const res = await fetch('/api/whatsapp?action=status').catch(() => null);
+      if (res && res.ok) {
+        const json = await res.json();
+        if (json.session) return json.session;
+      }
+    } catch (e) {}
+
+    try {
+      const settings = await this.getSiteSettings();
+      const raw = settings['church_whatsapp_session'];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.status) {
+          localStorage.setItem('church_whatsapp_session', raw);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const local = localStorage.getItem('church_whatsapp_session');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed && parsed.status) return parsed;
+      }
+    } catch (e) {}
+
+    return {
+      id: 'default',
+      status: 'disconnected',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  },
+
+  async saveWhatsAppSession(session: WhatsAppSession): Promise<void> {
+    const raw = JSON.stringify(session);
+    localStorage.setItem('church_whatsapp_session', raw);
+    try {
+      await this.updateSiteSettings({ church_whatsapp_session: raw });
+    } catch (e) {
+      console.warn('Failed to sync WhatsApp session to site_settings', e);
+    }
+  },
+
+  async disconnectWhatsApp(): Promise<void> {
+    try {
+      await fetch('/api/whatsapp?action=disconnect', { method: 'POST' }).catch(() => {});
+    } catch (e) {}
+
+    const session: WhatsAppSession = {
+      id: 'default',
+      status: 'disconnected',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    await this.saveWhatsAppSession(session);
+  },
+
+  async getWhatsAppBroadcastJobs(): Promise<WhatsAppBroadcastJob[]> {
+    try {
+      const settings = await this.getSiteSettings();
+      const raw = settings['church_whatsapp_jobs'];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          localStorage.setItem('church_whatsapp_jobs', raw);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const local = localStorage.getItem('church_whatsapp_jobs');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+
+    return [];
+  },
+
+  async saveWhatsAppBroadcastJobs(jobs: WhatsAppBroadcastJob[]): Promise<void> {
+    const raw = JSON.stringify(jobs);
+    localStorage.setItem('church_whatsapp_jobs', raw);
+    try {
+      await this.updateSiteSettings({ church_whatsapp_jobs: raw });
+    } catch (e) {
+      console.warn('Failed to sync WhatsApp broadcast jobs to site_settings', e);
+    }
+  },
+
+  async createWhatsAppBroadcastJob(jobData: WhatsAppBroadcastJobInsert): Promise<WhatsAppBroadcastJob> {
+    const jobs = await this.getWhatsAppBroadcastJobs();
+    const newJob: WhatsAppBroadcastJob = {
+      ...jobData,
+      id: jobData.id || `job_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      status: jobData.status || 'running',
+      sent_count: 0,
+      failed_count: 0,
+      created_at: new Date().toISOString(),
+      recipients: jobData.recipients || []
+    };
+
+    const updated = [newJob, ...jobs];
+    await this.saveWhatsAppBroadcastJobs(updated);
+
+    // Also notify server queue worker if endpoint exists
+    try {
+      fetch('/api/whatsapp?action=enqueue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job: newJob })
+      }).catch(() => {});
+    } catch (e) {}
+
+    return newJob;
+  },
+
+  async updateWhatsAppBroadcastJob(updatedJob: WhatsAppBroadcastJob): Promise<void> {
+    const jobs = await this.getWhatsAppBroadcastJobs();
+    const index = jobs.findIndex(j => j.id === updatedJob.id);
+    if (index >= 0) {
+      jobs[index] = updatedJob;
+    } else {
+      jobs.unshift(updatedJob);
+    }
+    await this.saveWhatsAppBroadcastJobs(jobs);
+  },
+
+  async pauseWhatsAppBroadcastJob(jobId: string): Promise<void> {
+    const jobs = await this.getWhatsAppBroadcastJobs();
+    const job = jobs.find(j => j.id === jobId);
+    if (job) {
+      job.status = 'paused';
+      await this.saveWhatsAppBroadcastJobs(jobs);
+      try {
+        fetch('/api/whatsapp?action=pause', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId })
+        }).catch(() => {});
+      } catch (e) {}
+    }
+  },
+
+  async resumeWhatsAppBroadcastJob(jobId: string): Promise<void> {
+    const jobs = await this.getWhatsAppBroadcastJobs();
+    const job = jobs.find(j => j.id === jobId);
+    if (job) {
+      job.status = 'running';
+      await this.saveWhatsAppBroadcastJobs(jobs);
+      try {
+        fetch('/api/whatsapp?action=resume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId })
+        }).catch(() => {});
+      } catch (e) {}
+    }
+  },
+
+  async cancelWhatsAppBroadcastJob(jobId: string): Promise<void> {
+    const jobs = await this.getWhatsAppBroadcastJobs();
+    const job = jobs.find(j => j.id === jobId);
+    if (job) {
+      job.status = 'cancelled';
+      job.completed_at = new Date().toISOString();
+      await this.saveWhatsAppBroadcastJobs(jobs);
+      try {
+        fetch('/api/whatsapp?action=cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId })
+        }).catch(() => {});
+      } catch (e) {}
+    }
+  },
+
+  async updateRecipientStatus(
+    jobId: string, 
+    recipientId: string, 
+    status: 'sending' | 'sent' | 'failed', 
+    errorMessage?: string
+  ): Promise<void> {
+    const jobs = await this.getWhatsAppBroadcastJobs();
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) return;
+
+    const recipient = job.recipients.find(r => r.id === recipientId);
+    if (!recipient) return;
+
+    const prevStatus = recipient.status;
+    recipient.status = status;
+    if (errorMessage) recipient.error_message = errorMessage;
+    if (status === 'sent') recipient.sent_at = new Date().toISOString();
+
+    if (prevStatus !== 'sent' && status === 'sent') {
+      job.sent_count = (job.sent_count || 0) + 1;
+    }
+    if (prevStatus !== 'failed' && status === 'failed') {
+      job.failed_count = (job.failed_count || 0) + 1;
+    }
+
+    if (job.sent_count + job.failed_count >= job.total_count) {
+      job.status = 'completed';
+      job.completed_at = new Date().toISOString();
+    }
+
+    await this.saveWhatsAppBroadcastJobs(jobs);
+  },
+
+  async sendDirectWhatsApp(phone: string, text: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const res = await fetch('/api/whatsapp?action=send_direct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, text })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+
+    // Fallback: format clean Egyptian phone number
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const formatted = cleanPhone.startsWith('01') ? `2${cleanPhone}` : cleanPhone;
+    return {
+      success: true,
+      message: `https://wa.me/${formatted}?text=${encodeURIComponent(text)}`
+    };
   }
 };
 

@@ -41,6 +41,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'super_admin':
         return [
           { label: 'نظرة عامة', path: '/admin', icon: 'dashboard' },
+          { label: 'إرسال رسائل واتساب 💬', path: '/admin/whatsapp', icon: 'chat', permission: PERMISSIONS.CAN_SEND_WHATSAPP_BROADCAST },
           { label: 'إعدادات وصلاحيات المستخدمين', path: '/admin/permissions', icon: 'admin_panel_settings', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'تعيين كهنة وأمناء الخدمات', path: '/admin/services', icon: 'shield_person', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'إدارة الأعضاء والخدام', path: '/admin/members', icon: 'badge', permission: PERMISSIONS.MANAGE_MEMBERS },
@@ -66,6 +67,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'admin':
         return [
           { label: 'نظرة عامة', path: '/admin', icon: 'dashboard' },
+          { label: 'إرسال رسائل واتساب 💬', path: '/admin/whatsapp', icon: 'chat', permission: PERMISSIONS.CAN_SEND_WHATSAPP_BROADCAST },
           { label: 'إعدادات وصلاحيات المستخدمين', path: '/admin/permissions', icon: 'admin_panel_settings', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'تعيين كهنة وأمناء الخدمات', path: '/admin/services', icon: 'shield_person', permission: PERMISSIONS.MANAGE_PERMISSIONS },
           { label: 'إدارة الأعضاء والخدام', path: '/admin/members', icon: 'badge', permission: PERMISSIONS.MANAGE_MEMBERS },
@@ -84,6 +86,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'priest':
         return [
           { label: 'لوحة التحكم الرعوية', path: '/priest', icon: 'dashboard' },
+          { label: 'إرسال رسائل واتساب 💬', path: '/admin/whatsapp', icon: 'chat', permission: PERMISSIONS.CAN_SEND_WHATSAPP_BROADCAST },
           { label: 'حضور ونقاط الخدام ⭐', path: '/service-leader/servants-points', icon: 'military_tech' },
           { label: 'المعرض ومتجر الكوبونات 🎁', path: '/servant/expo', icon: 'shopping_bag' },
           { label: 'طلبات الصلاة والرسائل', path: '/admin/communications', icon: 'chat', permission: PERMISSIONS.VIEW_PRAYERS_AND_CONTACT },
@@ -102,6 +105,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'service_leader':
         return [
           { label: 'لوحة أمين الخدمة', path: '/service-leader', icon: 'dashboard' },
+          { label: 'إرسال رسائل واتساب 💬', path: '/admin/whatsapp', icon: 'chat', permission: PERMISSIONS.CAN_SEND_WHATSAPP_BROADCAST },
           { label: 'حضور ونقاط الخدام ⭐', path: '/service-leader/servants-points', icon: 'military_tech' },
           { label: 'المعرض ومتجر الكوبونات 🎁', path: '/servant/expo', icon: 'shopping_bag' },
           { label: 'فصول وأسر التربية الكنسية', path: '/service-leader/families', icon: 'family_restroom', permission: PERMISSIONS.CREATE_FAMILIES },
@@ -120,6 +124,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'servant':
         return [
           { label: 'نظرة عامة', path: '/servant', icon: 'dashboard' },
+          { label: 'إرسال رسائل واتساب 💬', path: '/admin/whatsapp', icon: 'chat', permission: PERMISSIONS.CAN_SEND_WHATSAPP_BROADCAST },
           { label: 'المعرض ومتجر الكوبونات 🎁', path: '/servant/expo', icon: 'shopping_bag' },
           { label: 'أسرتي وفصلي ومخدومي', path: '/servant/families', icon: 'family_restroom', permission: PERMISSIONS.MANAGE_FAMILIES },
           { label: 'بنك تحضير الدروس 📖', path: '/servant/lesson-bank', icon: 'menu_book' },

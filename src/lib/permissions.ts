@@ -45,6 +45,10 @@ export const PERMISSIONS = {
   // Membership & Church Members
   REVIEW_MEMBERSHIP_REQUESTS: 'review_membership_requests',
   MANAGE_CHURCH_MEMBERS: 'manage_church_members',
+
+  // WhatsApp Broadcast & Automation
+  CAN_SEND_WHATSAPP_BROADCAST: 'can_send_whatsapp_broadcast',
+  MANAGE_WHATSAPP: 'manage_whatsapp',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -57,6 +61,8 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   [PERMISSIONS.MANAGE_PERMISSIONS]: 'إنشاء وإدارة حسابات المستخدمين والخدام والصلاحيات',
   [PERMISSIONS.MANAGE_VERSES]: 'إدارة آيات الموقع اليومية',
   [PERMISSIONS.MANAGE_NOTIFICATIONS]: 'إرسال الإشعارات الفورية (Push Notifications)',
+  [PERMISSIONS.CAN_SEND_WHATSAPP_BROADCAST]: 'إرسال رسائل وإشعارات الواتساب الجماعية (Bulk WhatsApp Broadcast)',
+  [PERMISSIONS.MANAGE_WHATSAPP]: 'ربط وإدارة جلسة واتساب الكنيسة (WhatsApp Session QR)',
 
   [PERMISSIONS.MANAGE_LITURGIES]: 'إدارة وجدول القداسات',
   [PERMISSIONS.MANAGE_PRIEST_SERMONS]: 'إدارة عظات الكاهن',
@@ -88,11 +94,13 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
 /** Group permissions by category for the admin UI */
 export const PERMISSION_GROUPS: { label: string; permissions: PermissionKey[] }[] = [
   {
-    label: 'صلاحيات الإدارة (Admin)',
+    label: 'صلاحيات الإدارة والتواصل (Admin & WhatsApp)',
     permissions: [
+      PERMISSIONS.CAN_SEND_WHATSAPP_BROADCAST,
+      PERMISSIONS.MANAGE_WHATSAPP,
+      PERMISSIONS.MANAGE_NOTIFICATIONS,
       PERMISSIONS.MANAGE_LITURGIES,
       PERMISSIONS.MANAGE_VERSES,
-      PERMISSIONS.MANAGE_NOTIFICATIONS,
       PERMISSIONS.MANAGE_ANNOUNCEMENTS,
       PERMISSIONS.MANAGE_SERMONS,
       PERMISSIONS.MANAGE_CONTENT,

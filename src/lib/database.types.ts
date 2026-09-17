@@ -575,6 +575,56 @@ export interface ContactMessage {
 }
 export type ContactMessageInsert = Omit<ContactMessage, 'id' | 'created_at'> & { id?: string };
 
+// ----- WhatsApp Automation & Bulk Broadcast Types -----
+
+export interface WhatsAppSession {
+  id: string;
+  status: 'disconnected' | 'connecting' | 'connected' | 'qr_ready' | 'banned';
+  phone_number?: string;
+  name?: string;
+  qr_code?: string;
+  battery?: number;
+  last_active?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WhatsAppBroadcastRecipient {
+  id: string;
+  job_id: string;
+  target_id?: string;
+  name: string;
+  phone: string;
+  stage?: string;
+  family?: string;
+  points?: number;
+  message: string;
+  status: 'queued' | 'sending' | 'sent' | 'failed';
+  error_message?: string;
+  sent_at?: string;
+}
+
+export interface WhatsAppBroadcastJob {
+  id: string;
+  title: string;
+  target_audience: 'all_members' | 'servants' | 'service_families' | 'students' | 'custom';
+  target_filter?: string;
+  message_template: string;
+  total_count: number;
+  sent_count: number;
+  failed_count: number;
+  status: 'draft' | 'running' | 'paused' | 'completed' | 'cancelled';
+  created_at: string;
+  created_by: string;
+  created_by_name: string;
+  completed_at?: string;
+  recipients: WhatsAppBroadcastRecipient[];
+}
+export type WhatsAppBroadcastJobInsert = Omit<WhatsAppBroadcastJob, 'id' | 'created_at' | 'sent_count' | 'failed_count' | 'status'> & {
+  id?: string;
+  status?: 'draft' | 'running' | 'paused' | 'completed' | 'cancelled';
+};
+
 // ----- Database type for Supabase client generic -----
 
 export interface Database {
