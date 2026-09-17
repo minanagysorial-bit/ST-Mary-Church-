@@ -222,9 +222,26 @@ export const ExpoManagementPage: React.FC = () => {
   // Public Store Link
   const publicStoreUrl = `${window.location.origin}/store`;
 
-  const copyStoreLink = () => {
-    navigator.clipboard.writeText(publicStoreUrl);
-    toast.success('تم نسخ رابط المعرض المباشر للمخدومين بنجاح! 📋');
+  const copyStoreLink = (customUrl?: string | React.MouseEvent) => {
+    const urlToCopy = typeof customUrl === 'string' ? customUrl : publicStoreUrl;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(urlToCopy);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = urlToCopy;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      toast.success('تم نسخ رابط المعرض المباشر للمخدومين بنجاح! 📋');
+    } catch (err) {
+      toast.error('يرجى نسخ الرابط يدوياً من الشاشة');
+    }
   };
 
   const getShareWhatsAppMessage = () => {

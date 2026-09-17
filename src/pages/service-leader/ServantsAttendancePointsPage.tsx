@@ -35,7 +35,8 @@ import {
   type Family, 
   type ServantAttendanceRecord, 
   type ServantPointTransaction, 
-  type UserRole 
+  type UserRole,
+  type ChurchServiceCategory
 } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
@@ -58,8 +59,10 @@ export const ServantsAttendancePointsPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'attendance' | 'points' | 'history'>('attendance');
   const [servants, setServants] = useState<Profile[]>([]);
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [families, setFamilies] = useState<Family[]>([]);
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
+  const [familyServantsMap, setFamilyServantsMap] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
   // Attendance Date
@@ -88,29 +91,96 @@ export const ServantsAttendancePointsPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [selectedDate]);
+  }, [selectedDate, profile]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [profilesList, familiesList, settings, attendanceRecords, points, txs] = await Promise.all([
+      const [profilesList, familiesList, settings, attendanceRecords, points, txs, allFamilyServants] = await Promise.all([
         api.getProfiles(),
-        api.getFamilies(),
+        api.getFamilies('sunday_school').catch(() => [] as Family[]),
         api.getSiteSettings().catch(() => ({})),
         api.getServantAttendanceRecords(),
         api.getServantsPoints(),
-        api.getServantPointTransactions()
+        api.getServantPointTransactions(),
+        api.getFamilyServantsForAll().catch(() => [])
       ]);
+
+      const relMap: Record<string, string[]> = {};
+      (allFamilyServants || []).forEach((fs: any) => {
+        if (!relMap[fs.family_id]) relMap[fs.family_id] = [];
+        relMap[fs.family_id].push(fs.servant_id);
+      });
 
       setSiteSettings(settings);
       setFamilies(familiesList);
       setPointsMap(points);
       setTransactions(txs);
+      setAllProfiles(profilesList);
+      setFamilyServantsMap(relMap);
 
-      // Filter servants & service leaders
-      const activeServants = profilesList.filter(p => 
-        p.role === 'servant' || p.role === 'service_leader' || p.role === 'admin'
-      );
+      const isGlobalAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'priest';
+
+      // 1. Determine assigned service categories for current leader
+      let leaderAssignedCategories: ChurchServiceCategory[] = [];
+      if (isGlobalAdmin) {
+        leaderAssignedCategories = ALL_CHURCH_SERVICE_CATEGORIES.map(c => c.category);
+      } else if (profile?.id) {
+        leaderAssignedCategories = getLeaderAssignedServices(profile.id, settings);
+        const pService = (profile as any)?.service;
+        if (pService) {
+          const matchCat = ALL_CHURCH_SERVICE_CATEGORIES.find(c => pService.includes(c.category));
+          if (matchCat && !leaderAssignedCategories.includes(matchCat.category)) {
+            leaderAssignedCategories.push(matchCat.category);
+          }
+        }
+      }
+
+      // 2. Find Sunday School families belonging to these categories
+      const matchingFamilies = familiesList.filter(f => {
+        if (isGlobalAdmin) return true;
+        if (leaderAssignedCategories.length === 0) return true;
+        return leaderAssignedCategories.some(cat => 
+          (f.stage && f.stage.includes(cat)) || 
+          (f.area && f.area.includes(cat)) || 
+          (f.notes && f.notes.includes(cat)) ||
+          (f.head_name && f.head_name.includes(cat))
+        );
+      });
+
+      // 3. Collect servant IDs belonging to leader's families
+      const servantIdsInMyServices = new Set<string>();
+      matchingFamilies.forEach(f => {
+        if (f.assigned_servant_id) servantIdsInMyServices.add(f.assigned_servant_id);
+        const assignedList = relMap[f.id] || [];
+        assignedList.forEach((id: string) => servantIdsInMyServices.add(id));
+      });
+
+      // 4. Filter active servants strictly
+      const activeServants = profilesList.filter(p => {
+        if (p.role !== 'servant' && p.role !== 'service_leader' && p.role !== 'admin') return false;
+        if (isGlobalAdmin) return true;
+        
+        const servantService = (p as any)?.service || '';
+
+        // Match by assigned class / family
+        if (servantIdsInMyServices.has(p.id)) return true;
+        
+        // Match by servant profile service category
+        if (leaderAssignedCategories.some(cat => servantService.includes(cat))) return true;
+
+        // Service leader themselves
+        if (p.id === profile?.id) return true;
+
+        // If no explicit category was found, fallback to matching servant service with leader service
+        const pLeaderService = (profile as any)?.service || '';
+        if (leaderAssignedCategories.length === 0 && pLeaderService && servantService === pLeaderService) {
+          return true;
+        }
+
+        return false;
+      });
+
       setServants(activeServants);
 
       // Build daily attendance from records for selected date
@@ -120,7 +190,6 @@ export const ServantsAttendancePointsPage: React.FC = () => {
         if (found) {
           attendanceState[s.id] = { status: found.status, notes: found.notes || '' };
         } else {
-          // Default unrecorded
           attendanceState[s.id] = { status: 'present', notes: '' };
         }
       });
@@ -276,16 +345,45 @@ export const ServantsAttendancePointsPage: React.FC = () => {
     }
   };
 
+  const isGlobalAdmin = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'priest';
+  const myAssignedCategories: ChurchServiceCategory[] = isGlobalAdmin
+    ? ALL_CHURCH_SERVICE_CATEGORIES.map(c => c.category)
+    : (profile?.id ? getLeaderAssignedServices(profile.id, siteSettings) : []);
+
+  const currentLeaderService = (profile as any)?.service;
+  if (!isGlobalAdmin && currentLeaderService) {
+    const matchCat = ALL_CHURCH_SERVICE_CATEGORIES.find(c => currentLeaderService.includes(c.category));
+    if (matchCat && !myAssignedCategories.includes(matchCat.category)) {
+      myAssignedCategories.push(matchCat.category);
+    }
+  }
+
+  // Available Category filters
+  const availableCategories = isGlobalAdmin
+    ? ['الكل', ...ALL_CHURCH_SERVICE_CATEGORIES.map(c => c.category)]
+    : myAssignedCategories.length > 1
+      ? ['الكل', ...myAssignedCategories]
+      : [];
+
   // Filter Servants
   const filteredServants = servants.filter(s => {
     const matchesSearch = searchTerm.trim() === '' || 
       (s.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (s.email || '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    
+    const sService = (s as any)?.service || '';
+    const matchesCategory = selectedCategory === 'الكل' || 
+      sService.includes(selectedCategory);
+
+    return matchesSearch && matchesCategory;
   });
 
+  // Visible Servant IDs
+  const visibleServantIds = new Set(servants.map(s => s.id));
+  const visibleTransactions = transactions.filter(t => visibleServantIds.has(t.servant_id));
+
   // Sorted Leaderboard
-  const leaderboardServants = [...servants].sort((a, b) => {
+  const leaderboardServants = [...filteredServants].sort((a, b) => {
     const ptsA = pointsMap[a.id] || 0;
     const ptsB = pointsMap[b.id] || 0;
     return ptsB - ptsA;
@@ -318,7 +416,7 @@ export const ServantsAttendancePointsPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `كشف_حضور_الخدام_${selectedDate}.csv`;
+    a.download = `كشف_حضور_خدام_${selectedCategory !== 'الكل' ? selectedCategory : 'الخدمة'}_${selectedDate}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('تم تصدير كشف الحضور بنجاح إلى Excel 📊');
@@ -347,7 +445,7 @@ export const ServantsAttendancePointsPage: React.FC = () => {
   const presentCount = Object.values(dailyAttendance).filter(a => a.status === 'present').length;
   const lateCount = Object.values(dailyAttendance).filter(a => a.status === 'late').length;
   const absentCount = Object.values(dailyAttendance).filter(a => a.status === 'absent' || a.status === 'excused').length;
-  const totalRecorded = servants.length;
+  const totalRecorded = filteredServants.length;
   const attendanceRate = totalRecorded > 0 ? Math.round(((earlyCount + presentCount) / totalRecorded) * 100) : 0;
 
   return (
@@ -361,11 +459,21 @@ export const ServantsAttendancePointsPage: React.FC = () => {
               <CalendarCheck className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="font-tajawal text-2xl sm:text-3xl font-extrabold text-[#002366] tracking-wide">
-                حضور وغياب ونقاط الخدام ⭐
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-tajawal text-2xl sm:text-3xl font-extrabold text-[#002366] tracking-wide">
+                  حضور وغياب ونقاط الخدام ⭐
+                </h1>
+                {!isGlobalAdmin && (
+                  <span className="bg-amber-100 text-amber-900 border border-amber-300 text-xs px-3 py-1 rounded-full font-black flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>خدمتك: {myAssignedCategories.join(' ، ') || currentLeaderService || 'التربية الكنسية'}</span>
+                  </span>
+                )}
+              </div>
               <p className="text-xs sm:text-sm text-slate-500 font-bold mt-1">
-                رصد التزام الخدام أسبوعياً، تحفيز بالنقاط، ولوحة شرف أبطال الخدمة
+                {isGlobalAdmin 
+                  ? 'رصد التزام الخدام أسبوعياً لجميع الخدمات وتحفيزهم بالنقاط ولوحة الشرف'
+                  : `متابعة حضور ودرجات خدام خدمتك (${myAssignedCategories.join(' ، ') || currentLeaderService || 'الخدمة'}) فقط`}
               </p>
             </div>
           </div>
@@ -398,6 +506,29 @@ export const ServantsAttendancePointsPage: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Category Filter Pills (if admin or leader of multiple services) */}
+        {availableCategories.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <span className="text-xs font-black text-slate-500 shrink-0 flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5" />
+              <span>تصفية الخدمة:</span>
+            </span>
+            {availableCategories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-[#002366] text-[#fed65b] shadow'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -758,8 +889,8 @@ export const ServantsAttendancePointsPage: React.FC = () => {
         {activeTab === 'history' && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <h4 className="font-tajawal text-sm font-black text-[#002366]">سجل حركات ومنح النقاط للخدام</h4>
-              <span className="text-xs text-slate-500 font-bold">{transactions.length} حركة مسجلة</span>
+              <h4 className="font-tajawal text-sm font-black text-[#002366]">سجل حركات ومنح النقاط لخدام الخدمة</h4>
+              <span className="text-xs text-slate-500 font-bold">{visibleTransactions.length} حركة مسجلة</span>
             </div>
 
             <div className="overflow-x-auto">
@@ -774,14 +905,14 @@ export const ServantsAttendancePointsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
-                  {transactions.length === 0 ? (
+                  {visibleTransactions.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center text-slate-400">
-                        لا توجد حركات نقاط مسجلة حتى الآن
+                        لا توجد حركات نقاط مسجلة لخدام هذه الخدمة حتى الآن
                       </td>
                     </tr>
                   ) : (
-                    transactions.map((tx, idx) => (
+                    visibleTransactions.map((tx, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                         <td className="p-4 font-black text-[#002366]">{tx.servant_name}</td>
                         <td className="p-4">

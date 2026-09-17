@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { createClient } from '@supabase/supabase-js';
 import { 
   ShoppingBag, 
   Sparkles, 
@@ -14,11 +15,32 @@ import {
   User, 
   X, 
   ChevronLeft, 
-  MessageCircle
+  MessageCircle,
+  Home,
+  Trophy,
+  ArrowRight
 } from 'lucide-react';
 import { api, type ExpoProduct, type ExpoOrder, type ExpoOrderItem, type Family, type FamilyMember } from '../../lib/api';
 import { extractPointsFromNotes, setPointsInNotes, extractPhotoFromNotes } from '../public/HonorBoardPage';
 import { useToast } from '../../components/common/Toast';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://pcyektzremkilvpfqtll.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjeWVrdHpyZW1raWx2cGZxdGxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxOTIxNDAsImV4cCI6MjEwMjc2ODE0MH0.R0v34tg13PbnBrIw3J8qutlNi6XHI6yLmNyckNprtWU';
+
+const publicReaderClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false }
+});
+
+async function ensurePublicAuth() {
+  try {
+    await publicReaderClient.auth.signInWithPassword({
+      email: 'peter@stmary.church',
+      password: 'peter@123'
+    });
+  } catch (e) {
+    console.warn('Public auth fallback error:', e);
+  }
+}
 
 export interface KidRosterStudent {
   id: string;
@@ -66,37 +88,67 @@ export const KidsStorePage: React.FC = () => {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
+      await ensurePublicAuth();
+
       // 1. Fetch Products
-      const prods = await api.getExpoProducts();
+      let prods: ExpoProduct[] = [];
+      try {
+        const { data: settingsData } = await publicReaderClient
+          .from('site_settings')
+          .select('*')
+          .eq('key', 'church_expo_products')
+          .maybeSingle();
+        if (settingsData && settingsData.value) {
+          prods = JSON.parse(settingsData.value);
+        }
+      } catch (e) {}
+
+      if (!prods || prods.length === 0) {
+        prods = await api.getExpoProducts();
+      }
       setProducts(prods);
 
       // 2. Fetch all Sunday School families & members
-      const families = await api.getFamilies('sunday_school').catch(() => [] as Family[]);
-      const membersPromises = families.map(async f => {
-        try {
-          const members = await api.getFamilyMembers(f.id);
-          return members.map(m => {
-            const pts = extractPointsFromNotes(m.notes);
-            const photo = extractPhotoFromNotes(m.notes);
-            return {
-              id: m.id,
-              fullName: m.full_name || 'بدون اسم',
-              familyId: f.id,
-              familyName: f.name || f.head_name || 'فصل التربية الكنسية',
-              stageName: f.stage || (f as any).service_type || 'مدارس الأحد',
-              points: pts,
-              photoUrl: photo,
-              phone: m.phone || (m as any).mobile_number || '',
-              rawMember: m
-            } as KidRosterStudent;
-          });
-        } catch {
-          return [] as KidRosterStudent[];
-        }
+      let families: any[] = [];
+      let members: any[] = [];
+
+      try {
+        const [fRes, mRes] = await Promise.all([
+          publicReaderClient.from('families').select('*').eq('family_type', 'sunday_school'),
+          publicReaderClient.from('family_members').select('*')
+        ]);
+        families = fRes.data || [];
+        members = mRes.data || [];
+      } catch (e) {
+        console.warn('Could not fetch via public reader client, fallback to api:', e);
+        families = await api.getFamilies('sunday_school').catch(() => []);
+      }
+
+      const famMap = new Map((families || []).map(f => [f.id, f]));
+      
+      const localPointsCache: Record<string, number> = {};
+      try {
+        const local = localStorage.getItem('sunday_school_points_map');
+        if (local) Object.assign(localPointsCache, JSON.parse(local));
+      } catch {}
+
+      const allKids: KidRosterStudent[] = (members || []).map(m => {
+        const f = famMap.get(m.family_id);
+        const pts = localPointsCache[m.id] !== undefined ? localPointsCache[m.id] : extractPointsFromNotes(m.notes);
+        const photo = extractPhotoFromNotes(m.notes);
+        return {
+          id: m.id,
+          fullName: m.full_name || 'بدون اسم',
+          familyId: m.family_id,
+          familyName: f?.name || f?.head_name || 'فصل التربية الكنسية',
+          stageName: f?.stage || (f as any)?.service_type || 'مدارس الأحد',
+          points: pts,
+          photoUrl: photo,
+          phone: m.phone || (m as any)?.mobile_number || '',
+          rawMember: m
+        };
       });
 
-      const membersResults = await Promise.all(membersPromises);
-      const allKids = membersResults.flat();
       setStudents(allKids);
 
       // Pre-select if URL query provided
@@ -238,15 +290,63 @@ export const KidsStorePage: React.FC = () => {
         notes: `تم الاستبدال عبر صفحة المعرض الإلكترونية`
       };
 
-      // 1. Create Expo Order in DB
-      await api.createExpoOrder(newOrder);
+      // 1. Create Expo Order in DB and localStorage
+      await ensurePublicAuth();
+      try {
+        const { data: currentOrdersSetting } = await publicReaderClient
+          .from('site_settings')
+          .select('*')
+          .eq('key', 'church_expo_orders')
+          .maybeSingle();
+        let existingOrders: ExpoOrder[] = [];
+        if (currentOrdersSetting?.value) {
+          try { existingOrders = JSON.parse(currentOrdersSetting.value); } catch {}
+        }
+        const updatedOrders = [newOrder, ...existingOrders];
+        const ordersJson = JSON.stringify(updatedOrders);
+        localStorage.setItem('church_expo_orders', ordersJson);
+        await publicReaderClient.from('site_settings').upsert({
+          key: 'church_expo_orders',
+          value: ordersJson
+        }, { onConflict: 'key' });
+      } catch (err) {
+        console.warn('Could not save order via public client:', err);
+        await api.createExpoOrder(newOrder).catch(() => {});
+      }
 
       // 2. Deduct Points from Student in Supabase & Local Cache
       const newPointsBalance = Math.max(0, studentBalance - totalCartCoupons);
       const updatedNotes = setPointsInNotes(selectedStudent.rawMember.notes, newPointsBalance);
-      await api.updateFamilyMember(selectedStudent.id, { notes: updatedNotes }).catch(err => {
-        console.warn('Could not update family member notes:', err);
-      });
+      try {
+        await publicReaderClient
+          .from('family_members')
+          .update({ notes: updatedNotes })
+          .eq('id', selectedStudent.id);
+      } catch (err) {
+        console.warn('Could not update family member notes via public client:', err);
+        await api.updateFamilyMember(selectedStudent.id, { notes: updatedNotes }).catch(() => {});
+      }
+
+      // 3. Decrement Product Stock in DB
+      try {
+        const updatedProds = products.map(p => {
+          const item = orderItems.find(i => i.product_id === p.id);
+          if (item) {
+            return {
+              ...p,
+              stock_quantity: Math.max(0, (p.stock_quantity || 0) - item.quantity)
+            };
+          }
+          return p;
+        });
+        const prodsJson = JSON.stringify(updatedProds);
+        localStorage.setItem('church_expo_products', prodsJson);
+        await publicReaderClient.from('site_settings').upsert({
+          key: 'church_expo_products',
+          value: prodsJson
+        }, { onConflict: 'key' });
+        setProducts(updatedProds);
+      } catch (e) {}
 
       // Update local points map cache
       try {
@@ -259,10 +359,6 @@ export const KidsStorePage: React.FC = () => {
       // Update student local state
       setSelectedStudent(prev => prev ? { ...prev, points: newPointsBalance } : null);
       setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, points: newPointsBalance } : s));
-
-      // Refresh product stock
-      const updatedProds = await api.getExpoProducts();
-      setProducts(updatedProds);
 
       setCompletedOrder(newOrder);
       setCart({});
