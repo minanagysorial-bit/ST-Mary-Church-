@@ -64,6 +64,9 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       case 'admin':
         return [
           { label: 'نظرة عامة', path: '/admin', icon: 'dashboard' },
+          { label: 'إعدادات وصلاحيات المستخدمين', path: '/admin/permissions', icon: 'admin_panel_settings', permission: PERMISSIONS.MANAGE_PERMISSIONS },
+          { label: 'تعيين كهنة وأمناء الخدمات', path: '/admin/services', icon: 'shield_person', permission: PERMISSIONS.MANAGE_PERMISSIONS },
+          { label: 'إدارة الأعضاء والخدام', path: '/admin/members', icon: 'badge', permission: PERMISSIONS.MANAGE_MEMBERS },
           { label: 'جدول القداسات', path: '/priest/liturgies', icon: 'calendar_month', permission: PERMISSIONS.MANAGE_LITURGIES },
           { label: 'إدارة الآيات اليومية', path: '/admin/verses', icon: 'menu_book', permission: PERMISSIONS.MANAGE_VERSES },
           { label: 'الإشعارات الفورية', path: '/admin/notifications', icon: 'notifications_active', permission: PERMISSIONS.MANAGE_NOTIFICATIONS },

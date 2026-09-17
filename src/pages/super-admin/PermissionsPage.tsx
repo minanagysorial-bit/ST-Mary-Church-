@@ -643,7 +643,7 @@ https://www.tibarthenos.com/login
   };
 
   return (
-    <DashboardLayout role="super_admin">
+    <DashboardLayout role={currentAdminProfile?.role || 'admin'}>
       <div className="space-y-8 font-cairo text-right" dir="rtl">
         
         {/* Top Header */}

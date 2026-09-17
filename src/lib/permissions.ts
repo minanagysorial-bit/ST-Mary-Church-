@@ -52,9 +52,9 @@ export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 /** Arabic labels for each permission — used in the admin checkbox UI */
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   [PERMISSIONS.MANAGE_SERMONS]: 'إدارة العظات والكلمات الروحية',
-  [PERMISSIONS.MANAGE_MEMBERS]: 'إدارة الأعضاء والمستخدمين',
+  [PERMISSIONS.MANAGE_MEMBERS]: 'إدارة قائمة الأعضاء والخدام المسجلين',
   [PERMISSIONS.MANAGE_CONTENT]: 'إدارة محتوى وبناء صفحات الموقع',
-  [PERMISSIONS.MANAGE_PERMISSIONS]: 'إعتماد الحسابات والصلاحيات (للسوبر أدمن)',
+  [PERMISSIONS.MANAGE_PERMISSIONS]: 'إنشاء وإدارة حسابات المستخدمين والخدام والصلاحيات',
   [PERMISSIONS.MANAGE_VERSES]: 'إدارة آيات الموقع اليومية',
   [PERMISSIONS.MANAGE_NOTIFICATIONS]: 'إرسال الإشعارات الفورية (Push Notifications)',
 

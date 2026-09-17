@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
-import { Users, BookOpen, MessageSquare, UserPlus, Heart, Bookmark } from 'lucide-react';
+import { Users, BookOpen, MessageSquare, UserPlus, Heart, Bookmark, Shield, Key, ShieldCheck } from 'lucide-react';
 import { Member, api } from '../../lib/api';
 
 export const AdminDashboardPage: React.FC = () => {
@@ -44,6 +45,40 @@ export const AdminDashboardPage: React.FC = () => {
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>النظام متصل ونشط</span>
             </span>
+          </div>
+        </div>
+
+        {/* Quick Actions Bar */}
+        <div className="bg-gradient-to-r from-[#002366] to-[#0a192f] p-5 sm:p-6 rounded-2xl text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-[#fed65b] text-[#002366] rounded-xl shadow font-black">
+              <ShieldCheck className="w-7 h-7" />
+            </div>
+            <div>
+              <h3 className="font-tajawal text-lg sm:text-xl font-bold text-white">
+                إدارة المستخدمين والخدام والصلاحيات وشيت كلمات المرور
+              </h3>
+              <p className="text-xs text-slate-300">
+                إنشاء حسابات جديدة للخدام وأمناء الخدمة، تصدير شيت كلمات المرور، ومتابعة سجل نشاطات المشرفين (Activity Log)
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+            <Link
+              to="/admin/permissions"
+              className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#fed65b] hover:bg-[#ffe082] text-[#002366] font-extrabold text-xs rounded-xl shadow transition-all active:scale-95"
+            >
+              <Key className="w-4 h-4" />
+              <span>إنشاء حسابات وشيت الباسوردات</span>
+            </Link>
+            <Link
+              to="/admin/services"
+              className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition-all active:scale-95"
+            >
+              <Shield className="w-4 h-4" />
+              <span>تعيين كهنة وأمناء الخدمات</span>
+            </Link>
           </div>
         </div>
 
