@@ -3,7 +3,7 @@
 // ===================================================================
 
 import { Liturgy, Sermon, ChurchService } from './database.types';
-import { parseLiturgyNotes, PRIEST_NAMES_LIST } from './liturgyHelper';
+import { parseLiturgyNotes, PRIEST_NAMES_LIST, normalizeArabicDayName } from './liturgyHelper';
 import { getCopticDate } from './copticReadings';
 
 export type PriestEventType = 
@@ -165,7 +165,7 @@ export const aggregatePriestSchedule = (
 
     if (isAssigned || isSermonPreacher) {
       const isVesper = l.title.includes('عشية') || l.title.includes('نهضة') || l.title.includes('تسبيحة');
-      const isToday = l.liturgy_day === currentDayName;
+      const isToday = normalizeArabicDayName(l.liturgy_day) === normalizeArabicDayName(currentDayName);
 
       allDuties.push({
         id: `lit_${l.id}`,
@@ -173,7 +173,7 @@ export const aggregatePriestSchedule = (
         dutyType: isVesper ? 'vespers' : 'liturgy',
         title: isSermonPreacher && !isAssigned ? `عظة وكلمة: ${l.title}` : l.title,
         priestName: priestName,
-        dayName: l.liturgy_day,
+        dayName: normalizeArabicDayName(l.liturgy_day),
         startTime: l.start_time,
         endTime: l.end_time,
         location: `${l.church_name} - ${l.altar_name}`,
@@ -193,7 +193,7 @@ export const aggregatePriestSchedule = (
 
       if (s.sermon_date) {
         dObj = new Date(s.sermon_date);
-        dayName = dObj.toLocaleDateString('ar-EG', { weekday: 'long' });
+        dayName = normalizeArabicDayName(dObj.toLocaleDateString('ar-EG', { weekday: 'long' }));
         isToday = dObj.toDateString() === now.toDateString();
       }
 
@@ -231,7 +231,7 @@ export const aggregatePriestSchedule = (
         endTime: '19:00',
         location: 'مبنى الخدمات والأنشطة',
         description: srv.description || `مسؤولية رعاية ${srv.name}`,
-        isToday: currentDayName === 'الجمعة',
+        isToday: normalizeArabicDayName(currentDayName) === 'الجمعة',
         canEditOrDelete: false,
       });
     }
@@ -246,7 +246,7 @@ export const aggregatePriestSchedule = (
       dObj = new Date(pe.date);
       isToday = dObj.toDateString() === now.toDateString();
     } else {
-      isToday = pe.day_name === currentDayName;
+      isToday = normalizeArabicDayName(pe.day_name) === normalizeArabicDayName(currentDayName);
     }
 
     allDuties.push({
@@ -255,7 +255,7 @@ export const aggregatePriestSchedule = (
       dutyType: pe.event_type,
       title: pe.title,
       priestName: pe.priest_name,
-      dayName: pe.day_name,
+      dayName: normalizeArabicDayName(pe.day_name),
       dateStr: pe.date,
       dateObj: dObj,
       startTime: pe.start_time,
@@ -270,7 +270,9 @@ export const aggregatePriestSchedule = (
 
   // Sort duties chronologically
   allDuties.sort((a, b) => {
-    const dayDiff = ALL_DAYS_ORDER.indexOf(a.dayName) - ALL_DAYS_ORDER.indexOf(b.dayName);
+    const dayA = normalizeArabicDayName(a.dayName);
+    const dayB = normalizeArabicDayName(b.dayName);
+    const dayDiff = ALL_DAYS_ORDER.map(normalizeArabicDayName).indexOf(dayA) - ALL_DAYS_ORDER.map(normalizeArabicDayName).indexOf(dayB);
     if (dayDiff !== 0) return dayDiff;
     return a.startTime.localeCompare(b.startTime);
   });
@@ -298,8 +300,9 @@ export const aggregatePriestSchedule = (
   let totalVisitations = 0;
 
   for (const duty of allDuties) {
-    if (weekDutiesByDay[duty.dayName]) {
-      weekDutiesByDay[duty.dayName].push(duty);
+    const normDay = normalizeArabicDayName(duty.dayName);
+    if (weekDutiesByDay[normDay]) {
+      weekDutiesByDay[normDay].push(duty);
     }
 
     switch (duty.dutyType) {
@@ -342,7 +345,7 @@ export const createGoogleCalendarUrl = (duty: UnifiedPriestDuty): string => {
     const dayMap: Record<string, number> = {
       'الأحد': 0, 'الاثنين': 1, 'الثلاثاء': 2, 'الأربعاء': 3, 'الخميس': 4, 'الجمعة': 5, 'السبت': 6
     };
-    const targetDayIdx = dayMap[duty.dayName] ?? now.getDay();
+    const targetDayIdx = dayMap[normalizeArabicDayName(duty.dayName)] ?? now.getDay();
     let daysAhead = targetDayIdx - now.getDay();
     if (daysAhead < 0) daysAhead += 7;
     targetDate.setDate(now.getDate() + daysAhead);

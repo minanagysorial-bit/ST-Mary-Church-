@@ -11,6 +11,45 @@ export const PRIEST_NAMES_LIST = [
   'ابونا موسى وجيه'
 ];
 
+export const CANONICAL_DAYS_OF_WEEK = [
+  'الجمعة',
+  'السبت',
+  'الأحد',
+  'الاثنين',
+  'الثلاثاء',
+  'الأربعاء',
+  'الخميس'
+] as const;
+
+export type CanonicalArabicDay = (typeof CANONICAL_DAYS_OF_WEEK)[number];
+
+/**
+ * Normalizes any Arabic weekday name string (handling hamzas, variations, diacritics).
+ * Ensures 'الإثنين' and 'الاثنين' and 'اثنين' always map to 'الاثنين'.
+ */
+export const normalizeArabicDayName = (rawDay: string | null | undefined): string => {
+  if (!rawDay) return '';
+  const clean = rawDay.trim().replace(/[أإآ]/g, 'ا');
+  if (clean.includes('اثنين')) return 'الاثنين';
+  if (clean.includes('ثلاثاء')) return 'الثلاثاء';
+  if (clean.includes('اربعاء')) return 'الأربعاء';
+  if (clean.includes('خميس')) return 'الخميس';
+  if (clean.includes('جمعه') || clean.includes('جمعة')) return 'الجمعة';
+  if (clean.includes('سبت')) return 'السبت';
+  if (clean.includes('احد') || clean.includes('أحد')) return 'الأحد';
+  return rawDay.trim();
+};
+
+/**
+ * Formats a Date object to YYYY-MM-DD in local time without UTC offset shift.
+ */
+export const formatLocalDateToYYYYMMDD = (d: Date): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const OFFICIAL_ALTAR_CHOICES = [
   { label: 'الكنيسة الكبيرة - مذبح العذراء', church: 'الكنيسة الكبيرة', altar: 'مذبح العذراء' },
   { label: 'الكنيسة الكبيرة - مذبح مارمينا', church: 'الكنيسة الكبيرة', altar: 'مذبح مارمينا' },

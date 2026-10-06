@@ -39,7 +39,10 @@ import {
   OFFICIAL_ALTAR_CHOICES,
   FIXED_WEEKDAY_LITURGIES,
   ParsedLiturgyInfo,
-  parseLiturgyNotes
+  parseLiturgyNotes,
+  normalizeArabicDayName,
+  formatLocalDateToYYYYMMDD,
+  CANONICAL_DAYS_OF_WEEK
 } from '../../lib/liturgyHelper';
 
 export {
@@ -95,6 +98,8 @@ export const PriestLiturgiesPage: React.FC = () => {
       for (let d = startDay; d <= endDay; d++) {
         const dateObj = new Date(currentYear, currentMonth, d);
         const dayName = dateObj.toLocaleDateString('ar-EG', { weekday: 'long' });
+        const matchedDayName = normalizeArabicDayName(dayName);
+        const isoDate = formatLocalDateToYYYYMMDD(dateObj);
         const isToday = now.getFullYear() === currentYear && now.getMonth() === currentMonth && now.getDate() === d;
         const coptic = getCopticDate(dateObj);
 
@@ -102,6 +107,8 @@ export const PriestLiturgiesPage: React.FC = () => {
           dayNumber: d,
           dateObj,
           dayName,
+          matchedDayName,
+          isoDate,
           dateStr: `${d} ${dateObj.toLocaleDateString('ar-EG', { month: 'long' })}`,
           fullDateText: `${d} ${dateObj.toLocaleDateString('ar-EG', { month: 'long' })} / ${coptic.copticDay} ${coptic.copticMonthName}`,
           isToday,
@@ -471,8 +478,9 @@ export const PriestLiturgiesPage: React.FC = () => {
       for (const item of FIXED_WEEKDAY_LITURGIES) {
         const priestPrefix = item.priests.length > 1 ? 'الكهنة المصلون' : 'الكاهن المصلي';
         const notes = `${priestPrefix}: ${item.priests.join(' • ')}`;
+        const normItemDay = normalizeArabicDayName(item.day);
         
-        const match = liturgies.find(l => l.liturgy_day === item.day && l.church_name === item.church);
+        const match = liturgies.find(l => normalizeArabicDayName(l.liturgy_day) === normItemDay && l.church_name === item.church);
         if (match) {
           await api.updateLiturgy(match.id, {
             title: item.title,
@@ -520,7 +528,7 @@ export const PriestLiturgiesPage: React.FC = () => {
 
       return parsed.weekScope === 'all' || parsed.weekScope === targetKey;
     }).sort((a, b) => {
-      const dayDiff = ALL_DAYS_ORDER.indexOf(a.liturgy_day) - ALL_DAYS_ORDER.indexOf(b.liturgy_day);
+      const dayDiff = ALL_DAYS_ORDER.map(normalizeArabicDayName).indexOf(normalizeArabicDayName(a.liturgy_day)) - ALL_DAYS_ORDER.map(normalizeArabicDayName).indexOf(normalizeArabicDayName(b.liturgy_day));
       if (dayDiff !== 0) return dayDiff;
       return a.start_time.localeCompare(b.start_time);
     });
@@ -530,7 +538,8 @@ export const PriestLiturgiesPage: React.FC = () => {
   const nonFixedLiturgies = useMemo(() => {
     return liturgies.filter(l => {
       const parsed = parseLiturgyNotes(l.notes);
-      return parsed.weekScope !== 'all' && !['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].includes(l.liturgy_day);
+      const normDay = normalizeArabicDayName(l.liturgy_day);
+      return parsed.weekScope !== 'all' && !['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].map(normalizeArabicDayName).includes(normDay);
     });
   }, [liturgies]);
 
@@ -856,7 +865,8 @@ export const PriestLiturgiesPage: React.FC = () => {
                             const isAllWeekFixed = parsed.weekScope === 'all';
 
                             // Find exact date of this day in this specific week
-                            const matchedDay = w.days.find(d => d.dayName.includes(l.liturgy_day));
+                            const normLiturgyDay = normalizeArabicDayName(l.liturgy_day);
+                            const matchedDay = w.days.find(d => normalizeArabicDayName(d.dayName) === normLiturgyDay || normalizeArabicDayName(d.matchedDayName) === normLiturgyDay);
                             const exactDateText = matchedDay?.fullDateText || '';
                             const isTodayRow = matchedDay?.isToday;
 
@@ -1047,7 +1057,8 @@ export const PriestLiturgiesPage: React.FC = () => {
                         const isVesper = l.title.includes('عشية') || l.title.includes('نهضة') || l.title.includes('تسبيحة');
                         const isFixed = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].includes(l.liturgy_day) || parsed.weekScope === 'all';
 
-                        const matchedDay = w.days.find(d => d.dayName.includes(l.liturgy_day));
+                        const normLiturgyDay = normalizeArabicDayName(l.liturgy_day);
+                        const matchedDay = w.days.find(d => normalizeArabicDayName(d.dayName) === normLiturgyDay || normalizeArabicDayName(d.matchedDayName) === normLiturgyDay);
                         const exactDateStr = matchedDay?.dateStr;
 
                         const dummyDuty: UnifiedPriestDuty = {

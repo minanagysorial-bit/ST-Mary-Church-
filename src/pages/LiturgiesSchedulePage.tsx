@@ -32,7 +32,13 @@ import {
 } from 'lucide-react';
 import { getCopticDate } from '../lib/copticReadings';
 import { type DayOfWeekArabic } from '../lib/attendanceStatusHelper';
-import { PRIEST_NAMES_LIST, parseLiturgyNotes } from '../lib/liturgyHelper';
+import {
+  PRIEST_NAMES_LIST,
+  parseLiturgyNotes,
+  CANONICAL_DAYS_OF_WEEK,
+  normalizeArabicDayName,
+  formatLocalDateToYYYYMMDD
+} from '../lib/liturgyHelper';
 
 export { PRIEST_NAMES_LIST };
 
@@ -370,7 +376,7 @@ export const LiturgiesSchedulePage: React.FC = () => {
   const [serviceSearchQuery, setServiceSearchQuery] = useState<string>('');
   const [serviceViewMode, setServiceViewMode] = useState<'table' | 'cards'>('table');
 
-  const DAYS_OF_WEEK: DayOfWeekArabic[] = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const DAYS_OF_WEEK = CANONICAL_DAYS_OF_WEEK;
   const SERVICES_DAYS_ORDER: DayOfWeekArabic[] = ['الجمعة', 'السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
 
   const now = useMemo(() => new Date(), []);
@@ -408,7 +414,8 @@ export const LiturgiesSchedulePage: React.FC = () => {
       for (let d = startDay; d <= endDay; d++) {
         const dateObj = new Date(currentYear, currentMonth, d);
         const dayName = dateObj.toLocaleDateString('ar-EG', { weekday: 'long' });
-        const matchedDayName = DAYS_OF_WEEK.find(x => dayName.includes(x)) || 'الأحد';
+        const matchedDayName = normalizeArabicDayName(dayName);
+        const dateStr = formatLocalDateToYYYYMMDD(dateObj);
         const isToday = now.getDate() === d;
         const coptic = getCopticDate(dateObj);
 
@@ -417,6 +424,7 @@ export const LiturgiesSchedulePage: React.FC = () => {
           dateObj,
           dayName,
           matchedDayName,
+          dateStr,
           isToday,
           copticString: coptic.copticDateString
         });
@@ -480,12 +488,13 @@ export const LiturgiesSchedulePage: React.FC = () => {
     return `${displayHours}:${minutesStr} ${suffix}`;
   };
 
-  // Grouped by Day of Week
+  // Grouped by Day of Week with Arabic Day Name Normalization
   const groupedLiturgies = useMemo(() => {
     const groups: Record<string, Liturgy[]> = {};
-    DAYS_OF_WEEK.forEach(d => {
-      groups[d] = liturgies
-        .filter(l => l.liturgy_day === d)
+    CANONICAL_DAYS_OF_WEEK.forEach(d => {
+      const normD = normalizeArabicDayName(d);
+      groups[normD] = liturgies
+        .filter(l => normalizeArabicDayName(l.liturgy_day) === normD)
         .sort((a, b) => a.start_time.localeCompare(b.start_time));
     });
     return groups;
@@ -685,11 +694,12 @@ export const LiturgiesSchedulePage: React.FC = () => {
             ) : (
               <div className="space-y-4 animate-fadeIn">
                 {currentWeek?.days.map(dayItem => {
-                  const dayLiturgies = (groupedLiturgies[dayItem.matchedDayName] || []).filter(l => {
+                  const normDayName = normalizeArabicDayName(dayItem.matchedDayName);
+                  const dayLiturgies = (groupedLiturgies[normDayName] || []).filter(l => {
                     const parsed = parseLiturgyNotes(l.notes);
                     if (parsed.weekScope === 'all') return true;
                     if (parsed.weekScope === `week_${currentWeek?.weekIndex}`) return true;
-                    if (parsed.specificDate && parsed.specificDate === dayItem.dateObj.toISOString().split('T')[0]) return true;
+                    if (parsed.specificDate && parsed.specificDate === dayItem.dateStr) return true;
                     return false;
                   });
 
