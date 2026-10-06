@@ -32,15 +32,9 @@ import {
 } from 'lucide-react';
 import { getCopticDate } from '../lib/copticReadings';
 import { type DayOfWeekArabic } from '../lib/attendanceStatusHelper';
+import { PRIEST_NAMES_LIST, parseLiturgyNotes } from '../lib/liturgyHelper';
 
-export const PRIEST_NAMES_LIST = [
-  'ابونا مرقس ميلاد',
-  'ابونا بيشوي ثابت',
-  'ابونا مينا نادر',
-  'ابونا ميخائيل ميخائيل',
-  'ابونا كيرلس ميلاد',
-  'ابونا موسى وجيه'
-];
+export { PRIEST_NAMES_LIST };
 
 export interface ChurchServiceDisplayItem {
   id: string;
@@ -484,73 +478,6 @@ export const LiturgiesSchedulePage: React.FC = () => {
     const suffix = hours >= 12 ? 'م' : 'ص';
     const displayHours = hours % 12 === 0 ? 12 : hours % 12;
     return `${displayHours}:${minutesStr} ${suffix}`;
-  };
-
-  // Helper to extract priest names and optional sermon info from notes
-  const parseLiturgyNotes = (notes: string | null | undefined) => {
-    if (!notes) {
-      return {
-        priests: ['آباء الكنيسة'],
-        hasSermon: false,
-        sermonSpeaker: '',
-        sermonTopic: '',
-      };
-    }
-
-    let hasSermon = false;
-    let sermonSpeaker = '';
-    let sermonTopic = '';
-    let weekScope = 'all';
-    let specificDate = '';
-
-    // Week scope parsing
-    if (notes.includes('الأسبوع: الأول') || notes.includes('الأسبوع الأول')) weekScope = 'week_1';
-    else if (notes.includes('الأسبوع: الثاني') || notes.includes('الأسبوع الثاني')) weekScope = 'week_2';
-    else if (notes.includes('الأسبوع: الثالث') || notes.includes('الأسبوع الثالث')) weekScope = 'week_3';
-    else if (notes.includes('الأسبوع: الرابع') || notes.includes('الأسبوع الرابع')) weekScope = 'week_4';
-    else if (notes.includes('الأسبوع: الخامس') || notes.includes('الأسبوع الخامس')) weekScope = 'week_5';
-    
-    const dateMatch = notes.match(/تاريخ[:\s]+(\d{4}-\d{2}-\d{2})/);
-    if (dateMatch) {
-      weekScope = 'specific_date';
-      specificDate = dateMatch[1];
-    }
-
-    const sermonMatch = notes.match(/(?:العظة|ملقي العظة|واعظ القداس|واعظ العشية)[:\s]+([^|()]+)(?:\(([^)]+)\))?/);
-    if (sermonMatch) {
-      hasSermon = true;
-      sermonSpeaker = sermonMatch[1].trim();
-      if (sermonMatch[2]) {
-        sermonTopic = sermonMatch[2].trim();
-      }
-    }
-
-    const priests: string[] = [];
-    const priestSection = notes.split(/\||\b(?:العظة|ملقي العظة)/)[0];
-    for (const p of PRIEST_NAMES_LIST) {
-      if (priestSection.includes(p) && !priests.includes(p)) {
-        priests.push(p);
-      }
-    }
-    if (priests.length === 0) {
-      const match = notes.match(/(?:الكهنة|الكاهن(?:\s*المصلي)?[:\s]+)?([^|]+)/);
-      if (match) {
-        const names = match[1].split(/[،,•]/).map(s => s.trim()).filter(Boolean);
-        if (names.length > 0) priests.push(...names);
-      }
-    }
-    if (priests.length === 0) {
-      priests.push('آباء الكنيسة');
-    }
-
-    return {
-      priests,
-      hasSermon,
-      sermonSpeaker,
-      sermonTopic,
-      weekScope,
-      specificDate,
-    };
   };
 
   // Grouped by Day of Week

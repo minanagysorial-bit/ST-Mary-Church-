@@ -3,7 +3,7 @@
 // ===================================================================
 
 import { Liturgy, Sermon, ChurchService } from './database.types';
-import { parseLiturgyNotes, PRIEST_NAMES_LIST } from '../pages/priest/PriestLiturgiesPage';
+import { parseLiturgyNotes, PRIEST_NAMES_LIST } from './liturgyHelper';
 import { getCopticDate } from './copticReadings';
 
 export type PriestEventType = 
