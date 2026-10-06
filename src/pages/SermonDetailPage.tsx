@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Sermon, api } from '../lib/api';
+import { detectSermonCategory, detectSermonSpeaker } from '../lib/sermonHelper';
 
 export const SermonDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,8 +38,8 @@ export const SermonDetailPage: React.FC = () => {
               setSermon({
                 id: id,
                 title: 'عظة وكلمة روحية مباركة',
-                speaker: 'كنيسة السيدة العذراء مريم بمحرم بك',
-                topic: 'عظات وكلمات روحية',
+                speaker: 'آباء الكنيسة',
+                topic: 'عظة وكلمة روحية',
                 sermon_date: new Date().toISOString().split('T')[0],
                 duration_minutes: 45,
                 youtube_url: `https://www.youtube.com/watch?v=${cleanId}`,
@@ -87,13 +88,15 @@ export const SermonDetailPage: React.FC = () => {
     );
   }
 
+  const detectedSpeaker = detectSermonSpeaker(sermon.title, sermon.speaker);
+  const detectedCategory = detectSermonCategory(sermon);
   const videoId = extractVideoId(sermon.youtube_url);
   const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0` : null;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in font-cairo text-right" dir="rtl">
       <Helmet>
-        <title>{`${sermon.title} - ${sermon.speaker || 'عظات الكنيسة'}`} | كنيسة العذراء مريم بمحرم بك</title>
+        <title>{`${sermon.title} - ${detectedSpeaker}`} | كنيسة العذراء مريم بمحرم بك</title>
         <meta name="description" content={sermon.description || sermon.title} />
       </Helmet>
       
@@ -114,7 +117,7 @@ export const SermonDetailPage: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="bg-[#fed65b] text-[#00174a] text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
               <FolderOpen className="w-3.5 h-3.5" />
-              <span>{sermon.topic || 'تعليم وعظة'}</span>
+              <span>{detectedCategory}</span>
             </span>
             <div className="flex items-center gap-4 text-xs text-slate-300 font-semibold">
               <span className="flex items-center gap-1">
@@ -138,7 +141,7 @@ export const SermonDetailPage: React.FC = () => {
             </div>
             <div>
               <p className="text-[11px] text-slate-300 font-bold">الملقي والخطيب</p>
-              <p className="font-tajawal font-bold text-sm text-[#fed65b]">{sermon.speaker || 'آباء الكنيسة'}</p>
+              <p className="font-tajawal font-bold text-sm text-[#fed65b]">{detectedSpeaker}</p>
             </div>
           </div>
         </div>

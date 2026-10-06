@@ -55,17 +55,43 @@ function extractItemsFromContents(contents, seen, allVideos) {
 
       let topic = 'تعليم وعظة';
       const cleanTitle = title.trim();
-      if (cleanTitle.includes('عشية') || cleanTitle.includes('تسبحة') || cleanTitle.includes('تسابيح')) topic = 'عشيات وتسابيح';
-      else if (cleanTitle.includes('قداس') || cleanTitle.includes('ذبيحة')) topic = 'قداسات إلهية';
-      else if (cleanTitle.includes('نهضة') || cleanTitle.includes('صوم') || cleanTitle.includes('صعود') || cleanTitle.includes('عيد')) topic = 'نهضات ومناسبات';
-      else if (cleanTitle.includes('شبان') || cleanTitle.includes('شباب') || cleanTitle.includes('شابات') || cleanTitle.includes('جامعيين')) topic = 'اجتماعات الشباب';
-      else if (cleanTitle.includes('دراسة') || cleanTitle.includes('تفسير') || cleanTitle.includes('إنجيل') || cleanTitle.includes('مزمور') || cleanTitle.includes('رسالة')) topic = 'كتاب مقدس';
-      else if (cleanTitle.includes('لحن') || cleanTitle.includes('ألحان') || cleanTitle.includes('طقس')) topic = 'ألحان وطقوس';
 
-      let speaker = 'آباء كنيسة العذراء محرم بك';
-      const speakerMatch = cleanTitle.match(/(أبونا\s+[\u0621-\u064A]+|القمص\s+[\u0621-\u064A\s]+|القس\s+[\u0621-\u064A\s]+|الأنبا\s+[\u0621-\u064A]+)/);
-      if (speakerMatch) {
-        speaker = speakerMatch[1].trim();
+      // Speaker & Category Detection for Official Church Priests & Categories
+      let speaker = 'آباء الكنيسة';
+      if (/(مرقس\s*ميلاد|ابونا\s*مرقس|أبونا\s*مرقس|القمص\s*مرقس|ابونا\s*مرقص|أبونا\s*مرقص)/.test(cleanTitle)) {
+        speaker = 'ابونا مرقس ميلاد';
+        topic = 'ابونا مرقس ميلاد';
+      } else if (/(بيشوي\s*ثابت|بيشوى\s*ثابت|ابونا\s*بيشوي|أبونا\s*بيشوي|ابونا\s*بيشوى|أبونا\s*بيشوى|القمص\s*بيشوي)/.test(cleanTitle)) {
+        speaker = 'ابونا بيشوي ثابت';
+        topic = 'ابونا بيشوي ثابت';
+      } else if (/(مينا\s*نادر|ابونا\s*مينا|أبونا\s*مينا|القمص\s*مينا|القس\s*مينا)/.test(cleanTitle)) {
+        speaker = 'ابونا مينا نادر';
+        topic = 'ابونا مينا نادر';
+      } else if (/(ميخائيل\s*ميخائيل|ابونا\s*ميخائيل|أبونا\s*ميخائيل|القمص\s*ميخائيل|القس\s*ميخائيل)/.test(cleanTitle)) {
+        speaker = 'ابونا ميخائيل ميخائيل';
+        topic = 'ابونا ميخائيل ميخائيل';
+      } else if (/(كيرلس\s*ميلاد|ابونا\s*كيرلس|أبونا\s*كيرلس|القمص\s*كيرلس|القس\s*كيرلس)/.test(cleanTitle)) {
+        speaker = 'ابونا كيرلس ميلاد';
+        topic = 'ابونا كيرلس ميلاد';
+      } else if (/(موسى\s*وجيه|موسي\s*وجيه|ابونا\s*موسى|أبونا\s*موسى|ابونا\s*موسي|أبونا\s*موسي|القمص\s*موسى|القس\s*موسى)/.test(cleanTitle)) {
+        speaker = 'ابونا موسى وجيه';
+        topic = 'ابونا موسى وجيه';
+      } else {
+        const speakerMatch = cleanTitle.match(/(?:أبونا|ابونا|القمص|القس|الأنبا|الانبا)\s+([^\s\d\/\-()]+(?:\s+[^\s\d\/\-()]+)?)/);
+        if (speakerMatch) {
+          speaker = speakerMatch[0].trim();
+        }
+
+        const normalized = cleanTitle.replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه');
+        if (normalized.includes('عشيه') || normalized.includes('عشيات') || normalized.includes('تسبحه') || normalized.includes('تسابيح') || normalized.includes('رفع بخور')) {
+          topic = 'عشيات';
+          if (!speakerMatch) speaker = 'آباء كنيسة العذراء محرم بك';
+        } else if (normalized.includes('قداس') || normalized.includes('قداسات') || normalized.includes('ذبيحه') || normalized.includes('تكملة القداس')) {
+          topic = 'قداسات';
+          if (!speakerMatch) speaker = 'آباء كنيسة العذراء محرم بك';
+        } else {
+          topic = 'أخرى';
+        }
       }
 
       let sermonDate = new Date().toISOString().split('T')[0];

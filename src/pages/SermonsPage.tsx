@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -17,6 +17,12 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Sermon, api } from '../lib/api';
+import {
+  SERMON_CATEGORIES,
+  detectSermonCategory,
+  detectSermonSpeaker,
+  matchesSermonCategory
+} from '../lib/sermonHelper';
 
 interface PlaylistSection {
   id: string;
@@ -35,44 +41,68 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTopic, setSelectedTopic] = useState('الكل');
+  const [selectedTopic, setSelectedTopic] = useState<string>('الكل');
   const [visibleCount, setVisibleCount] = useState(30);
   const [playlistVisibleCount, setPlaylistVisibleCount] = useState(30);
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Defined playlist sections matching church channel categories
+  // Defined playlist sections matching church channel categories & fathers
   const playlistSections: PlaylistSection[] = [
     {
+      id: 'abouna-markos',
+      title: 'عظات أبونا مرقس ميلاد',
+      description: 'العظات والتأملات الروحية ودراسات الكتاب المقدس لأبونا القمص مرقس ميلاد',
+      icon: 'person'
+    },
+    {
+      id: 'abouna-bishoy',
+      title: 'عظات أبونا بيشوي ثابت',
+      description: 'العظات والكلمات الروحية والتأملات الكنسية لأبونا القمص بيشوي ثابت',
+      icon: 'person'
+    },
+    {
+      id: 'abouna-mina',
+      title: 'عظات أبونا مينا نادر',
+      description: 'العظات والدروس الروحية والاجتماعات لأبونا القمص مينا نادر',
+      icon: 'person'
+    },
+    {
+      id: 'abouna-mikhail',
+      title: 'عظات أبونا ميخائيل ميخائيل',
+      description: 'العظات والكلمات الروحية والصلوات لأبونا القمص ميخائيل ميخائيل',
+      icon: 'person'
+    },
+    {
+      id: 'abouna-kyrillos',
+      title: 'عظات أبونا كيرلس ميلاد',
+      description: 'العظات والدروس والكلمات الروحية لأبونا القس كيرلس ميلاد',
+      icon: 'person'
+    },
+    {
+      id: 'abouna-moussa',
+      title: 'عظات أبونا موسى وجيه',
+      description: 'العظات والكلمات الروحية والأنشطة لأبونا القس موسى وجيه',
+      icon: 'person'
+    },
+    {
       id: 'liturgies',
-      title: 'القداسات الإلهية والعشيات',
-      description: 'تسجيلات القداسات الإلهية الأسبوعية، قداسات الأحد، والصلوات الطقسية والعشيات',
+      title: 'القداسات الإلهية',
+      description: 'تسجيلات القداسات الإلهية الأسبوعية والأعياد والمناسبات والطقوس',
       icon: 'church'
     },
     {
-      id: 'sermons',
-      title: 'عظات وكلمات الآباء الكهنة',
-      description: 'العظات والكلمات الروحية لآباء كهنة الكنيسة والآباء المطارنة والأساقفة',
-      icon: 'settings_voice'
-    },
-    {
-      id: 'feasts',
-      title: 'نهضات الأعياد وصوم السيدة العذراء',
-      description: 'صلوات وتسابيح وعظات نهضة صوم العذراء مريم وقداسات أعياد الكنيسة',
-      icon: 'stars'
-    },
-    {
-      id: 'youth',
-      title: 'اجتماعات الشباب والشبان',
-      description: 'عشيات وعظات وموضوعات اجتماعات الشباب والخريجين الأسبوعية',
-      icon: 'groups'
-    },
-    {
-      id: 'bible',
-      title: 'دراسات الكتاب المقدس والعقيدة',
-      description: 'شروحات وتفاسير أسفار العهدين القديم والجديد والمفاهيم اللاهوتية',
+      id: 'vespers',
+      title: 'العشيات والتسابيح',
+      description: 'تسجيلات صلوات رفع بخور عشية وتسبحة نصف الليل وعشيات النهضات',
       icon: 'menu_book'
+    },
+    {
+      id: 'other',
+      title: 'عظات وكلمات أخرى',
+      description: 'عظات الآباء الأساقفة والضيوف والنهضات والاجتماعات العامة المتنوعة',
+      icon: 'stars'
     }
   ];
 
@@ -83,19 +113,28 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
       if (res.ok) {
         const syncData = await res.json();
         if (syncData.sermons && syncData.sermons.length > 0) {
-          const ytVideos: Sermon[] = syncData.sermons.map((s: any) => ({
-            id: s.id,
-            title: s.title,
-            speaker: s.speaker,
-            topic: s.topic,
-            sermon_date: s.sermon_date,
-            duration_minutes: s.duration_minutes || 45,
-            youtube_url: s.youtube_url,
-            audio_url: s.audio_url || null,
-            description: s.description,
-            featured: false,
-            play_count: s.play_count || 0
-          }));
+          const ytVideos: Sermon[] = syncData.sermons.map((s: any) => {
+            const speaker = detectSermonSpeaker(s.title, s.speaker);
+            const topic = detectSermonCategory({
+              title: s.title,
+              speaker: speaker,
+              topic: s.topic,
+              description: s.description
+            });
+            return {
+              id: s.id,
+              title: s.title,
+              speaker: speaker,
+              topic: topic,
+              sermon_date: s.sermon_date,
+              duration_minutes: s.duration_minutes || 45,
+              youtube_url: s.youtube_url,
+              audio_url: s.audio_url || null,
+              description: s.description,
+              featured: false,
+              play_count: s.play_count || 0
+            };
+          });
 
           setSermons(ytVideos);
           setLoading(false);
@@ -110,7 +149,12 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
 
     try {
       const dbSermons = await api.getSermons();
-      setSermons(dbSermons);
+      const enrichedDb = dbSermons.map(s => ({
+        ...s,
+        speaker: detectSermonSpeaker(s.title, s.speaker),
+        topic: detectSermonCategory(s)
+      }));
+      setSermons(enrichedDb);
     } catch (err) {
       console.error('Failed to fetch sermons from DB:', err);
     } finally {
@@ -126,38 +170,58 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
   // Filter video list by playlist category if in playlist view
   const getPlaylistVideos = (sectionId: string | null) => {
     if (!sectionId) return sermons;
-    return sermons.filter(s => {
-      const title = (s.title || '').toLowerCase();
-      const topic = (s.topic || '').toLowerCase();
-      const desc = (s.description || '').toLowerCase();
-
-      switch (sectionId) {
-        case 'liturgies':
-          return title.includes('قداس') || title.includes('عشية') || topic.includes('قداس') || topic.includes('عشيات');
-        case 'sermons':
-          return title.includes('عظة') || title.includes('كلمة') || topic.includes('عظة') || topic.includes('تعليم');
-        case 'feasts':
-          return title.includes('نهضة') || title.includes('صوم') || title.includes('عيد') || title.includes('صعود') || topic.includes('نهضات');
-        case 'youth':
-          return title.includes('شبان') || title.includes('شباب') || title.includes('شابات') || topic.includes('شباب') || desc.includes('شبان');
-        case 'bible':
-          return title.includes('دراسة') || title.includes('تفسير') || title.includes('إنجيل') || title.includes('مزمور') || title.includes('رسالة') || topic.includes('كتاب مقدس');
-        default:
-          return true;
-      }
-    });
+    switch (sectionId) {
+      case 'abouna-markos':
+        return sermons.filter(s => matchesSermonCategory(s, 'ابونا مرقس ميلاد'));
+      case 'abouna-bishoy':
+        return sermons.filter(s => matchesSermonCategory(s, 'ابونا بيشوي ثابت'));
+      case 'abouna-mina':
+        return sermons.filter(s => matchesSermonCategory(s, 'ابونا مينا نادر'));
+      case 'abouna-mikhail':
+        return sermons.filter(s => matchesSermonCategory(s, 'ابونا ميخائيل ميخائيل'));
+      case 'abouna-kyrillos':
+        return sermons.filter(s => matchesSermonCategory(s, 'ابونا كيرلس ميلاد'));
+      case 'abouna-moussa':
+        return sermons.filter(s => matchesSermonCategory(s, 'ابونا موسى وجيه'));
+      case 'liturgies':
+        return sermons.filter(s => matchesSermonCategory(s, 'قداسات'));
+      case 'vespers':
+        return sermons.filter(s => matchesSermonCategory(s, 'عشيات'));
+      case 'other':
+        return sermons.filter(s => matchesSermonCategory(s, 'أخرى'));
+      default:
+        return sermons;
+    }
   };
 
-  const topics = ['الكل', ...Array.from(new Set(sermons.map(s => s.topic).filter(Boolean)))];
+  // Pre-calculate count for each category pill
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      'الكل': sermons.length
+    };
+    SERMON_CATEGORIES.forEach(cat => {
+      if (cat !== 'الكل') {
+        counts[cat] = sermons.filter(s => matchesSermonCategory(s, cat)).length;
+      }
+    });
+    return counts;
+  }, [sermons]);
 
-  const filteredSermons = sermons.filter(s => {
-    const matchesSearch =
-      (s.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.speaker || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.topic || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTopic = selectedTopic === 'الكل' || s.topic === selectedTopic;
-    return matchesSearch && matchesTopic;
-  });
+  const filteredSermons = useMemo(() => {
+    return sermons.filter(s => {
+      const searchLower = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !searchLower ||
+        (s.title || '').toLowerCase().includes(searchLower) ||
+        (s.speaker || '').toLowerCase().includes(searchLower) ||
+        (s.topic || '').toLowerCase().includes(searchLower) ||
+        (s.description || '').toLowerCase().includes(searchLower);
+
+      const matchesCategory = matchesSermonCategory(s, selectedTopic);
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [sermons, searchQuery, selectedTopic]);
 
   // Select the latest actual SERMON / SPIRITUAL TALK (excluding pure liturgy recordings and ritual stream parts)
   const isPureLiturgyVideo = (s: Sermon) => {
@@ -313,19 +377,32 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
               <Filter className="w-3.5 h-3.5 text-[#d4af37]" />
               <span>التصنيف:</span>
             </span>
-            {topics.map(t => (
-              <button
-                key={t}
-                onClick={() => setSelectedTopic(t)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
-                  selectedTopic === t
-                    ? 'bg-[#002366] text-[#fed65b] shadow-md shadow-[#002366]/20'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
+            {SERMON_CATEGORIES.map(t => {
+              const count = categoryCounts[t] ?? 0;
+              const isSelected = selectedTopic === t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => { setSelectedTopic(t); setVisibleCount(30); }}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'bg-[#002366] text-[#fed65b] shadow-md shadow-[#002366]/20 ring-2 ring-[#fed65b]/40'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{t}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold ${
+                      isSelected
+                        ? 'bg-[#fed65b]/20 text-[#fed65b]'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -402,7 +479,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
 
                       <div className="flex items-center justify-between">
                         <span className="bg-[#002366]/10 text-[#002366] text-xs font-bold px-2.5 py-1 rounded-full border border-[#002366]/20">
-                          {sermon.topic || 'تعليم وعظة'}
+                          {detectSermonCategory(sermon)}
                         </span>
                         <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5 text-[#d4af37]" />
@@ -428,7 +505,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                         </div>
                         <div>
                           <p className="text-[10px] text-slate-400 font-bold">الملقي / الخطيب</p>
-                          <p className="text-xs font-bold text-[#00174a]">{sermon.speaker || 'آباء الكنيسة'}</p>
+                          <p className="text-xs font-bold text-[#00174a]">{detectSermonSpeaker(sermon.title, sermon.speaker)}</p>
                         </div>
                       </div>
 
@@ -475,7 +552,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                   </span>
                   <span className="bg-white/10 text-white text-xs font-bold px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1">
                     <FolderOpen className="w-3 h-3 text-[#fed65b]" />
-                    <span>{featuredSermon.topic || 'تعليم وعظة'}</span>
+                    <span>{detectSermonCategory(featuredSermon)}</span>
                   </span>
                 </div>
 
@@ -492,7 +569,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                 <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-semibold pt-1">
                   <span className="flex items-center gap-1">
                     <User className="w-4 h-4 text-[#fed65b]" />
-                    <span>{featuredSermon.speaker || 'آباء الكنيسة'}</span>
+                    <span>{detectSermonSpeaker(featuredSermon.title, featuredSermon.speaker)}</span>
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4 text-[#fed65b]" />
@@ -573,7 +650,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
 
                         <div className="flex items-center justify-between">
                           <span className="bg-[#002366]/10 text-[#002366] text-xs font-bold px-2.5 py-1 rounded-full border border-[#002366]/20">
-                            {sermon.topic || 'تعليم وعظة'}
+                            {detectSermonCategory(sermon)}
                           </span>
                           <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-[#d4af37]" />
@@ -599,7 +676,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = () => {
                           </div>
                           <div>
                             <p className="text-[10px] text-slate-400 font-bold">الملقي / الخطيب</p>
-                            <p className="text-xs font-bold text-[#00174a]">{sermon.speaker || 'آباء الكنيسة'}</p>
+                            <p className="text-xs font-bold text-[#00174a]">{detectSermonSpeaker(sermon.title, sermon.speaker)}</p>
                           </div>
                         </div>
 
