@@ -29,10 +29,12 @@ import {
   Eye,
   Info
 } from 'lucide-react';
-import { api, type ExpoProduct, type ExpoOrder, type ExpoOrderItem, type UserRole } from '../../lib/api';
+import { api, type ExpoProduct, type ExpoOrder, type ExpoOrderItem, type UserRole, type Family } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { uploadAnnouncementImage } from '../../lib/fileUpload';
+import { computeServantScope, filterExpoOrdersForServant, type ServantScopeResult } from '../../lib/servantScopeHelper';
+import { ServantUnassignedState } from '../../components/common/ServantUnassignedState';
 
 const PRESET_PRODUCT_IMAGES = [
   { label: 'كتاب مقدس مصور', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=600' },
@@ -50,6 +52,7 @@ export const ExpoManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'share'>('products');
   const [products, setProducts] = useState<ExpoProduct[]>([]);
   const [orders, setOrders] = useState<ExpoOrder[]>([]);
+  const [servantScope, setServantScope] = useState<ServantScopeResult | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Filters & Search
@@ -76,17 +79,37 @@ export const ExpoManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [profile]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [pList, oList] = await Promise.all([
+      const [pList, oList, allFams, famServants] = await Promise.all([
         api.getExpoProducts(),
-        api.getExpoOrders()
+        api.getExpoOrders(),
+        api.getFamilies('sunday_school').catch(() => []),
+        api.getFamilyServantsForAll().catch(() => [])
       ]);
+
+      const scope = computeServantScope(profile, allFams, famServants);
+      setServantScope(scope);
+
       setProducts(pList);
-      setOrders(oList);
+
+      if (scope.isUnassigned) {
+        setOrders([]);
+      } else if (scope.isServant && scope.assignedFamilies.length > 0) {
+        const myStage = scope.serviceCategory || '';
+        const myFamNames = new Set(scope.assignedFamilies.map(f => f.head_name.trim().toLowerCase()));
+        const scopedOrders = oList.filter(o => {
+          if (o.family_name && myFamNames.has(o.family_name.trim().toLowerCase())) return true;
+          if (o.stage && myStage && (o.stage.includes(myStage) || myStage.includes(o.stage))) return true;
+          return false;
+        });
+        setOrders(scopedOrders);
+      } else {
+        setOrders(oList);
+      }
     } catch (err) {
       console.error('Failed to load expo data:', err);
     } finally {
@@ -282,6 +305,14 @@ ${publicStoreUrl}
   const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
   const deliveredOrdersCount = orders.filter(o => o.status === 'delivered').length;
   const totalCouponsExchanged = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + o.total_coupons, 0);
+
+  if (!loading && servantScope?.isUnassigned) {
+    return (
+      <DashboardLayout role="servant">
+        <ServantUnassignedState servantName={profile?.full_name} pageTitle="معرض الهدايا والكوبونات" />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role={(profile?.role as UserRole) || 'servant'}>

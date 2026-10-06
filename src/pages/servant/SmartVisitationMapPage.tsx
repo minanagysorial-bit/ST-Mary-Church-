@@ -5,6 +5,7 @@ import type { Family, FamilyMember } from '../../lib/database.types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { FamilyQuickMapModal } from '../../components/visitation/FamilyQuickMapModal';
+import { ServantUnassignedState } from '../../components/common/ServantUnassignedState';
 import {
   MapPin,
   Search,
@@ -507,6 +508,14 @@ export const SmartVisitationMapPage: React.FC = () => {
     const matchStatus = filterStatus === 'all' || filterStatus === status;
     return matchSearch && matchStatus;
   });
+
+  if (!loading && profile?.role === 'servant' && families.length === 0) {
+    return (
+      <DashboardLayout role="servant">
+        <ServantUnassignedState servantName={profile?.full_name} pageTitle="خريطة الافتقاد الذكية" />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role={profile?.role as any || 'servant'}>

@@ -27,6 +27,7 @@ import {
 import { checkFamilyAttendanceStatus, findConsecutiveAbsentees, type ServiceScheduleConfig, type AttendanceStatusResult } from '../../lib/attendanceStatusHelper';
 import { getOfflineQueue, saveOfflineBatch, syncOfflineAttendanceQueue } from '../../lib/offlineSync';
 import { useToast } from '../../components/common/Toast';
+import { ServantUnassignedState } from '../../components/common/ServantUnassignedState';
 
 export const AttendancePage: React.FC = () => {
   const { profile } = useAuth();
@@ -335,6 +336,14 @@ export const AttendancePage: React.FC = () => {
     { [selectedFamilyId]: selectedFamily?.head_name || '' },
     2
   );
+
+  if (!loading && profile?.role === 'servant' && families.length === 0) {
+    return (
+      <DashboardLayout role="servant">
+        <ServantUnassignedState servantName={profile?.full_name} pageTitle="تسجيل الحضور والغياب" />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role={profile?.role as any || 'servant'}>

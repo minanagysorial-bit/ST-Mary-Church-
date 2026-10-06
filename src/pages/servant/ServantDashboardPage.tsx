@@ -5,12 +5,16 @@ import {
   Award, MapPin, Navigation, PhoneCall, MessageSquare, Cake, Gift, ChevronLeft, BellRing
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { api, type FamilyAttendanceRecord, type FamilyMember } from '../../lib/api';
+import { api, type FamilyAttendanceRecord, type FamilyMember, type Profile } from '../../lib/api';
 import type { Family, Sermon, Member } from '../../lib/database.types';
 import { useToast } from '../../components/common/Toast';
+import { useAuth } from '../../contexts/AuthContext';
 import { findConsecutiveAbsentees, getUpcomingBirthdays, type ConsecutiveAbsentee, type BirthdayItem } from '../../lib/attendanceStatusHelper';
+import { computeServantScope, type ServantScopeResult } from '../../lib/servantScopeHelper';
+import { ServantUnassignedState } from '../../components/common/ServantUnassignedState';
 
 export const ServantDashboardPage: React.FC = () => {
+  const { profile } = useAuth();
   const toast = useToast();
   const [families, setFamilies] = useState<Family[]>([]);
   const [sermonsCount, setSermonsCount] = useState<number>(0);
@@ -18,6 +22,7 @@ export const ServantDashboardPage: React.FC = () => {
   const [attendanceRecords, setAttendanceRecords] = useState<FamilyAttendanceRecord[]>([]);
   const [allFamilyMembers, setAllFamilyMembers] = useState<FamilyMember[]>([]);
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
+  const [servantScope, setServantScope] = useState<ServantScopeResult | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Student quick addition form states
@@ -32,25 +37,46 @@ export const ServantDashboardPage: React.FC = () => {
 
   const fetchServantDashboardData = async () => {
     try {
-      const [f, s, m, att, settings] = await Promise.all([
-        api.getFamilies(),
+      const [f, s, att, settings, famServants] = await Promise.all([
+        api.getFamilies('sunday_school'),
         api.getSermons(),
-        api.getSundaySchoolStudents(),
         api.getAllFamilyAttendanceRecords().catch(() => []),
-        api.getSiteSettings(),
+        api.getSiteSettings().catch(() => ({})),
+        api.getFamilyServantsForAll().catch(() => [])
       ]);
-      setFamilies(f);
+
+      const scope = computeServantScope(profile, f, famServants);
+      setServantScope(scope);
       setSermonsCount(s.length);
-      setStudents(m);
       setAttendanceRecords(att);
       setSiteSettings(settings);
 
-      // Fetch family members for attendance and birthdays
+      if (scope.isUnassigned) {
+        setFamilies([]);
+        setStudents([]);
+        setAllFamilyMembers([]);
+        return;
+      }
+
+      const targetFamilies = scope.assignedFamilies;
+      setFamilies(targetFamilies);
+
+      // Fetch family members only for assigned families
       try {
-        const memPromises = f.slice(0, 15).map(fam => api.getFamilyMembers(fam.id));
+        const memPromises = targetFamilies.map(fam => api.getFamilyMembers(fam.id));
         const memResults = await Promise.all(memPromises);
         const flattened = memResults.flat();
         setAllFamilyMembers(flattened);
+        
+        // Map to student Member objects
+        const studentList: Member[] = flattened.map(fm => ({
+          id: fm.id,
+          full_name: fm.full_name,
+          phone: fm.phone || '',
+          service: scope.serviceCategory || 'تربية كنسية',
+          status: 'نشط'
+        } as unknown as Member));
+        setStudents(studentList);
       } catch (err) {
         console.warn('Family members fetch notice:', err);
       }
@@ -63,7 +89,7 @@ export const ServantDashboardPage: React.FC = () => {
 
   useEffect(() => {
     fetchServantDashboardData();
-  }, []);
+  }, [profile]);
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +159,14 @@ export const ServantDashboardPage: React.FC = () => {
       : students.map(s => ({ id: s.id, full_name: s.full_name, birth_date: null, phone: s.phone })),
     []
   );
+
+  if (servantScope?.isUnassigned) {
+    return (
+      <DashboardLayout role="servant">
+        <ServantUnassignedState servantName={profile?.full_name} pageTitle="لوحة تحكم الخادم" />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="servant">

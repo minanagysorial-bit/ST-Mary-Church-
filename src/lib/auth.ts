@@ -87,7 +87,8 @@ export async function adminCreateUser(
   email: string,
   password: string,
   fullName: string,
-  role: UserRole
+  role: UserRole,
+  phone?: string
 ) {
   const { createClient } = await import('@supabase/supabase-js');
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -95,6 +96,7 @@ export async function adminCreateUser(
 
   const cleanEmail = email.trim().toLowerCase();
   const cleanName = fullName.trim();
+  const cleanPhone = phone ? phone.trim() : undefined;
 
   // Instantiate client with non-persisted state to protect admin's current session
   const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -111,7 +113,8 @@ export async function adminCreateUser(
     options: {
       data: {
         full_name: cleanName,
-        role
+        role,
+        phone: cleanPhone
       }
     }
   });
@@ -148,14 +151,17 @@ export async function adminCreateUser(
 
   if (finalUserId) {
     // Upsert to profiles table
+    const profilePayload: any = {
+      id: finalUserId,
+      email: cleanEmail,
+      full_name: cleanName,
+      role,
+    };
+    if (cleanPhone) profilePayload.phone = cleanPhone;
+
     const { error: profileError } = await supabase
       .from('profiles')
-      .upsert({
-        id: finalUserId,
-        email: cleanEmail,
-        full_name: cleanName,
-        role,
-      }, { onConflict: 'id' });
+      .upsert(profilePayload, { onConflict: 'id' });
 
     if (profileError) {
       console.warn('Profile upsert after signup returned error:', profileError);
@@ -167,6 +173,7 @@ export async function adminCreateUser(
             email: cleanEmail,
             full_name: cleanName,
             role: 'servant',
+            ...(cleanPhone ? { phone: cleanPhone } : {})
           }, { onConflict: 'id' });
       }
     }
@@ -198,6 +205,7 @@ export async function adminCreateUser(
         .insert({
           full_name: cleanName,
           email: cleanEmail,
+          phone: cleanPhone || null,
           status: 'نشط',
           service: role === 'service_leader' ? 'أمين خدمة' : 'خادم تربية كنسية',
         });

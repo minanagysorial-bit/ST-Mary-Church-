@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/DashboardLayout';
 import { api, type FamilyMember, type VisitationLog } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { ServantUnassignedState } from '../../components/common/ServantUnassignedState';
 import {
   HeartHandshake,
   Calendar,
@@ -64,36 +65,18 @@ export const VisitationPage: React.FC = () => {
         console.warn("family_servants table not ready or empty:", err);
       }
 
-      // Filter families (servants see their assigned, or fallback to all families)
+      // Filter families (servants see ONLY their assigned)
       let filteredFamilies = allFamilies;
       if (profile && profile.role === 'servant') {
-        const myAssigned = allFamilies.filter(f => 
+        filteredFamilies = allFamilies.filter(f => 
           myFamilyIds.includes(f.id) || f.assigned_servant_id === profile?.id
         );
-        if (myAssigned.length > 0) {
-          filteredFamilies = myAssigned;
-        }
       }
 
       // Fetch family members for each of these families
-      const membersPromises = filteredFamilies.map(async f => {
-        try {
-          const kids = await api.getFamilyMembers(f.id);
-          return kids.map(k => ({
-            ...k,
-            family_name: f.head_name,
-            family_stage: f.stage || f.area || ''
-          }));
-        } catch {
-          return [];
-        }
-      });
-      const membersLists = await Promise.all(membersPromises);
-      let allFamilyMembers = membersLists.flat();
-
-      // If servant has no kids in assigned list, fallback to all families
-      if (allFamilyMembers.length === 0 && allFamilies.length > 0) {
-        const allKidsPromises = allFamilies.map(async f => {
+      let allFamilyMembers: any[] = [];
+      if (filteredFamilies.length > 0) {
+        const membersPromises = filteredFamilies.map(async f => {
           try {
             const kids = await api.getFamilyMembers(f.id);
             return kids.map(k => ({
@@ -105,7 +88,8 @@ export const VisitationPage: React.FC = () => {
             return [];
           }
         });
-        allFamilyMembers = (await Promise.all(allKidsPromises)).flat();
+        const membersLists = await Promise.all(membersPromises);
+        allFamilyMembers = membersLists.flat();
       }
 
       // Deduplicate members
@@ -216,6 +200,14 @@ export const VisitationPage: React.FC = () => {
 
     return matchesSearch && matchesFilter && matchesStartDate && matchesEndDate;
   });
+
+  if (!loading && profile?.role === 'servant' && members.length === 0) {
+    return (
+      <DashboardLayout role="servant">
+        <ServantUnassignedState servantName={profile?.full_name} pageTitle="سجل ومتابعة الافتقاد" />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role={profile?.role as any || 'servant'}>

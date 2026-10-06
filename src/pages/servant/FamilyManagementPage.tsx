@@ -7,6 +7,7 @@ import {
 import { api, type Family, type FamilyMember, type FamilyServant, type Profile } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { ServantUnassignedState } from '../../components/common/ServantUnassignedState';
 
 export const FamilyManagementPage: React.FC = () => {
   const { profile, hasPermission } = useAuth();
@@ -87,9 +88,11 @@ export const FamilyManagementPage: React.FC = () => {
           (relationsMap[f.id] && relationsMap[f.id].includes(profile.id)) ||
           f.assigned_servant_id === profile.id
         );
+        finalFamilies = myAssigned;
         if (myAssigned.length > 0) {
-          finalFamilies = myAssigned;
           setExpandedFamilyId(myAssigned[0].id);
+        } else {
+          setExpandedFamilyId(null);
         }
       } else if (sundaySchoolFamilies.length > 0) {
         setExpandedFamilyId(sundaySchoolFamilies[0].id);
@@ -240,6 +243,14 @@ export const FamilyManagementPage: React.FC = () => {
       setError(err.message || 'حدث خطأ أثناء تعديل بيانات المخدوم');
     }
   };
+
+  if (!loading && profile?.role === 'servant' && families.length === 0) {
+    return (
+      <DashboardLayout role="servant">
+        <ServantUnassignedState servantName={profile?.full_name} pageTitle="فصول وأسر المخدومين" />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="servant">

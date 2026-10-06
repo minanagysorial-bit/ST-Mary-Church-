@@ -38,6 +38,7 @@ import {
   normalizeGoogleDriveImageUrl
 } from '../public/HonorBoardPage';
 import { compressImage, fileToBase64 } from '../../lib/fileUpload';
+import { ServantUnassignedState } from '../../components/common/ServantUnassignedState';
 
 interface GiftItem {
   id: string;
@@ -132,45 +133,46 @@ export const SundaySchoolPointsPage: React.FC = () => {
           const relations = await api.getFamilyServantsForAll();
           const myFamilyIds = relations.filter(r => r.servant_id === profile.id).map(r => r.family_id);
           const myFamilies = allFamilies.filter(f => myFamilyIds.includes(f.id) || f.assigned_servant_id === profile.id);
-          if (myFamilies.length > 0) {
-            targetFamilies = myFamilies;
-          }
+          targetFamilies = myFamilies;
         } catch (e) {
           console.warn('Could not filter servant families:', e);
+          targetFamilies = [];
         }
       }
 
       // 2. Load members of families
-      const membersPromises = targetFamilies.map(f => api.getFamilyMembers(f.id));
-      const membersResults = await Promise.all(membersPromises);
-      const allMembers = membersResults.flat();
-
       let studentList: Member[] = [];
 
-      if (allMembers.length > 0) {
-        studentList = allMembers.map(fm => {
-          const fam = allFamilies.find(f => f.id === fm.family_id);
-          const stage = fam?.stage || fam?.area || fm.sunday_school_stage || 'ابتدائي';
-          const ptsFromDb = extractPointsFromNotes(fm.notes);
-          const photoFromDb = extractPhotoFromNotes(fm.notes);
-          return {
-            id: fm.id,
-            full_name: fm.full_name,
-            national_id: '',
-            phone: fm.phone || '',
-            service: stage,
-            registration_date: fm.created_at || new Date().toISOString(),
-            father_of_confession: 'كنيسة السيدة العذراء مريم',
-            spiritual_status: 'منتظم',
-            attendance_status: 'حاضر',
-            points: ptsFromDb,
-            notes: fm.notes || '',
-            photo_url: photoFromDb,
-            qr_code: fm.id
-          } as unknown as Member;
-        });
-      } else {
-        // Fallback to Sunday school members table
+      if (targetFamilies.length > 0) {
+        const membersPromises = targetFamilies.map(f => api.getFamilyMembers(f.id));
+        const membersResults = await Promise.all(membersPromises);
+        const allMembers = membersResults.flat();
+
+        if (allMembers.length > 0) {
+          studentList = allMembers.map(fm => {
+            const fam = allFamilies.find(f => f.id === fm.family_id);
+            const stage = fam?.stage || fam?.area || fm.sunday_school_stage || 'ابتدائي';
+            const ptsFromDb = extractPointsFromNotes(fm.notes);
+            const photoFromDb = extractPhotoFromNotes(fm.notes);
+            return {
+              id: fm.id,
+              full_name: fm.full_name,
+              national_id: '',
+              phone: fm.phone || '',
+              service: stage,
+              registration_date: fm.created_at || new Date().toISOString(),
+              father_of_confession: 'كنيسة السيدة العذراء مريم',
+              spiritual_status: 'منتظم',
+              attendance_status: 'حاضر',
+              points: ptsFromDb,
+              notes: fm.notes || '',
+              photo_url: photoFromDb,
+              qr_code: fm.id
+            } as unknown as Member;
+          });
+        }
+      } else if (profile?.role !== 'servant') {
+        // Fallback to Sunday school members table only for managers
         studentList = await api.getSundaySchoolStudents();
       }
 
@@ -180,16 +182,12 @@ export const SundaySchoolPointsPage: React.FC = () => {
       const saved = localStorage.getItem('sunday_school_points_map');
       const existing: Record<string, number> = saved ? JSON.parse(saved) : {};
 
-      allMembers.forEach(fm => {
-        const pts = extractPointsFromNotes(fm.notes);
+      studentList.forEach((s) => {
+        const pts = extractPointsFromNotes((s as any).notes);
         if (pts > 0) {
-          existing[fm.id] = pts;
-        }
-      });
-
-      studentList.forEach((s, idx) => {
-        if (existing[s.id] === undefined) {
-          existing[s.id] = (idx % 5 + 1) * 20 + 20;
+          existing[s.id] = pts;
+        } else if (existing[s.id] === undefined) {
+          existing[s.id] = 20;
         }
       });
 
@@ -347,6 +345,14 @@ export const SundaySchoolPointsPage: React.FC = () => {
   const totalPointsAwarded = Object.values(pointsMap).reduce((a, b) => a + b, 0);
   const activeStudentsCount = students.length;
   const topStudent = sortedStudents[0];
+
+  if (!loading && profile?.role === 'servant' && students.length === 0) {
+    return (
+      <DashboardLayout role="servant">
+        <ServantUnassignedState servantName={profile?.full_name} pageTitle="نقاط ومكافآت مدارس الأحد" />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role={profile?.role as any || 'servant'}>

@@ -1,18 +1,110 @@
 import { api, type ChurchServiceCategory, type Profile } from './api';
-import { type ServiceScheduleConfig, DEFAULT_SERVICE_SCHEDULES } from './attendanceStatusHelper';
+import { type ServiceScheduleConfig, type DayOfWeekArabic, DEFAULT_SERVICE_SCHEDULES } from './attendanceStatusHelper';
 
-export const ALL_CHURCH_SERVICE_CATEGORIES: { category: ChurchServiceCategory; label: string; icon: string; description: string }[] = [
-  { category: 'ابتدائي بنين', label: 'ابتدائي بنين', icon: 'boy', description: 'خدمة مرحلة ابتدائي للبنين (الجمعة 2:30 ظهراً)' },
-  { category: 'ابتدائي بنات', label: 'ابتدائي بنات', icon: 'girl', description: 'خدمة مرحلة ابتدائي للبنات (الجمعة 10:30 صباحاً)' },
-  { category: 'فتيان إعدادي', label: 'فتيان إعدادي', icon: 'school', description: 'خدمة فتيان المرحلة الإعدادية (الجمعة 4:30 مساءً)' },
-  { category: 'فتيات إعدادي', label: 'فتيات إعدادي', icon: 'school', description: 'خدمة فتيات المرحلة الإعدادية (الجمعة 11:00 صباحاً)' },
-  { category: 'شباب ثانوي', label: 'شباب ثانوي', icon: 'groups', description: 'خدمة شباب المرحلة الثانوية (الجمعة 9:00 صباحاً)' },
-  { category: 'شابات ثانوي', label: 'شابات ثانوي', icon: 'groups_2', description: 'خدمة شابات المرحلة الثانوية (الخميس 6:00 مساءً)' },
-  { category: 'خدمة شباب جامعة', label: 'خدمة شباب جامعة', icon: 'local_library', description: 'خدمة الشباب والطلبة الجامعيين (الثلاثاء 7:00 مساءً)' },
-  { category: 'خدمة شابات جامعة', label: 'خدمة شابات جامعة', icon: 'local_library', description: 'خدمة الشابات والطالبات الجامعيات (الخميس 7:00 مساءً)' },
-  { category: 'خريجين', label: 'خريجين', icon: 'work', description: 'خدمة الخريجين وسوق العمل والمهنيين (الأحد 7:00 مساءً)' },
-  { category: 'عرس قانا الجليل', label: 'عرس قانا الجليل', icon: 'favorite', description: 'خدمة المقبلين على الزواج والمتزوجين حديثاً (الأربعاء 7:00 مساءً)' },
+export interface ChurchServiceItem {
+  id?: string;
+  category: ChurchServiceCategory | string;
+  label: string;
+  icon: string;
+  description: string;
+  isCustom?: boolean;
+  defaultDay?: DayOfWeekArabic;
+  defaultStart?: string;
+  defaultEnd?: string;
+}
+
+export const ALL_CHURCH_SERVICE_CATEGORIES: { category: ChurchServiceCategory; label: string; icon: string; description: string; defaultDay?: DayOfWeekArabic; defaultStart?: string; defaultEnd?: string }[] = [
+  { category: 'ابتدائي بنين', label: 'ابتدائي بنين', icon: 'boy', description: 'خدمة مرحلة ابتدائي للبنين (الجمعة 2:30 ظهراً)', defaultDay: 'الجمعة', defaultStart: '14:30', defaultEnd: '17:00' },
+  { category: 'ابتدائي بنات', label: 'ابتدائي بنات', icon: 'girl', description: 'خدمة مرحلة ابتدائي للبنات (الجمعة 10:30 صباحاً)', defaultDay: 'الجمعة', defaultStart: '10:30', defaultEnd: '13:00' },
+  { category: 'فتيان إعدادي', label: 'فتيان إعدادي', icon: 'school', description: 'خدمة فتيان المرحلة الإعدادية (الجمعة 4:30 مساءً)', defaultDay: 'الجمعة', defaultStart: '16:30', defaultEnd: '19:00' },
+  { category: 'فتيات إعدادي', label: 'فتيات إعدادي', icon: 'school', description: 'خدمة فتيات المرحلة الإعدادية (الجمعة 11:00 صباحاً)', defaultDay: 'الجمعة', defaultStart: '11:00', defaultEnd: '13:30' },
+  { category: 'شباب ثانوي', label: 'شباب ثانوي', icon: 'groups', description: 'خدمة شباب المرحلة الثانوية (الجمعة 9:00 صباحاً)', defaultDay: 'الجمعة', defaultStart: '09:00', defaultEnd: '11:30' },
+  { category: 'شابات ثانوي', label: 'شابات ثانوي', icon: 'groups_2', description: 'خدمة شابات المرحلة الثانوية (الخميس 6:00 مساءً)', defaultDay: 'الخميس', defaultStart: '18:00', defaultEnd: '20:30' },
+  { category: 'خدمة شباب جامعة', label: 'خدمة شباب جامعة', icon: 'local_library', description: 'خدمة الشباب والطلبة الجامعيين (الثلاثاء 7:00 مساءً)', defaultDay: 'الثلاثاء', defaultStart: '19:00', defaultEnd: '21:30' },
+  { category: 'خدمة شابات جامعة', label: 'خدمة شابات جامعة', icon: 'local_library', description: 'خدمة الشابات والطالبات الجامعيات (الخميس 7:00 مساءً)', defaultDay: 'الخميس', defaultStart: '19:00', defaultEnd: '21:30' },
+  { category: 'خريجين', label: 'خريجين', icon: 'work', description: 'خدمة الخريجين وسوق العمل والمهنيين (الأحد 7:00 مساءً)', defaultDay: 'الأحد', defaultStart: '19:00', defaultEnd: '21:30' },
+  { category: 'عرس قانا الجليل', label: 'عرس قانا الجليل', icon: 'favorite', description: 'خدمة المقبلين على الزواج والمتزوجين حديثاً (الأربعاء 7:00 مساءً)', defaultDay: 'الأربعاء', defaultStart: '19:00', defaultEnd: '21:30' },
 ];
+
+export const DEFAULT_CHURCH_SERVICE_CATEGORIES = ALL_CHURCH_SERVICE_CATEGORIES;
+
+/**
+ * Retrieve custom church services added by Super Admin.
+ */
+export function getCustomServices(settings: Record<string, string> = {}): ChurchServiceItem[] {
+  const raw = settings['custom_church_services'];
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // ignore
+    }
+  }
+
+  try {
+    const local = localStorage.getItem('custom_church_services');
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {
+    // ignore
+  }
+
+  return [];
+}
+
+/**
+ * Combine default and custom services into a single unified list.
+ */
+export function getAllChurchServices(settings: Record<string, string> = {}): ChurchServiceItem[] {
+  const customList = getCustomServices(settings);
+  const map = new Map<string, ChurchServiceItem>();
+
+  DEFAULT_CHURCH_SERVICE_CATEGORIES.forEach(item => {
+    map.set(item.category, item);
+  });
+
+  customList.forEach(item => {
+    map.set(item.category, { ...item, isCustom: true });
+  });
+
+  return Array.from(map.values());
+}
+
+/**
+ * Save custom services list to database and localStorage.
+ */
+export async function saveCustomServices(
+  services: ChurchServiceItem[],
+  currentSettings: Record<string, string> = {}
+): Promise<void> {
+  const customOnly = services.filter(s => s.isCustom || !DEFAULT_CHURCH_SERVICE_CATEGORIES.some(d => d.category === s.category));
+  const payload = JSON.stringify(customOnly);
+  
+  try {
+    localStorage.setItem('custom_church_services', payload);
+  } catch {
+    // ignore
+  }
+
+  await api.updateSiteSettings({
+    custom_church_services: payload
+  });
+}
+
+/**
+ * Delete a custom church service and its configuration.
+ */
+export async function deleteCustomService(
+  categoryName: string,
+  currentSettings: Record<string, string> = {}
+): Promise<void> {
+  const currentCustom = getCustomServices(currentSettings);
+  const updated = currentCustom.filter(c => c.category !== categoryName);
+  await saveCustomServices(updated, currentSettings);
+}
 
 /**
  * Retrieves the list of assigned service categories for a specific Service Leader.
@@ -41,14 +133,15 @@ export function getLeaderAssignedServices(
   }
 
   // 2. Also check all service_assignment_${cat} to see if leaderId is in leader_ids
-  ALL_CHURCH_SERVICE_CATEGORIES.forEach(item => {
+  const allServices = getAllChurchServices(settings);
+  allServices.forEach(item => {
     const catKey = `service_assignment_${item.category}`;
     const rawCat = settings[catKey];
     if (rawCat) {
       try {
         const parsed = JSON.parse(rawCat);
         if (Array.isArray(parsed.leader_ids) && parsed.leader_ids.includes(leaderId)) {
-          resultSet.add(item.category);
+          resultSet.add(item.category as ChurchServiceCategory);
         }
       } catch {
         // ignore
@@ -64,21 +157,22 @@ export function getLeaderAssignedServices(
  */
 export async function saveLeaderAssignedServices(
   leaderId: string,
-  newCategories: ChurchServiceCategory[],
+  newCategories: string[],
   currentSettings: Record<string, string> = {}
 ): Promise<void> {
   if (!leaderId) return;
 
   const updates: Record<string, string> = {};
+  const allServices = getAllChurchServices(currentSettings);
 
   // 1. Direct leader mapping
   const directKey = `service_leader_assigned_services_${leaderId}`;
   updates[directKey] = JSON.stringify(newCategories);
 
   // 2. Cross-update each service_assignment_${cat}
-  ALL_CHURCH_SERVICE_CATEGORIES.forEach(item => {
+  allServices.forEach(item => {
     const catKey = `service_assignment_${item.category}`;
-    const defaultSched = DEFAULT_SERVICE_SCHEDULES[item.category] || { day: 'الجمعة', start: '09:00', end: '11:30' };
+    const defaultSched = item.defaultDay ? { day: item.defaultDay, start: item.defaultStart || '09:00', end: item.defaultEnd || '11:30' } : (DEFAULT_SERVICE_SCHEDULES[item.category] || { day: 'الجمعة', start: '09:00', end: '11:30' });
     
     let config: ServiceScheduleConfig = {
       priest_ids: [],
@@ -151,14 +245,15 @@ export function getPriestAssignedServices(
   }
 
   // 2. Also check all service_assignment_${cat} to see if priestId is in priest_ids
-  ALL_CHURCH_SERVICE_CATEGORIES.forEach(item => {
+  const allServices = getAllChurchServices(settings);
+  allServices.forEach(item => {
     const catKey = `service_assignment_${item.category}`;
     const rawCat = settings[catKey];
     if (rawCat) {
       try {
         const parsed = JSON.parse(rawCat);
         if (Array.isArray(parsed.priest_ids) && parsed.priest_ids.includes(priestId)) {
-          resultSet.add(item.category);
+          resultSet.add(item.category as ChurchServiceCategory);
         }
       } catch {
         // ignore
@@ -174,21 +269,22 @@ export function getPriestAssignedServices(
  */
 export async function savePriestAssignedServices(
   priestId: string,
-  newCategories: ChurchServiceCategory[],
+  newCategories: string[],
   currentSettings: Record<string, string> = {}
 ): Promise<void> {
   if (!priestId) return;
 
   const updates: Record<string, string> = {};
+  const allServices = getAllChurchServices(currentSettings);
 
   // 1. Direct priest mapping
   const directKey = `priest_assigned_services_${priestId}`;
   updates[directKey] = JSON.stringify(newCategories);
 
   // 2. Cross-update each service_assignment_${cat}
-  ALL_CHURCH_SERVICE_CATEGORIES.forEach(item => {
+  allServices.forEach(item => {
     const catKey = `service_assignment_${item.category}`;
-    const defaultSched = DEFAULT_SERVICE_SCHEDULES[item.category] || { day: 'الجمعة', start: '09:00', end: '11:30' };
+    const defaultSched = item.defaultDay ? { day: item.defaultDay, start: item.defaultStart || '09:00', end: item.defaultEnd || '11:30' } : (DEFAULT_SERVICE_SCHEDULES[item.category] || { day: 'الجمعة', start: '09:00', end: '11:30' });
     
     let config: ServiceScheduleConfig = {
       priest_ids: [],
@@ -231,4 +327,3 @@ export async function savePriestAssignedServices(
     // ignore
   }
 }
-
